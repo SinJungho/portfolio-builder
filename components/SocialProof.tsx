@@ -9,7 +9,7 @@ export function SocialProof() {
 
   return (
     <section className="border-y border-gray-200 bg-gray-50">
-      <div className="max-w-[1200px] mx-auto px-6 py-12">
+      <div className="max-w-300 mx-auto px-6 py-12">
         <div className="flex flex-col items-center gap-8">
           <p className="text-gray-500 text-sm uppercase tracking-wider">
             Trusted by developers from
@@ -19,7 +19,7 @@ export function SocialProof() {
             {companies.map((company) => (
               <div
                 key={company.name}
-                className={`${company.width} h-8 bg-gradient-to-br from-gray-300 to-gray-400 rounded opacity-60 hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center`}
+                className={`${company.width} h-8 bg-linear-to-br from-gray-300 to-gray-400 rounded opacity-60 hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center`}
               >
                 <span className="text-white text-xs opacity-50">
                   {company.name}
