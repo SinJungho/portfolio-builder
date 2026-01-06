@@ -4,12 +4,12 @@ export function FinalCTA() {
   return (
     <section className="py-24 bg-white relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
+      <div className="absolute inset-0 bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
 
       {/* Grid overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff12_1px,transparent_1px),linear-gradient(to_bottom,#ffffff12_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff12_1px,transparent_1px),linear-gradient(to_bottom,#ffffff12_1px,transparent_1px)] bg-position-[32px_32px]"></div>
 
-      <div className="relative max-w-[1200px] mx-auto px-6">
+      <div className="relative max-w-300 mx-auto px-6">
         <div className="flex flex-col items-center gap-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full border border-white/30">
             <span className="text-sm">🚀 Join 10,000+ developers</span>

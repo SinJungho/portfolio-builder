@@ -4,12 +4,12 @@ export function Hero() {
   return (
     <section className="relative pt-32 pb-20 overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-60"></div>
+      <div className="absolute inset-0 bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-60"></div>
 
       {/* Grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]"></div>
 
-      <div className="relative max-w-[1200px] mx-auto px-6">
+      <div className="relative max-w-300 mx-auto px-6">
         <div className="grid grid-cols-2 gap-16 items-center">
           {/* Left Column */}
           <div className="space-y-8">
@@ -24,7 +24,7 @@ export function Hero() {
             <h1 className="text-gray-900 leading-tight">
               Developers focus on code.
               <br />
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-linear-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 We build the portfolio.
               </span>
             </h1>
@@ -65,7 +65,7 @@ export function Hero() {
 
           {/* Right Column - Portfolio Preview */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
+            <div className="absolute -inset-4 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
             <div className="relative bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
               {/* Browser chrome */}
               <div className="bg-gray-100 border-b border-gray-200 px-4 py-3 flex items-center gap-2">
@@ -82,7 +82,7 @@ export function Hero() {
               {/* Portfolio content mockup */}
               <div className="p-8 space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                  <div className="w-16 h-16 rounded-full bg-linear-to-br from-indigo-500 to-purple-600"></div>
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-gray-200 rounded w-32"></div>
                     <div className="h-3 bg-gray-100 rounded w-48"></div>
