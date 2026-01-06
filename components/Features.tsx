@@ -24,7 +24,7 @@ export function Features() {
 
   return (
     <section className="py-24 bg-white">
-      <div className="max-w-[1200px] mx-auto px-6">
+      <div className="max-w-300 mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-gray-900 mb-4">
             Everything you need to showcase your work
@@ -45,12 +45,12 @@ export function Features() {
               >
                 {/* Gradient background on hover */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`}
+                  className={`absolute inset-0 bg-linear-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`}
                 ></div>
 
                 <div className="relative space-y-4">
                   <div
-                    className={`w-12 h-12 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center`}
+                    className={`w-12 h-12 bg-linear-to-br ${feature.gradient} rounded-xl flex items-center justify-center`}
                   >
                     <Icon className="w-6 h-6 text-white" />
                   </div>

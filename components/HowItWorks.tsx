@@ -33,7 +33,7 @@ export function HowItWorks() {
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+    <section className="py-24 bg-linear-to-br from-gray-50 to-gray-100 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
       <div
@@ -41,7 +41,7 @@ export function HowItWorks() {
         style={{ animationDelay: "1s" }}
       ></div>
 
-      <div className="relative max-w-[1200px] mx-auto px-6">
+      <div className="relative max-w-300 mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-gray-900 mb-4">
             From GitHub to portfolio in minutes
@@ -54,7 +54,7 @@ export function HowItWorks() {
 
         <div className="grid grid-cols-4 gap-6 relative">
           {/* Connection lines */}
-          <div className="absolute top-12 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 to-green-200"></div>
+          <div className="absolute top-12 left-[12.5%] right-[12.5%] h-0.5 bg-linear-to-r from-blue-200 via-purple-200 to-green-200"></div>
 
           {steps.map((step, index) => {
             const Icon = step.icon;
@@ -63,12 +63,12 @@ export function HowItWorks() {
                 <div className="bg-white rounded-2xl p-6 space-y-4 shadow-lg border border-gray-200 hover:shadow-xl transition-shadow">
                   <div className="relative">
                     <div
-                      className={`w-12 h-12 bg-gradient-to-br ${step.color} rounded-xl flex items-center justify-center relative z-10`}
+                      className={`w-12 h-12 bg-linear-to-br ${step.color} rounded-xl flex items-center justify-center relative z-10`}
                     >
                       <Icon className="w-6 h-6 text-white" />
                     </div>
                     <div
-                      className={`absolute -top-1 -left-1 w-14 h-14 bg-gradient-to-br ${step.color} rounded-xl opacity-20 blur-md`}
+                      className={`absolute -top-1 -left-1 w-14 h-14 bg-linear-to-br ${step.color} rounded-xl opacity-20 blur-md`}
                     ></div>
                   </div>
 

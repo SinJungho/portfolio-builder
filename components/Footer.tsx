@@ -3,12 +3,12 @@ import { Github, Linkedin, Twitter } from "lucide-react";
 export function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
-      <div className="max-w-[1200px] mx-auto px-6 py-16">
+      <div className="max-w-300 mx-auto px-6 py-16">
         <div className="grid grid-cols-5 gap-8 mb-12">
           {/* Brand column */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg"></div>
+              <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg"></div>
               <span className="text-white">PortfolioForge</span>
             </div>
             <p className="text-gray-400 text-sm">
