@@ -1,4 +1,3 @@
-"use client";
 import { SettingsContent } from "@/components/SettingsContent";
 import { SettingsNav } from "@/components/SettingsNav";
 import { Sidebar } from "@/components/Sidebar";
@@ -8,6 +7,7 @@ export default function Page() {
   const [activeSection, setActiveSection] = useState<
     "profile" | "account" | "integrations" | "billing" | "danger"
   >("profile");
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
