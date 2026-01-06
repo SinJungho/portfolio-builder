@@ -1,28 +1,21 @@
-"use client";
-import { SettingsContent } from "@/components/SettingsContent";
-import { SettingsNav } from "@/components/SettingsNav";
+import { AnalyticsHeader } from "@/components/AnalyticsHeader";
+import { BreakdownGrid } from "@/components/BreakdownGrid";
+import { ChartSection } from "@/components/ChartSection";
+import { MetricsGrid } from "@/components/MetricsGrid";
 import { Sidebar } from "@/components/Sidebar";
-import { useState } from "react";
 
 export default function Page() {
-  const [activeSection, setActiveSection] = useState<
-    "profile" | "account" | "integrations" | "billing" | "danger"
-  >("profile");
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
 
       <main className="flex-1 ml-[240px]">
-        <div className="border-b border-gray-200 bg-white px-8 py-6">
-          <h1 className="text-gray-900">Settings</h1>
-        </div>
+        <AnalyticsHeader />
 
-        <div className="flex">
-          <SettingsNav
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-          />
-          <SettingsContent activeSection={activeSection} />
+        <div className="p-8 max-w-[1200px]">
+          <MetricsGrid />
+          <ChartSection />
+          <BreakdownGrid />
         </div>
       </main>
     </div>
