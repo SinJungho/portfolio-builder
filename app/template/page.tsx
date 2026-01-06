@@ -1,4 +1,4 @@
-import { CTASection } from "@/components/a";
+import { CTASection } from "@/components/CTASection";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PageHeader } from "@/components/PageHeader";
