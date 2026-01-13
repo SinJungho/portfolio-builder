@@ -1,8 +1,11 @@
-import { Canvas } from "@/components/Canvas";
-import { LeftSidebar } from "@/components/LeftSidebar";
-import { RightPanel } from "@/components/RightPanel";
-import { TopToolbar } from "@/components/TopToolbar";
+"use client";
+
+import { Canvas } from "@/components/features/editor/Canvas";
+import { LeftSidebar } from "@/components/layouts/LeftSidebar";
+import { RightPanel } from "@/components/layouts/RightPanel";
+import { TopToolbar } from "@/components/layouts/TopToolbar";
 import { useState } from "react";
+
 
 export default function Page() {
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);

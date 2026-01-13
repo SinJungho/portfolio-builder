@@ -1,7 +1,7 @@
-import { DashboardHeader } from "@/components/DashboardHeader";
-import { PortfolioGrid } from "@/components/PortfolioGrid";
-import { Sidebar } from "@/components/Sidebar";
-import { StatsCards } from "@/components/StatsCards";
+import { DashboardHeader } from "@/components/layouts/DashboardHeader";
+import { PortfolioGrid } from "@/components/features/dashboard/PortfolioGrid";
+import { Sidebar } from "@/components/layouts/Sidebar";
+import { StatsCards } from "@/components/features/dashboard/StatsCards";
 
 export default function Page() {
   return (
