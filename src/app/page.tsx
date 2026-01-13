@@ -7,10 +7,13 @@ import HowItWorks from "@/components/home/HowItWorks";
 import Pricing from "@/components/home/Pricing";
 import SocialProof from "@/components/home/SocialProof";
 import Testimonials from "@/components/home/Testimonials";
+import Header from "@/components/layouts/Header";
+import Footer from "@/components/layouts/Footer";
 
 export default function Page() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
+      <Header />
       <main>
         <Hero />
         <SocialProof />
@@ -20,6 +23,7 @@ export default function Page() {
         <Pricing />
         <FinalCTA />
       </main>
+      <Footer />
     </div>
   );
 }

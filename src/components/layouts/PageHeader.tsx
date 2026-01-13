@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDown, Grid3x3, List } from "lucide-react";
 import { useState } from "react";
 

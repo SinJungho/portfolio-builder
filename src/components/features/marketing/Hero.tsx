@@ -18,32 +18,32 @@ export function Hero() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
-              <span className="text-sm">Now with AI-powered curation</span>
+              <span className="text-sm">AI 기반 큐레이션으로 더욱 강화된</span>
             </div>
 
             <h1 className="text-gray-900 leading-tight">
-              Developers focus on code.
+              개발자는 코드에 집중합니다.
               <br />
               <span className="bg-linear-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                We build the portfolio.
+                포트폴리오는 우리가 만듭니다.
               </span>
             </h1>
 
             <p className="text-gray-600 text-lg max-w-md">
-              Automatically generate and maintain a live developer portfolio
-              using your GitHub data.
+              GitHub 데이터를 활용해 개발자 포트폴리오를 자동으로 생성하고
+              실시간으로 유지합니다.
             </p>
 
             <div className="flex items-center gap-4">
               <button className="group bg-gray-900 text-white px-6 py-3.5 rounded-lg hover:bg-gray-800 transition-all hover:shadow-xl flex items-center gap-2">
                 <Github className="w-5 h-5" />
-                Continue with GitHub
+                GitHub로 계속하기
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors px-4 py-3.5">
                 <Play className="w-4 h-4" />
-                View Live Demo
+                실시간 데모 보기
               </button>
             </div>
 
@@ -51,13 +51,13 @@ export function Hero() {
             <div className="flex items-center gap-8 pt-4">
               <div>
                 <div className="text-2xl text-gray-900">10K+</div>
-                <div className="text-sm text-gray-500">Portfolios created</div>
+                <div className="text-sm text-gray-500">생성된 포트폴리오</div>
               </div>
               <div className="w-px h-12 bg-gray-300"></div>
               <div>
                 <div className="text-2xl text-gray-900">50M+</div>
                 <div className="text-sm text-gray-500">
-                  GitHub events synced
+                  동기화된 GitHub 이벤트
                 </div>
               </div>
             </div>

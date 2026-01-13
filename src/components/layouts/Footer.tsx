@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { Github, Twitter, Linkedin } from "lucide-react";
+
 export default function Footer() {
   return (
     <footer className="bg-slate-900 pt-16 pb-10 px-6 text-gray-400">
@@ -19,11 +22,11 @@ export default function Footer() {
           </div>
 
           {[
-            { title: "제품", items: ["기능", "가격", "템플릿", "변경 로그"] },
-            { title: "자료", items: ["문서", "API 참조", "블로그", "지원"] },
+            { title: "제품", items: [{ name: "기능", href: "/features" }, { name: "가격", href: "/pricing" }, { name: "템플릿", href: "/templates" }, { name: "변경 로그", href: "/changelog" }] },
+            { title: "자료", items: [{ name: "문서", href: "/docs" }, { name: "API 참조", href: "/api" }, { name: "블로그", href: "/blog" }, { name: "지원", href: "/support" }] },
             {
               title: "회사",
-              items: ["소개", "개인정보처리방침", "이용약관", "문의"],
+              items: [{ name: "소개", href: "/about" }, { name: "개인정보처리방침", href: "/privacy" }, { name: "이용약관", href: "/terms" }, { name: "문의", href: "/contact" }],
             },
           ].map((col) => (
             <div key={col.title}>
@@ -31,13 +34,13 @@ export default function Footer() {
 
               <ul className="flex flex-col gap-2.5">
                 {col.items.map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
                       className="text-sm text-slate-500 no-underline transition-colors duration-200 hover:text-white"
                     >
-                      {item}
-                    </a>
+                      {item.name}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -52,13 +55,20 @@ export default function Footer() {
           </span>
 
           <div className="flex gap-2">
-            {["GitHub", "Twitter", "LinkedIn"].map((s) => (
+            {[
+              { name: "GitHub", icon: <Github size={16} />, href: "https://github.com" },
+              { name: "Twitter", icon: <Twitter size={16} />, href: "https://twitter.com" },
+              { name: "LinkedIn", icon: <Linkedin size={16} />, href: "https://linkedin.com" }
+            ].map((s) => (
               <a
-                key={s}
-                href="#"
-                className="px-3.5 py-2 rounded-lg text-[13px] text-slate-500 bg-white/4 border border-slate-800 transition-colors duration-200 hover:text-white"
+                key={s.name}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-[13px] text-slate-500 bg-white/4 border border-slate-800 transition-colors duration-200 hover:text-white"
               >
-                {s}
+                {s.icon}
+                {s.name}
               </a>
             ))}
           </div>
