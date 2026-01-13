@@ -1,8 +1,8 @@
-import { AnalyticsHeader } from "@/components/AnalyticsHeader";
-import { BreakdownGrid } from "@/components/BreakdownGrid";
-import { ChartSection } from "@/components/ChartSection";
-import { MetricsGrid } from "@/components/MetricsGrid";
-import { Sidebar } from "@/components/Sidebar";
+import { AnalyticsHeader } from "@/components/layouts/AnalyticsHeader";
+import { BreakdownGrid } from "@/components/features/analytics/BreakdownGrid";
+import { ChartSection } from "@/components/features/analytics/ChartSection";
+import { MetricsGrid } from "@/components/features/analytics/MetricsGrid";
+import { Sidebar } from "@/components/layouts/Sidebar";
 
 export default function Page() {
   return (

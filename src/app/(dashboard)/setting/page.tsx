@@ -1,7 +1,10 @@
-import { SettingsContent } from "@/components/SettingsContent";
-import { SettingsNav } from "@/components/SettingsNav";
-import { Sidebar } from "@/components/Sidebar";
+"use client";
+
+import { SettingsContent } from "@/components/features/settings/SettingsContent";
+import { SettingsNav } from "@/components/features/settings/SettingsNav";
+import { Sidebar } from "@/components/layouts/Sidebar";
 import { useState } from "react";
+
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState<
