@@ -3,15 +3,15 @@ import { ArrowRight, Github, Play } from "lucide-react";
 export function Hero() {
   return (
     <section className="relative pt-32 pb-20 overflow-hidden">
-      {/* Background gradient */}
+      {/* 배경 그라디언트 */}
       <div className="absolute inset-0 bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-60"></div>
 
-      {/* Grid pattern */}
+      {/* 그리드 패턴 */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]"></div>
 
       <div className="relative max-w-300 mx-auto px-6">
         <div className="grid grid-cols-2 gap-16 items-center">
-          {/* Left Column */}
+          {/* 왼쪽 컬럼 */}
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full">
               <span className="relative flex h-2 w-2">
@@ -41,14 +41,14 @@ export function Hero() {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 
-              <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors px-4 py-3.5">
+              <button className="flex items-center gap-2 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 text-white hover:text-gray-900 transition-colors px-4 py-3.5">
                 <Play className="w-4 h-4" />
                 실시간 데모 보기
               </button>
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-8 pt-4">
+            {/* TODO : 실제 운영시 반영 */}
+            <div className="invisible flex items-center gap-8 pt-4">
               <div>
                 <div className="text-2xl text-gray-900">10K+</div>
                 <div className="text-sm text-gray-500">생성된 포트폴리오</div>
@@ -63,11 +63,11 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column - Portfolio Preview */}
+          {/* 오른쪽 컬럼 - 포트폴리오 미리보기 */}
           <div className="relative">
             <div className="absolute -inset-4 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
             <div className="relative bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
-              {/* Browser chrome */}
+              {/* 브라우저 크롬 */}
               <div className="bg-gray-100 border-b border-gray-200 px-4 py-3 flex items-center gap-2">
                 <div className="flex gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-400"></div>
@@ -79,7 +79,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* Portfolio content mockup */}
+              {/* 포트폴리오 콘텐츠 목업 */}
               <div className="p-8 space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-linear-to-br from-indigo-500 to-purple-600"></div>

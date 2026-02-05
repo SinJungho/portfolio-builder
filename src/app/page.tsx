@@ -1,11 +1,10 @@
 "use client";
 
-import Features from "@/components/home/Features";
-import FinalCTA from "@/components/home/FinalCTA";
-import Hero from "@/components/home/Hero";
-import HowItWorks from "@/components/home/HowItWorks";
+import { Features } from "@/components/features/marketing/Features";
+import { FinalCTA } from "@/components/features/marketing/FinalCTA";
+import { Hero } from "@/components/features/marketing/Hero";
+import { HowItWorks } from "@/components/features/marketing/HowItWorks";
 import Pricing from "@/components/home/Pricing";
-import SocialProof from "@/components/home/SocialProof";
 import Testimonials from "@/components/home/Testimonials";
 import Header from "@/components/layouts/Header";
 import Footer from "@/components/layouts/Footer";
@@ -16,7 +15,6 @@ export default function Page() {
       <Header />
       <main>
         <Hero />
-        <SocialProof />
         <HowItWorks />
         <Features />
         <Testimonials />

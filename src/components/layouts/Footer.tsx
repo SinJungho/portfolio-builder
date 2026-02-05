@@ -22,11 +22,32 @@ export default function Footer() {
           </div>
 
           {[
-            { title: "제품", items: [{ name: "기능", href: "/features" }, { name: "가격", href: "/pricing" }, { name: "템플릿", href: "/templates" }, { name: "변경 로그", href: "/changelog" }] },
-            { title: "자료", items: [{ name: "문서", href: "/docs" }, { name: "API 참조", href: "/api" }, { name: "블로그", href: "/blog" }, { name: "지원", href: "/support" }] },
+            {
+              title: "제품",
+              items: [
+                { name: "기능", href: "/features" },
+                { name: "가격", href: "/pricing" },
+                { name: "템플릿", href: "/templates" },
+                { name: "변경 로그", href: "/changelog" },
+              ],
+            },
+            {
+              title: "자료",
+              items: [
+                { name: "문서", href: "/docs" },
+                { name: "API 참조", href: "/api" },
+                { name: "블로그", href: "/blog" },
+                { name: "지원", href: "/support" },
+              ],
+            },
             {
               title: "회사",
-              items: [{ name: "소개", href: "/about" }, { name: "개인정보처리방침", href: "/privacy" }, { name: "이용약관", href: "/terms" }, { name: "문의", href: "/contact" }],
+              items: [
+                { name: "소개", href: "/about" },
+                { name: "개인정보처리방침", href: "/privacy" },
+                { name: "이용약관", href: "/terms" },
+                { name: "문의", href: "/contact" },
+              ],
             },
           ].map((col) => (
             <div key={col.title}>
@@ -56,9 +77,21 @@ export default function Footer() {
 
           <div className="flex gap-2">
             {[
-              { name: "GitHub", icon: <Github size={16} />, href: "https://github.com" },
-              { name: "Twitter", icon: <Twitter size={16} />, href: "https://twitter.com" },
-              { name: "LinkedIn", icon: <Linkedin size={16} />, href: "https://linkedin.com" }
+              {
+                name: "GitHub",
+                icon: <Github size={16} />,
+                href: "https://github.com",
+              },
+              {
+                name: "Twitter",
+                icon: <Twitter size={16} />,
+                href: "https://twitter.com",
+              },
+              {
+                name: "LinkedIn",
+                icon: <Linkedin size={16} />,
+                href: "https://linkedin.com",
+              },
             ].map((s) => (
               <a
                 key={s.name}
