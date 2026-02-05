@@ -9,11 +9,10 @@ export function Footer() {
           <div className="col-span-2 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg"></div>
-              <span className="text-white">PortfolioForge</span>
+              <span className="text-white">포트폴리오포지</span>
             </div>
             <p className="text-gray-400 text-sm">
-              Automatically generate beautiful developer portfolios from your
-              GitHub profile.
+              GitHub 프로필을 통해 멋진 개발자 포트폴리오를 자동으로 생성하세요.
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -39,14 +38,14 @@ export function Footer() {
 
           {/* Product */}
           <div>
-            <h4 className="text-white mb-4">Product</h4>
+            <h4 className="text-white mb-4">제품</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <a
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Features
+                  기능
                 </a>
               </li>
               <li>
@@ -54,7 +53,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Pricing
+                  가격
                 </a>
               </li>
               <li>
@@ -62,7 +61,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Templates
+                  템플릿
                 </a>
               </li>
               <li>
@@ -70,7 +69,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Changelog
+                  변경 로그
                 </a>
               </li>
             </ul>
@@ -78,14 +77,14 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-white mb-4">Resources</h4>
+            <h4 className="text-white mb-4">자료</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <a
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Documentation
+                  문서
                 </a>
               </li>
               <li>
@@ -93,7 +92,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  API Reference
+                  API 참조
                 </a>
               </li>
               <li>
@@ -101,7 +100,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Blog
+                  블로그
                 </a>
               </li>
               <li>
@@ -109,7 +108,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Support
+                  지원
                 </a>
               </li>
             </ul>
@@ -117,14 +116,14 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="text-white mb-4">Company</h4>
+            <h4 className="text-white mb-4">회사</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <a
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  About
+                  소개
                 </a>
               </li>
               <li>
@@ -132,7 +131,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Privacy
+                  개인정보처리방침
                 </a>
               </li>
               <li>
@@ -140,7 +139,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Terms
+                  약관
                 </a>
               </li>
               <li>
@@ -148,7 +147,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Contact
+                  문의
                 </a>
               </li>
             </ul>
@@ -158,20 +157,20 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-gray-800 flex items-center justify-between text-sm">
           <p className="text-gray-500">
-            © 2026 PortfolioForge. All rights reserved.
+            © 2026 포트폴리오포지. 모든 권리 보유.
           </p>
           <div className="flex items-center gap-6">
             <a
               href="#"
               className="text-gray-500 hover:text-white transition-colors"
             >
-              Privacy Policy
+              개인정보처리방침
             </a>
             <a
               href="#"
               className="text-gray-500 hover:text-white transition-colors"
             >
-              Terms of Service
+              서비스 약관
             </a>
           </div>
         </div>

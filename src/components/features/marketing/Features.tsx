@@ -4,20 +4,20 @@ export function Features() {
   const features = [
     {
       icon: RefreshCw,
-      title: "Automated GitHub Sync",
-      description: "Projects and contributions updated in real time",
+      title: "자동 GitHub 동기화",
+      description: "프로젝트 및 기여가 실시간으로 업데이트됩니다",
       gradient: "from-blue-500 to-cyan-500",
     },
     {
       icon: Sparkles,
-      title: "AI Project Curation",
-      description: "Highlight your strongest work automatically",
+      title: "AI 프로젝트 큐레이션",
+      description: "가장 뛰어난 작업을 자동으로 강조합니다",
       gradient: "from-purple-500 to-pink-500",
     },
     {
       icon: Pencil,
-      title: "Real-time Editor",
-      description: "Edit and preview your portfolio instantly",
+      title: "실시간 에디터",
+      description: "포트폴리오를 즉시 편집하고 미리 봅니다",
       gradient: "from-orange-500 to-red-500",
     },
   ];
@@ -27,11 +27,10 @@ export function Features() {
       <div className="max-w-300 mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-gray-900 mb-4">
-            Everything you need to showcase your work
+            작업을 선보이는 데 필요한 모든 것
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Powerful features designed to make portfolio management effortless
-            for developers
+            개발자를 위해 포트폴리오 관리를 쉽게 할 수 있도록 설계된 강력한 기능
           </p>
         </div>
 
