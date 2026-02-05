@@ -5,29 +5,29 @@ export function HowItWorks() {
     {
       number: "1",
       icon: Github,
-      title: "Connect GitHub",
-      description: "Authorize with your GitHub account securely",
+      title: "GitHub 연결",
+      description: "GitHub 계정으로 안전하게 인증하세요",
       color: "from-blue-500 to-cyan-500",
     },
     {
       number: "2",
       icon: Cpu,
-      title: "Analyze Projects",
-      description: "AI reviews your repositories and contributions",
+      title: "프로젝트 분석",
+      description: "AI가 저장소 및 기여를 분석합니다",
       color: "from-purple-500 to-pink-500",
     },
     {
       number: "3",
       icon: Palette,
-      title: "Customize Layout",
-      description: "Edit and refine your portfolio in real-time",
+      title: "레이아웃 사용자 지정",
+      description: "실시간으로 포트폴리오를 편집하고 세련되게 만드세요",
       color: "from-orange-500 to-red-500",
     },
     {
       number: "4",
       icon: Rocket,
-      title: "Publish Portfolio",
-      description: "Deploy your portfolio with a single click",
+      title: "포트폴리오 게시",
+      description: "클릭 한 번으로 포트폴리오를 배포하세요",
       color: "from-green-500 to-emerald-500",
     },
   ];
@@ -44,11 +44,10 @@ export function HowItWorks() {
       <div className="relative max-w-300 mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-gray-900 mb-4">
-            From GitHub to portfolio in minutes
+            몇 분 만에 GitHub에서 포트폴리오로
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Our streamlined process gets you from connection to deployment in
-            just four simple steps
+            간소화된 과정을 통해 단 4단계만으로 연결부터 배포까지 완료하세요
           </p>
         </div>
 
@@ -74,7 +73,7 @@ export function HowItWorks() {
 
                   <div>
                     <div className="text-sm text-gray-500 mb-1">
-                      Step {step.number}
+                      단계 {step.number}
                     </div>
                     <h4 className="text-gray-900 mb-2">{step.title}</h4>
                     <p className="text-gray-600 text-sm">{step.description}</p>
