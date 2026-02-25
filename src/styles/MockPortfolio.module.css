@@ -1,0 +1,183 @@
+/* MockPortfolio.module.css */
+
+.outerContainer {
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.08);
+  background: white;
+}
+
+/* 브라우저 바 */
+.browserBar {
+  background: #f3f4f6;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.browserDots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dotRed {
+  background: #ff5f57;
+}
+.dotYellow {
+  background: #febc2e;
+}
+.dotGreen {
+  background: #28c840;
+}
+
+.browserUrl {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+  margin-left: 8px;
+}
+
+/* 포트폴리오 본문 */
+.portfolioContent {
+  padding: 32px;
+  background: #0f172a;
+  min-height: 360px;
+}
+
+/* 프로필 + 프로젝트 영역 (flex) */
+.profileProjectRow {
+  display: flex;
+  gap: 24px;
+}
+
+.profileArea {
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #3182f6, #8b5cf6);
+  margin-bottom: 16px;
+}
+
+.userName {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.userRole {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.tagContainer {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 4px 12px;
+  border-radius: 50px;
+  background: rgba(49, 130, 246, 0.15);
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 프로젝트 그리드 */
+.projectsGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.projectCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.projectName {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.projectMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.langDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.starText {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* 기여도 그래프 */
+.graphSection {
+  margin-top: 24px;
+}
+
+.graphLabel {
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.graphGrid {
+  display: grid;
+  grid-template-columns: repeat(52, 1fr);
+  gap: 3px;
+}
+
+.graphCell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+}
+
+/* 기여도 레벨별 배경색 (동적 할당) */
+.bgLevel0 {
+  background-color: #1e293b;
+}
+.bgLevel1 {
+  background-color: rgba(49, 130, 246, 0.3);
+}
+.bgLevel2 {
+  background-color: rgba(49, 130, 246, 0.6);
+}
+.bgLevel3 {
+  background-color: #3182f6;
+}
