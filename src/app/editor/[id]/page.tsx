@@ -1,27 +1,11 @@
-"use client";
-
-import { Canvas } from "@/components/features/editor/Canvas";
-import { LeftSidebar } from "@/components/layouts/LeftSidebar";
-import { RightPanel } from "@/components/layouts/RightPanel";
-import { TopToolbar } from "@/components/layouts/TopToolbar";
-import { useState } from "react";
-
-
-export default function Page() {
-  const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-
+export default function EditorEntryPointPage() {
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <TopToolbar />
-
-      <div className="flex flex-1 overflow-hidden">
-        <LeftSidebar />
-        <Canvas
-          selectedBlock={selectedBlock}
-          onSelectBlock={setSelectedBlock}
-        />
-        <RightPanel selectedBlock={selectedBlock} />
-      </div>
+    <div className="flex min-h-screen flex-col items-center justify-center p-24">
+      <h1 className="text-4xl font-bold">에디터 (Editor) Page</h1>
+      <p className="text-lg">
+        이 페이지는 아직 개발 중입니다. 포트폴리오를 선택하거나 새로 생성할 수
+        있습니다.
+      </p>
     </div>
   );
 }
