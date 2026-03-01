@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="bg-slate-900 pt-16 pb-10 px-6 text-gray-400">
       <div className="max-w-280 mx-auto">
         {/* top area */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-8 md:gap-12 mb-12">
           {/* brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -13,7 +13,7 @@ export default function Footer() {
               </span>
             </div>
 
-            <p className="text-sm leading-[1.7] text-slate-500 max-w-65">
+            <p className="text-sm leading-[1.7] text-slate-500">
               개발자의 GitHub를 아름다운 포트폴리오로 자동 변환하는 AI 빌더
             </p>
           </div>
@@ -46,8 +46,8 @@ export default function Footer() {
         </div>
 
         {/* bottom area */}
-        <div className="border-t border-slate-800 pt-8 flex justify-between items-center">
-          <span className="text-[13px] text-gray-600">
+        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center md:justify-between gap-4 md:gap-0">
+          <span className="text-[13px] text-gray-400">
             © 2026 포트폴리오포지. 모든 권리 보유.
           </span>
 

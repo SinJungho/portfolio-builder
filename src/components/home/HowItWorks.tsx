@@ -69,13 +69,13 @@ export default function HowItWorks() {
             <Reveal key={i} delay={i * 100}>
               <div
                 className={`
-                  flex items-center gap-16
+                  flex flex-col md:flex-row items-center gap-8 md:gap-16
                   rounded-[24px]
                   border border-black/5
                   bg-white
-                  px-14 py-12
+                  px-6 py-8 md:px-14 md:py-12
                   shadow-[0_2px_16px_rgba(0,0,0,0.06)]
-                  ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"}
+                  ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}
                 `}
               >
                 {/* Text */}
@@ -109,7 +109,7 @@ export default function HowItWorks() {
                 {/* Visual */}
                 <div
                   className="
-                    flex h-60 w-90 shrink-0
+                    flex w-full h-60 shrink-0 md:w-90
                     items-center justify-center
                     overflow-hidden rounded-3xl
                     border border-[#F0F4F8]

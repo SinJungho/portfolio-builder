@@ -46,7 +46,7 @@ export default function Testimonials() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {reviews.map((r, i) => (
             <Reveal key={i} delay={i * 100}>
               <div className="bg-white rounded-4xl p-8 shadow-[0_2px_20px_rgba(0,0,0,0.06)] border border-black/5">

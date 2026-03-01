@@ -10,7 +10,7 @@ export default function SocialProof() {
 
   return (
     <section className="border-y border-[#F0F0F0] bg-white px-6 py-12">
-      <div className="mx-auto flex max-w-280 justify-center gap-20">
+      <div className="mx-auto grid grid-cols-2 md:flex max-w-280 justify-center gap-x-8 gap-y-4 md:gap-20">
         {stats.map((s, i) => (
           <Reveal key={i} delay={i * 80}>
             <div className="text-center">
