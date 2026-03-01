@@ -1,512 +1,622 @@
-# 프로젝트 기획서: PortfolioForge
+# PortfolioForge — 기술 스택 및 아키텍처 레퍼런스 (GEMINI.md)
+
+> AI 코딩 어시스턴트 및 개발자가 프로젝트 컨텍스트를 파악하기 위한 기술 문서입니다.  
+> 기획 의도·페르소나·KPI는 [PLANNING.md](./PLANNING.md)를 참조하세요.
+
+---
 
 ## 📋 목차
 
-1. [프로젝트 개요](#1-프로젝트-개요)
-2. [문제 정의](#2-문제-정의)
-3. [솔루션](#3-솔루션)
-4. [타겟 사용자](#4-타겟-사용자)
-5. [핵심 기능](#5-핵심-기능)
-6. [기술 아키텍처](#6-기술-아키텍처)
-7. [개발 로드맵](#7-개발-로드맵)
-8. [차별화 전략](#8-차별화-전략)
-9. [포트폴리오 전략](#9-포트폴리오-전략)
-10. [KPI 및 성공 지표](#10-kpi-및-성공-지표)
-11. [인터페이스 및 라우팅 설계](#11-인터페이스-및-라우팅-설계)
+1. [기술 스택 전체 요약](#1-기술-스택-전체-요약)
+2. [기술 의사결정 근거](#2-기술-의사결정-근거)
+3. [인프라 아키텍처](#3-인프라-아키텍처)
+4. [DB 스키마](#4-db-스키마)
+5. [API 명세](#5-api-명세)
+6. [디렉토리 구조 및 라우팅](#6-디렉토리-구조-및-라우팅)
+7. [기술 리스크 및 대응 전략](#7-기술-리스크-및-대응-전략)
+8. [월간 운영 비용 추정](#8-월간-운영-비용-추정)
 
 ---
 
-## 1. 프로젝트 개요
+## 1. 기술 스택 전체 요약
 
-### 1.1 프로젝트 명
-
-**PortfolioForge** - 개발자 맞춤형 동적 포트폴리오 빌더
-
-### 1.2 비전
-
-> "개발자가 코드에 집중하는 동안, 포트폴리오는 저희가 관리합니다"
-
-### 1.3 한 줄 설명
-
-GitHub, 블로그, 알고리즘 플랫폼 등 다양한 데이터 소스를 자동 수집하여 AI 기반 추천과 실시간 편집이 가능한 맞춤형 포트폴리오 생성 플랫폼
-
-### 1.4 개발 기간
-
-총 14주 (MVP 6주 + 확장 4주 + 고도화 4주)
-
----
-
-## 2. 문제 정의
-
-### 2.1 개발자 포트폴리오 작성의 어려움
-
-| 문제점      | 설명                                       | 데이터          |
-| ----------- | ------------------------------------------ | --------------- |
-| 시간 소모   | 평균 8-15시간 소요                         | 설문조사 기반   |
-| 디자인 부담 | 68% 개발자가 디자인으로 인한 업데이트 미룸 | GitHub 설문     |
-| 정적 콘텐츠 | 실시간 성과 반영 불가                      | 사용자 인터뷰   |
-| 관리 불편   | 여러 플랫폼 데이터 통합 어려움             | 커뮤니티 피드백 |
-
-### 2.2 기존 솔루션의 한계
-
-- **정적 템플릿**: 개인화 부족, 업데이트 수동
-- **GitHub Pages**: 디자인 제한적, 설정 복잡
-- **Notion**: SEO 취약, 개발자 특화 기능 부재
-- **유료 템플릿**: 비용 대비 유연성 낮음
+| 영역              | 기술                         | 버전   | 선택 이유                                                   |
+| ----------------- | ---------------------------- | ------ | ----------------------------------------------------------- |
+| **Core**          | Next.js (App Router)         | 14+    | 프론트/백 단일 코드베이스, RSC·SSR·ISR 모두 활용            |
+|                   | TypeScript                   | 5+     | 데이터 모델·API 응답 타입 안정성 확보                       |
+|                   | Node.js                      | 18+    | Runtime                                                     |
+| **UI**            | Tailwind CSS                 | 3+     | 유틸리티 퍼스트, 디자인 토큰 시스템과 자연스러운 통합       |
+|                   | shadcn/ui                    | latest | 컴포넌트 소유권 확보 → 테마 시스템 구현 필수                |
+|                   | Lucide React                 | latest | 아이콘                                                      |
+| **상태 관리**     | TanStack Query               | 5+     | 서버 상태 캐싱·동기화                                       |
+|                   | Zustand                      | 4+     | 에디터 UI 상태, 클라이언트 전역 상태                        |
+| **에디터**        | dnd-kit                      | latest | 드래그앤드롭 블록 시스템, 가벼운 번들 크기                  |
+| **DB**            | PostgreSQL (Neon Serverless) | -      | Connection Pooling 자동 관리, Vercel 환경 최적화            |
+| **ORM**           | Prisma                       | 5+     | TypeScript 타입 안정성, 스키마 변경 시 즉각 타입 체크       |
+| **인증**          | NextAuth.js (Auth.js)        | v5     | GitHub OAuth 네이티브 지원, JWT/세션 전략 선택              |
+| **캐시**          | Upstash Redis                | -      | GitHub API Rate Limit 대응, TTL 캐싱 + Rate Limiter         |
+| **검증**          | Zod                          | 3+     | API 요청·환경변수 런타임 검증, discriminatedUnion 블록 검증 |
+| **스토리지**      | Cloudflare R2                | -      | S3 호환 API, Egress 비용 무료                               |
+| **AI**            | OpenAI API (GPT-4o-mini)     | -      | GPT-4o 대비 1/10 비용, README 요약·태깅 품질 충분           |
+| **배포**          | Vercel                       | -      | Next.js 최적화, Edge Middleware, ISR 네이티브 지원          |
+| **에러 모니터링** | Sentry                       | -      | 무료 티어로 에러율 0.1% 미만 목표 관리                      |
 
 ---
 
-## 3. 솔루션
+## 2. 기술 의사결정 근거
 
-### 3.1 핵심 가치 제안
+### Why shadcn/ui?
 
-```
-✅ 데이터 자동화: GitHub 연동으로 프로젝트 자동 수집
-✅ 스마트 큐레이션: AI 기반 최적의 프로젝트 배열 제안
-✅ 실시간 편집: WYSIWYG 에디터 + 코드 기반 커스터마이징
-✅ 원클릭 배포: Vercel/Netlify 연동으로 간편 배포
-```
+컴포넌트 코드를 직접 소유해 포트폴리오 테마 시스템 구현에 필수적입니다.  
+Tailwind CSS와 완벽 통합되어 디자인 토큰 적용이 자연스럽고, 특정 버전에 종속되지 않습니다.
 
-### 3.2 비즈니스 모델 (참고)
+### Why Server Actions?
 
-```yaml
-Free Tier:
-  - 1개 포트폴리오
-  - 기본 템플릿 3종
-  - GitHub 기본 연동
+별도 API 엔드포인트 없이 폼 제출·데이터 업데이트 처리가 가능합니다.  
+보일러플레이트 감소, CSRF 자동 방어, 타입 안전한 서버-클라이언트 통신을 제공합니다.
 
-Pro Tier ($8/월):
-  - 무제한 포트폴리오
-  - 커스텀 도메인
-  - 고급 분석 도구
-  - AI 추천 기능
+### Why Neon + Upstash?
 
-Team Tier ($25/월):
-  - 팀 협업 기능
-  - 프라이빗 템플릿
-  - 우선 지원
-```
+둘 다 Serverless 특화입니다. Vercel의 Cold Start 환경에서 Connection Pooling 문제가 없으며, 모두 무료 티어로 시작 가능합니다.
 
----
+### Why GPT-4o-mini?
 
-## 4. 타겟 사용자
+GPT-4o 대비 1/10 비용으로 README 요약·기술 태깅 품질이 충분합니다.  
+결과를 DB에 캐싱해 동일 레포 재분석 시 API 호출을 완전히 제거합니다.
 
-### 4.1 주요 페르소나
+### Why Cloudflare R2?
 
-#### 페르소나 A: 이직 준비 개발자
+S3 호환 API로 마이그레이션 없이 전환 가능합니다. Egress 비용이 무료라 이미지 서빙 비용이 AWS S3 대비 대폭 절감됩니다.
 
-- **이름**: 김개발 (28세)
-- **직무**: 2년차 프론트엔드 개발자
-- **목표**: 3개월 내 이직 성공
-- **페인 포인트**:
-  - GitHub 프로젝트 정리 어려움
-  - 디자인 능력 부족
-  - 기술 스택 효과적 표현 미흡
+### Why Prisma over Drizzle?
 
-#### 페르소나 B: 취업 준비생
-
-- **상태**: 부트캠프 수료 1개월 차
-- **목표**: 첫 개발자 취업
-- **필요**:
-  - 빠른 포트폴리오 제작
-  - 채용 담당자 눈길 끌기
-  - 프로젝트 스토리텔링
+TypeScript 에코시스템 성숙도와 팀 협업 시 스키마 가독성을 우선합니다.  
+성능이 중요해지는 시점에 Drizzle 마이그레이션을 검토합니다.
 
 ---
 
-## 5. 핵심 기능
-
-### 5.1 데이터 자동 수집 모듈
-
-```typescript
-// 데이터 소스 연동 구조
-interface DataSources {
-  github: {
-    repositories: Repository[];
-    contributions: ContributionGraph;
-    skills: string[];
-  };
-  blog?: {
-    posts: BlogPost[];
-    rssFeed: string;
-  };
-  algorithm?: {
-    solvedProblems: number;
-    platforms: string[];
-  };
-  custom?: Project[];
-}
-```
-
-### 5.2 AI 기반 프로젝트 큐레이션
+## 3. 인프라 아키텍처
 
 ```
-🎯 기술 스택 분석
-  - package.json, README 기반 기술 태깅
-  - 프로젝트별 기술 가중치 계산
+┌─────────────────────────────────────────────────────┐
+│                    USERS                            │
+│            Browser / Mobile                         │
+└──────────────────┬──────────────────────────────────┘
+                   │ HTTPS
+┌──────────────────▼──────────────────────────────────┐
+│              VERCEL EDGE NETWORK                    │
+│                                                     │
+│  ┌──────────────────────────────────────────────┐  │
+│  │          Next.js 14 (App Router)             │  │
+│  │                                              │  │
+│  │  Server Components  │  Route Handlers        │  │
+│  │  (RSC / ISR / SSR)  │  (REST API)            │  │
+│  │                     │                        │  │
+│  │  Edge Middleware ───┼── Auth 검증 (JWT)      │  │
+│  └──────────┬──────────┴──────────┬─────────────┘  │
+└─────────────┼─────────────────────┼────────────────┘
+              │                     │
+   ┌──────────▼──────┐   ┌──────────▼──────────┐
+   │  Neon PostgreSQL │   │   Upstash Redis     │
+   │  (Serverless)   │   │                     │
+   │                 │   │  - TTL 1h 캐싱      │
+   │  - Auto Pooling │   │  - Rate Limiter     │
+   └──────────────────┘   └─────────────────────┘
 
-🎯 스토리텔링 추천
-  - 프로젝트 간 연관성 발견
-  - 커리어 성장 스토리 라인 제안
-
-🎯 최적화 배열
-  - 채용 담당자 선호도 데이터 기반
-  - 모바일/데스크탑 최적 레이아웃
+   External Services
+   ─────────────────
+   GitHub API ──── Webhook ──► /api/webhooks/github
+   OpenAI API (GPT-4o-mini)
+   Cloudflare R2 (이미지·에셋, S3 호환)
+   Stripe (결제, Phase 2)
 ```
 
-### 5.3 실시간 WYSIWYG 에디터
-
-```jsx
-// 블록 기반 컴포넌트 구조
-<PortfolioEditor>
-  <HeaderBlock editable />
-  <ProjectGrid
-    projects={curatedProjects}
-    layout="grid" // grid, list, masonry
-  />
-  <SkillsChart data={skillsData} interactive />
-  <ContactForm integrations={["email", "linkedin"]} />
-</PortfolioEditor>
-```
-
-### 5.4 디자인 시스템
-
-```
-🎨 3단계 커스터마이징 레벨:
-
-Level 1: 테마 선택기 (6개 프리셋)
-  - Minimalist, Creative, Corporate 등
-
-Level 2: 디자인 토큰 편집기
-  - 색상 팔레트
-  - 타이포그래피 시스템
-  - 간격(Spacing) 스케일
-
-Level 3: 고급 CSS 편집
-  - CSS-in-JS 지원
-  - 컴포넌트별 스타일 오버라이드
-```
-
-### 5.5 접근성 및 SEO
-
-```
-✅ WCAG 2.1 기준 자동 검사
-  - 색상 대비도 검증
-  - 키보드 네비게이션 검사
-  - 스크린 리더 호환성
-
-✅ SEO 최적화 자동화
-  - 메타 태그 자동 생성
-  - 사이트맵 생성
-  - Open Graph 이미지 생성
-```
-
-### 5.6 배포 및 분석
-
-```
-🚀 원클릭 배포
-  - Vercel, Netlify, GitHub Pages 연동
-  - 커스텀 도메인 설정
-  - SSL 자동 적용
-
-📊 분석 대시보드
-  - 방문자 추적 (간단한 GA 대체)
-  - 프로젝트 클릭률 분석
-  - 연락처 전환율 추적
-```
-
----
-
-제시해주신 기획서의 **6. 기술 아키텍처** 섹션을 사용자의 요구사항(Next.js App Router 통합 구현, Tailwind CSS, shadcn/ui)에 맞춰 최적화하여 업데이트해 드립니다.
-
-Full-stack 프레임워크로서의 Next.js 강점을 살리고, 생산성을 극대화할 수 있는 최신 라이브러리 조합으로 재구성했습니다.
-
----
-
-## 6. 기술 아키텍처 (Updated)
-
-### 6.1 기술 스택 (Full-stack Next.js)
-
-**Core Framework & Language**
-
-- **Framework**: **Next.js 14+ (App Router)** - 프론트엔드와 백엔드 API를 단일 코드베이스에서 관리
-- **Language**: **TypeScript** - 데이터 모델 및 API 응답의 타입 안정성 확보
-- **Runtime**: Node.js 18+
-
-**Frontend (UI/UX)**
-
-- **Styling**: **Tailwind CSS** - 유틸리티 퍼스트 기반의 빠른 스타일링
-- **Component Library**: **shadcn/ui** - Radix UI 기반의 고품질, 접근성 준수 컴포넌트 활용
-- **State Management**:
-- **Server State**: TanStack Query (React Query) - 서버 데이터 캐싱 및 동기화
-- **Client State**: Zustand - 에디터 설정 및 UI 상태 관리
-
-- **Icons**: Lucide React
-
-**Backend & Data**
-
-- **API**: Next.js **Route Handlers** (Serverless Functions)
-- **Database**: **PostgreSQL** (with Neon or Supabase)
-- **ORM**: **Prisma** 또는 **Drizzle ORM** - Type-safe한 DB 쿼리 및 마이그레이션 관리
-- **Authentication**: **NextAuth.js** (Auth.js) - GitHub OAuth 연동 및 세션 관리
-- **Validation**: **Zod** - API 요청 및 환경 변수 스키마 검증
-
-**Infrastructure & Tools**
-
-- **Deployment**: **Vercel** - Next.js 최적화 배포 및 Edge Functions 활용
-- **Storage**: **AWS S3** 또는 **Uploadthing** - 사용자 업로드 이미지 및 자산 저장
-- **AI Integration**: **OpenAI API** - 프로젝트 요약 및 스토리텔링 큐레이션 생성
-
-### 6.2 데이터 흐름 설계 (Next.js 특화)
-
-Next.js의 Server Components와 Client Components를 전략적으로 분리하여 성능을 최적화합니다.
+### 데이터 흐름
 
 ```mermaid
 graph TD
     A[User Browser] --> B{Next.js App Router}
-    B --> C[Server Components]
+    B --> C[Server Components / RSC]
     B --> D[Client Components]
 
-    C --> E[Server Actions / Prisma]
-    E --> F[(PostgreSQL)]
+    C --> E[Server Actions + Prisma]
+    E --> F[(Neon PostgreSQL)]
 
-    D --> G[Zustand State]
-    D --> H[shadcn/ui Components]
+    D --> G[Zustand — UI State]
+    D --> H[TanStack Query — Server State]
+    H --> I[Route Handlers]
+    I --> F
 
-    C --> I[External APIs]
-    I --> J[GitHub API]
-    I --> K[OpenAI API]
-
-```
-
-### 6.3 주요 기술적 의사결정
-
-1. **Why shadcn/ui?**
-
-- 직접 코드를 소유할 수 있어 커스터마이징이 자유롭습니다 (포트폴리오 빌더의 테마 시스템 구현에 필수적).
-- Tailwind CSS와 완벽하게 조화되어 일관된 디자인 시스템 구축이 빠릅니다.
-
-2. **Why Server Actions?**
-
-- 별도의 API 엔드포인트를 정의하지 않고도 폼 제출, 데이터 업데이트를 안전하게 처리하여 개발 복잡도를 낮춥니다.
-
-3. **Why Prisma/Drizzle?**
-
-- TypeScript와의 시너지가 극대화되어, DB 스키마 변경 시 프론트엔드까지 즉각적인 타입 체크가 가능합니다.
-
----
-
-## 7. 개발 로드맵
-
-### Phase 1: MVP 개발 (6주)
-
-| 주차 | 주제           | 주요 태스크                                                          |
-| ---- | -------------- | -------------------------------------------------------------------- |
-| 1-2  | 기반 아키텍처  | - 프로젝트 초기화<br>- GitHub OAuth 연동<br>- 기본 데이터 모델 설계  |
-| 3-4  | 코어 에디터    | - 드래그앤드롭 블록 시스템<br>- 실시간 미리보기<br>- 기본 템플릿 3종 |
-| 5-6  | 배포 및 폴리싱 | - 정적 사이트 생성<br>- Vercel 연동<br>- 기본 문서화                 |
-
-### Phase 2: 확장 기능 (4주)
-
-- AI 기반 프로젝트 추천 시스템
-- 고급 디자인 커스터마이징
-- 분석 대시보드 구현
-- 커뮤니티 템플릿 마켓플레이스
-
-### Phase 3: 고도화 (4주)
-
-- 팀 포트폴리오 기능
-- CV/이력서 생성기 연동
-- 채용 담당자 뷰 모드
-- 프리미엄 기능 개발
-
----
-
-## 8. 차별화 전략
-
-### 8.1 경쟁사 비교
-
-| 기능          | PortfolioForge | GitHub Pages | Notion  | 유료 템플릿 |
-| ------------- | -------------- | ------------ | ------- | ----------- |
-| 데이터 자동화 | ✅             | ❌           | ⚠️      | ❌          |
-| 실시간 편집   | ✅             | ❌           | ✅      | ❌          |
-| AI 큐레이션   | ✅             | ❌           | ❌      | ❌          |
-| 접근성 검사   | ✅             | ❌           | ❌      | ⚠️          |
-| 비용          | 무료~$8        | 무료         | 무료~$8 | $20~$100    |
-
-### 8.2 고유 가치 제안
-
-**Context-Aware 큐레이션**
-
-- 프로젝트를 단순 나열이 아닌 스토리로 연결
-- 기술적 성장 과정 시각화
-
-**개발자 친화적 UX**
-
-- CLI 도구 제공 (포트폴리오 CLI 관리자)
-- VS Code 확장 프로그램 연동
-- Git-like 버전 관리
-
-**지속적 업데이트 시스템**
-
-- GitHub 웹훅 기반 자동 싱크
-- 월간 성과 리포트 자동 생성
-
----
-
-## 9. 포트폴리오 전략
-
-### 9.1 이 프로젝트로 증명할 역량
-
-**✅ 기술적 깊이**
-
-- 복잡한 상태 관리 (멀티 테넌시 환경)
-- 실시간 협업 시스템 설계
-- 성능 최적화 (가상화, 지연 로딩)
-- TypeScript 고급 활용
-
-**✅ 문제 해결 능력**
-
-- GitHub API 레이트 리밋 핸들링
-- 대용량 데이터 클라이언트 처리
-- 크로스 브라우저 호환성 보장
-
-**✅ 프로덕트 센스**
-
-- 사용자 리서치 기반 기능 개발
-- 데이터 기반 의사결정
-- 접근성 우선 설계
-
-### 9.2 포트폴리오 효과적 소개법
-
-1. **라이브 데모 링크** 포함
-   - 직접 만든 자신의 포트폴리오: portfolioforge.vercel.app
-   - 관리자 데모 계정 제공
-
-2. **기술 블로그 시리즈**
-   - "실시간 편집기의 동시성 문제 해결기"
-   - "GitHub 데이터 캐싱 전략: 90% 성능 향상"
-   - "접근성 자동 검사 시스템 구축기"
-
-3. **데이터 기반 인사이트**
-   - "사용자 행동 분석으로 발견한 3가지 인사이트"
-   - "A/B 테스트: 어떤 템플릿이 더 효과적일까?"
-
-### 9.3 GitHub 저장소 구성
-
-```
-portfolio-forge/
-├── README.md          # 프로젝트 개요, 실행 방법
-├── CHANGELOG.md       # 개발 기록
-├── docs/              # 상세 문서
-│   ├── ARCHITECTURE.md
-│   ├── API.md
-│   └── DEPLOYMENT.md
-├── src/
-│   ├── core/          # 핵심 로직
-│   ├── editor/        # 에디터 컴포넌트
-│   ├── integrations/  # 외부 연동
-│   └── utils/         # 유틸리티 함수
-└── tests/             # 테스트 코드
+    C --> J[External APIs]
+    J --> K[GitHub API]
+    J --> L[OpenAI API]
+    K --> M[(Upstash Redis — Cache)]
 ```
 
 ---
 
-## 10. KPI 및 성공 지표
+## 4. DB 스키마
 
-### 10.1 제품 메트릭
+### 4.1 엔티티 관계 요약
 
-```yaml
-사용자 참여:
-  - 평균 세션 시간: > 10분
-  - 템플릿 사용률: > 70%
-  - GitHub 연동률: > 85%
-  - 포트폴리오 생성률: > 60%
+| 테이블             | 핵심 컬럼                   | 설명                                                                    |
+| ------------------ | --------------------------- | ----------------------------------------------------------------------- |
+| `users`            | `plan`, `ai_credits`        | NextAuth 연동. `plan(free/pro/team)`, `ai_credits`로 크레딧 관리        |
+| `integrations`     | `provider`, `access_token`  | GitHub·블로그 연동. `access_token`은 AES-256 암호화 저장 필수           |
+| `raw_projects`     | `ai_score`, `ai_summary`    | GitHub 레포 원본 + AI 분석 결과. `UNIQUE(user_id, source, external_id)` |
+| `portfolios`       | `slug`, `design_tokens`     | 사용자당 복수 생성. `design_tokens`는 JSONB(색상·폰트·spacing)          |
+| `portfolio_blocks` | `block_type`, `config`      | 에디터 블록. `config`는 `block_type`별 Zod discriminatedUnion으로 검증  |
+| `analytics_events` | `event_type`, `session_id`  | 경량 자체 애널리틱스. 월별 파티셔닝 권장                                |
+| `feed_items`       | `item_type`, `published_at` | RSS·블로그·알고리즘 피드 수집 결과 저장                                 |
 
-기술적:
-  - Lighthouse 성능 점수: > 90
-  - 빌드 시간: < 30초
-  - API 응답 시간: < 200ms
-  - 에러 발생률: < 0.1%
+### 4.2 전체 스키마 (PostgreSQL)
+
+```sql
+-- 1. 사용자 계정 (NextAuth 연동)
+CREATE TABLE users (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email           VARCHAR(255) UNIQUE NOT NULL,
+  name            VARCHAR(100),
+  avatar_url      TEXT,
+  github_login    VARCHAR(100) UNIQUE,
+  github_id       BIGINT UNIQUE,
+  plan            VARCHAR(20) DEFAULT 'free', -- free | pro | team
+  plan_expires_at TIMESTAMPTZ,
+  ai_credits      INTEGER DEFAULT 3,          -- Free: 월 3회, 월초 리셋
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. 연동된 데이터 소스
+CREATE TABLE integrations (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID REFERENCES users(id) ON DELETE CASCADE,
+  provider      VARCHAR(50) NOT NULL,       -- github | tistory | velog | baekjoon
+  access_token  TEXT,                       -- AES-256 암호화 저장 필수
+  refresh_token TEXT,
+  metadata      JSONB,                      -- provider별 추가 정보
+  synced_at     TIMESTAMPTZ,
+  is_active     BOOLEAN DEFAULT TRUE,
+  UNIQUE(user_id, provider)
+);
+
+-- 3. 수집된 원본 프로젝트 데이터
+CREATE TABLE raw_projects (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id          UUID REFERENCES users(id) ON DELETE CASCADE,
+  source           VARCHAR(50) NOT NULL,    -- github | manual
+  external_id      VARCHAR(255),           -- GitHub repo id 등
+  name             VARCHAR(255) NOT NULL,
+  description      TEXT,
+  html_url         TEXT,
+  language         VARCHAR(100),
+  topics           TEXT[],
+  stargazers_count INTEGER DEFAULT 0,
+  forks_count      INTEGER DEFAULT 0,
+  is_fork          BOOLEAN DEFAULT FALSE,
+  pushed_at        TIMESTAMPTZ,
+  raw_data         JSONB,                  -- API 원본 응답 보관
+  ai_summary       TEXT,                   -- AI 생성 요약 (캐싱)
+  ai_tags          TEXT[],                 -- AI 추출 기술 태그
+  ai_score         FLOAT,                  -- 큐레이션 우선순위 점수 (0~1)
+  is_featured      BOOLEAN DEFAULT FALSE,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, source, external_id)
+);
+
+-- 4. 포트폴리오 (복수 생성 가능)
+CREATE TABLE portfolios (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
+  slug            VARCHAR(100) NOT NULL,   -- URL 식별자
+  title           VARCHAR(255),
+  theme           VARCHAR(50) DEFAULT 'minimalist',
+  design_tokens   JSONB,                   -- 색상·폰트·spacing 커스텀 값
+  custom_domain   TEXT,                    -- Pro 전용 (Phase 2)
+  is_published    BOOLEAN DEFAULT FALSE,
+  seo_title       VARCHAR(255),
+  seo_description TEXT,
+  og_image_url    TEXT,
+  view_count      INTEGER DEFAULT 0,
+  published_at    TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, slug)
+);
+
+-- 5. 포트폴리오 블록 (에디터 핵심)
+CREATE TABLE portfolio_blocks (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  portfolio_id UUID REFERENCES portfolios(id) ON DELETE CASCADE,
+  block_type   VARCHAR(50) NOT NULL,  -- hero | project_grid | skills | blog_feed | contact | custom_text
+  position     INTEGER NOT NULL,
+  config       JSONB NOT NULL,        -- block_type별 설정값 (Zod로 검증)
+  is_visible   BOOLEAN DEFAULT TRUE,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+/*
+  config 예시 — project_grid:
+  {
+    "layout": "grid",
+    "columns": 2,
+    "project_ids": ["uuid1", "uuid2"],
+    "show_tech_stack": true
+  }
+
+  config 예시 — skills:
+  {
+    "chart_type": "radar",
+    "skills": [
+      { "name": "TypeScript", "level": 90 },
+      { "name": "Spring Boot", "level": 85 }
+    ]
+  }
+*/
+
+-- 6. 방문자 분석 이벤트 (경량 자체 애널리틱스)
+CREATE TABLE analytics_events (
+  id           BIGSERIAL PRIMARY KEY,
+  portfolio_id UUID REFERENCES portfolios(id) ON DELETE CASCADE,
+  event_type   VARCHAR(50) NOT NULL,  -- page_view | block_click | contact_click
+  block_id     UUID,
+  session_id   VARCHAR(100),
+  referrer     TEXT,
+  user_agent   TEXT,
+  country_code VARCHAR(10),
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_analytics_portfolio_date
+  ON analytics_events(portfolio_id, created_at DESC);
+
+-- 7. 외부 콘텐츠 피드 (블로그·알고리즘)
+CREATE TABLE feed_items (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID REFERENCES users(id) ON DELETE CASCADE,
+  integration_id UUID REFERENCES integrations(id) ON DELETE CASCADE,
+  item_type      VARCHAR(50),  -- blog_post | solved_problem
+  title          VARCHAR(500),
+  url            TEXT,
+  published_at   TIMESTAMPTZ,
+  metadata       JSONB,
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
-### 10.2 비즈니스 메트릭 (참고)
+### 4.3 Zod 블록 검증 스키마
 
-- MAU (월간 활성 사용자): 1,000명 (3개월 목표)
-- 전환율 (무료→유료): 5%
-- NPS (순추천지수): > 40
-- 채용 성공 사례 수: 50+ (사용자 인터뷰)
+```typescript
+// src/schemas/portfolio.ts
 
-## 11. 인터페이스 및 라우팅 설계 (v2.0)
+export const DesignTokenSchema = z.object({
+  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i),
+  fontFamily: z.enum(["inter", "pretendard", "fira-code", "playfair"]),
+  borderRadius: z.enum(["none", "sm", "md", "lg", "full"]),
+  spacing: z.enum(["compact", "normal", "relaxed"]),
+});
 
-사용자 경험(UX)의 일관성과 기술적 최적화(SEO, 권한 관리)를 위해 서비스 영역을 **Public(마케팅)**, **Auth(인증)**, **App(관리/편집)**, **Output(배포)**의 4가지 레이어로 분리하여 설계합니다.
+export const BlockConfigSchema = z.discriminatedUnion("block_type", [
+  z.object({
+    block_type: z.literal("hero"),
+    config: z.object({
+      headline: z.string().max(100),
+      subheadline: z.string().max(200).optional(),
+      show_github_stats: z.boolean().default(false),
+    }),
+  }),
+  z.object({
+    block_type: z.literal("project_grid"),
+    config: z.object({
+      layout: z.enum(["grid", "list", "masonry"]),
+      columns: z.number().min(1).max(3),
+      project_ids: z.array(z.string().uuid()).max(10),
+      show_tech_stack: z.boolean(),
+    }),
+  }),
+  z.object({
+    block_type: z.literal("skills"),
+    config: z.object({
+      chart_type: z.enum(["radar", "bar", "tag_cloud"]),
+      skills: z
+        .array(
+          z.object({
+            name: z.string(),
+            level: z.number().min(0).max(100),
+          }),
+        )
+        .max(20),
+    }),
+  }),
+  z.object({
+    block_type: z.literal("blog_feed"),
+    config: z.object({
+      integration_provider: z.enum([
+        "tistory",
+        "velog",
+        "medium",
+        "custom_rss",
+      ]),
+      max_items: z.number().min(1).max(6),
+      show_thumbnail: z.boolean(),
+    }),
+  }),
+]);
 
-### 11.1 서비스 레이어 구조
+export type DesignTokens = z.infer<typeof DesignTokenSchema>;
+export type BlockConfig = z.infer<typeof BlockConfigSchema>;
+```
 
-1.  **Public Layer (`/`)**: 비로그인 사용자 대상. 서비스 가치 제안 및 SEO 최적화.
-2.  **Auth Layer (`/auth`, `/onboarding`)**: 신규 유저 유입 및 데이터 초기 동기화.
-3.  **App Layer (`/dashboard`, `/editor`, `/settings`)**: 로그인 유저 전용 작업 공간. 일관된 UI/UX 제공.
-4.  **Output Layer (`/[domain]`)**: 최종 결과물. 초고속 로딩을 위한 ISR(Incremental Static Regeneration) 적용.
+---
 
-### 11.2 디렉토리 아키텍처 (Next.js App Router)
+## 5. API 명세
 
-```text
+모든 인증 필요 엔드포인트는 `Authorization: Bearer <session_token>` 헤더를 요구합니다.
+
+### 5.1 GitHub 연동 및 동기화
+
+```
+POST /api/integrations/github/sync
+```
+
+GitHub 레포지토리 전체 수집 및 AI 점수 계산 트리거. 비동기 처리.
+
+| 항목         | 내용                                              |
+| ------------ | ------------------------------------------------- |
+| Auth         | Required                                          |
+| Request      | `{ force?: boolean }` — `true` 시 Redis 캐시 무시 |
+| Response 202 | `{ job_id: string, estimated_seconds: number }`   |
+
+```
+GET /api/integrations/github/sync/:job_id
+```
+
+동기화 진행 상태 폴링.
+
+| Response | 내용                                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| 200      | `{ status: 'pending' \| 'processing' \| 'completed' \| 'failed', progress: number, synced_count: number }` |
+
+---
+
+### 5.2 프로젝트 관리
+
+```
+GET /api/projects
+```
+
+| Query           | 설명                             |
+| --------------- | -------------------------------- |
+| `page`, `limit` | 페이지네이션 (default: 20)       |
+| `sort`          | `ai_score \| pushed_at \| stars` |
+| `filter`        | `featured \| all`                |
+
+```
+POST /api/projects/:id/curate
+```
+
+특정 프로젝트에 대해 AI 요약 및 태깅 실행.  
+Free Tier: `ai_credits` 차감, 0이면 **402** 반환.
+
+| Response 200 | `{ ai_summary, ai_tags, ai_score, credits_remaining }` |
+| ------------ | ------------------------------------------------------ |
+
+---
+
+### 5.3 포트폴리오 CRUD
+
+| Method   | Path                  | 설명                             |
+| -------- | --------------------- | -------------------------------- |
+| `GET`    | `/api/portfolios`     | 포트폴리오 목록                  |
+| `POST`   | `/api/portfolios`     | 포트폴리오 생성                  |
+| `PATCH`  | `/api/portfolios/:id` | 부분 업데이트 (에디터 자동 저장) |
+| `DELETE` | `/api/portfolios/:id` | 삭제                             |
+
+**에디터 자동저장 동작 방식**
+
+- debounce 2초 후 `PATCH` 호출
+- 서버의 `updatedAt` > 클라이언트의 `updatedAt`이면 **409 Conflict** 반환
+- 클라이언트는 409 수신 시 사용자에게 덮어쓰기 여부 선택 UI 제공
+
+---
+
+### 5.4 블록 관리
+
+| Method   | Path                                  | 설명                               |
+| -------- | ------------------------------------- | ---------------------------------- |
+| `GET`    | `/api/portfolios/:id/blocks`          | 블록 목록                          |
+| `POST`   | `/api/portfolios/:id/blocks`          | 블록 추가                          |
+| `PUT`    | `/api/portfolios/:id/blocks`          | 전체 순서 교체 (드래그앤드롭 저장) |
+| `PATCH`  | `/api/portfolios/:id/blocks/:blockId` | 블록 설정 수정                     |
+| `DELETE` | `/api/portfolios/:id/blocks/:blockId` | 블록 삭제                          |
+
+```typescript
+// PUT /api/portfolios/:id/blocks — 드래그앤드롭 후 순서 저장
+Request: {
+  blocks: Array<{ id: string; position: number }>;
+}
+
+// POST /api/portfolios/:id/blocks — 블록 추가
+Request: {
+  block_type: BlockType;
+  position: number;
+  config: BlockConfig; // Zod discriminatedUnion으로 검증
+}
+```
+
+---
+
+### 5.5 분석 API
+
+```
+POST /api/analytics/event
+```
+
+포트폴리오 방문자 이벤트 수집. **Auth 불필요** (공개 엔드포인트).
+
+```typescript
+Request: {
+  portfolio_id: string;
+  event_type:   'page_view' | 'block_click' | 'contact_click';
+  block_id?:    string;
+  session_id:   string; // 클라이언트 생성 UUID
+}
+```
+
+```
+GET /api/analytics/:portfolioId/summary?period=30d
+```
+
+본인 포트폴리오만 조회 가능. `period`: `7d | 30d | 90d`
+
+```typescript
+Response 200: {
+  total_views:      number;
+  unique_sessions:  number;
+  top_referrers:    Array<{ source: string; count: number }>;
+  block_engagement: Array<{
+    block_id:         string;
+    block_type:       string;
+    click_count:      number;
+  }>;
+  daily_views: Array<{ date: string; count: number }>;
+}
+```
+
+---
+
+## 6. 디렉토리 구조 및 라우팅
+
+### 6.1 서비스 레이어 구조
+
+| 레이어     | 경로           | 렌더링 전략          | 목적                                 |
+| ---------- | -------------- | -------------------- | ------------------------------------ |
+| **Public** | `/(marketing)` | SSG + ISR            | 랜딩·프라이싱·SEO 최적화             |
+| **Auth**   | `/(auth)`      | SSR                  | GitHub OAuth 로그인·신규 유저 온보딩 |
+| **App**    | `/(dashboard)` | SSR + Client         | 포트폴리오 편집·관리 작업 공간       |
+| **Output** | `/[slug]`      | ISR (60s revalidate) | 배포된 포트폴리오 공개 페이지        |
+
+> ⚠️ **MVP 범위**: Output Layer는 서브도메인(`slug.portfolioforge.app`) 방식으로 운영.  
+> 커스텀 도메인(Vercel Domains API)은 Phase 2 Pro 기능.
+
+### 6.2 App Router 디렉토리 구조
+
+```
 app/
-├── (marketing)/             # [Public] 루트 및 홍보 영역
-│   ├── layout.tsx           # 랜딩 전용 헤더/푸터 (로그인 버튼 등)
-│   ├── page.tsx             # 루트 경로 (/) - 서비스 메인 랜딩 페이지
-│   └── pricing/             # 요금제 안내 페이지
-├── (auth)/                  # [Auth] 인증 및 유저 온보딩
-│   ├── login/               # 소셜 로그인 (GitHub OAuth)
-│   └── onboarding/          # 최초 가입 시 데이터 수집 마법사
-├── (dashboard)/             # [App] 대시보드 및 설정 (통합 LNB 레이아웃 공유)
-│   ├── layout.tsx           # 사이드바 내비게이션 포함 공통 레이아웃
-│   ├── dashboard/           # 내 포트폴리오 목록 및 요약 통계
-│   ├── projects/            # GitHub 데이터 관리 및 AI 큐레이션 풀
-│   ├── analytics/[id]/      # 개별 포트폴리오 상세 분석
-│   └── settings/            # 서비스 전역 설정 (일관된 구조)
-│       ├── page.tsx         # 기본 경로: 프로필 및 계정 설정
-│       ├── integrations/    # 플랫폼 연동 (GitHub, 블로그, 알고리즘)
-│       └── billing/         # 구독 및 결제 내역 관리
-├── editor/[id]/             # [Tool] 실시간 편집 영역
-│   ├── layout.tsx           # 에디터 전용 전체화면 레이아웃
-│   └── page.tsx             # WYSIWYG 캔버스 및 속성 패널
-└── [domain]/                # [Output] 배포된 사용자 포트폴리오
-    └── page.tsx             # 사용자 커스텀 도메인 기반 동적 라우팅
+├── (marketing)/               # [Public] 비로그인 사용자 대상
+│   ├── layout.tsx             # 랜딩 전용 헤더/푸터
+│   ├── page.tsx               # 서비스 메인 랜딩 (/)
+│   └── pricing/               # 요금제 안내
+│
+├── (auth)/                    # [Auth] 인증 및 온보딩
+│   ├── login/                 # GitHub OAuth 소셜 로그인
+│   └── onboarding/            # 최초 가입 데이터 수집 마법사
+│
+├── (dashboard)/               # [App] 로그인 유저 작업 공간
+│   ├── layout.tsx             # 사이드바 내비게이션 공통 레이아웃
+│   ├── dashboard/             # 포트폴리오 목록 + 요약 통계
+│   ├── projects/              # GitHub 레포 관리 + AI 큐레이션 풀
+│   ├── analytics/[id]/        # 개별 포트폴리오 상세 분석 (Pro)
+│   └── settings/
+│       ├── page.tsx           # 프로필·계정 설정 (기본 경로)
+│       ├── integrations/      # GitHub 토큰·RSS 피드 연동 관리
+│       └── billing/           # 구독 플랜·결제 내역
+│
+├── editor/[id]/               # [Tool] 실시간 편집 (전체화면)
+│   ├── layout.tsx             # 에디터 전용 레이아웃 (사이드바 없음)
+│   └── page.tsx               # WYSIWYG 캔버스 + 속성 패널
+│
+├── [slug]/                    # [Output] MVP: 서브도메인 방식
+│   └── page.tsx               # slug 기반 ISR 포트폴리오 페이지
+│
+└── api/
+    ├── auth/[...nextauth]/    # NextAuth 핸들러
+    ├── integrations/          # GitHub 동기화, Webhook 수신
+    ├── portfolios/            # CRUD + 블록 관리
+    ├── projects/              # AI 큐레이션 트리거
+    ├── analytics/             # 이벤트 수집 + 집계
+    └── webhooks/github/       # Push 이벤트 증분 업데이트
 ```
 
-### 11.3 주요 페이지 인터페이스 명세
+### 6.3 주요 페이지 명세
 
-| 페이지 분류   | URL 경로 | 핵심 컴포넌트 및 기능      | 비고 |
-| ------------- | -------- | -------------------------- | ---- |
-| **메인 랜딩** | `/`      | • Hero 섹션 (CTA 버튼)<br> |
+| 페이지          | 경로              | 핵심 기능                                                  | 비고           |
+| --------------- | ----------------- | ---------------------------------------------------------- | -------------- |
+| 메인 랜딩       | `/`               | Hero CTA, 기능 소개, 템플릿 쇼케이스                       | SSG + SEO      |
+| 대시보드        | `/dashboard`      | 포트폴리오 카드 그리드, 방문자 현황, 신규 생성 버튼        | 앱 홈          |
+| 데이터 관리     | `/projects`       | GitHub 레포 동기화 리스트, AI 자동 태깅·수정, 요약 생성기  | 기능 5.1 반영  |
+| 실시간 에디터   | `/editor/[id]`    | dnd-kit 블록 배치, 디자인 토큰 적용, SEO 설정, 원클릭 배포 | 전체화면       |
+| 통합 설정       | `/settings`       | 프로필/계정, GitHub·RSS 연동, 플랜·결제 내역               | 공통 LNB 공유  |
+| 분석 대시보드   | `/analytics/[id]` | 일별 방문자, 블록 클릭률, 레퍼러, 전환율                   | Pro 전용       |
+| 포트폴리오 출력 | `/[slug]`         | ISR 렌더링, OG 이미지 자동 생성, 이벤트 수집               | 60s revalidate |
 
-<br>• 기능 소개 및 템플릿 쇼케이스<br>
+### 6.4 UI 일관성 원칙
 
-<br>• 기술 블로그 연동 예시 시각화 | SEO 최적화 |
-| **대시보드** | `/dashboard` | • 생성된 포트폴리오 카드 그리드<br>
+- **컴포넌트 재사용**: `/dashboard`와 `/settings`는 동일 `(dashboard)/layout.tsx` 공유 → 심리적 일관성 제공
+- **반응형 전략**: 관리 페이지 모바일 전환 시 사이드바 → 하단 탭 메뉴 (shadcn/ui `Sheet` 활용)
+- **상태 동기화**: `settings/integrations` 변경 시 Zustand 즉시 업데이트 → `projects`·`editor`에 자동 반영
+- **에디터 격리**: `/editor/[id]`는 별도 layout.tsx. 대시보드 사이드바 없음. 저장 상태·배포 버튼만 상단 노출
 
-<br>• 전체 방문자 수 현황 대시보드<br>
+---
 
-<br>• '새로운 프로젝트 Forge' 버튼 | 앱 홈 |
-| **데이터 관리** | `/projects` | • GitHub 레포지토리 동기화 리스트<br>
+## 7. 기술 리스크 및 대응 전략
 
-<br>• 기술 스택 자동 태깅 및 수정 기능<br>
+### 🔴 Critical — MVP 전 반드시 해결
 
-<br>• AI 기반 프로젝트 요약 생성기 | 기획 5.1 반영 |
-| **실시간 에디터** | `/editor/[id]` | • 드래그앤드롭 컴포넌트 배치<br>
+#### ① GitHub API Rate Limit
 
-<br>• 디자인 토큰(색상, 폰트) 실시간 적용<br>
+| 항목       | 내용                                                                                                                               |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **리스크** | OAuth 인증 시 시간당 5,000회 제한. 레포 100개 + 커밋 이력 수집 시 단일 사용자가 수십 회 소진. 온보딩 집중 시 서비스 전체 중단 가능 |
+| **대응**   | 사용자 GitHub 토큰으로 요청 → Upstash Redis TTL 1시간 캐싱 → Webhook `push` 이벤트 시만 증분 업데이트                              |
 
-<br>• SEO 설정 및 원클릭 배포 버튼 | 기획 5.3 반영 |
-| **통합 설정** | `/settings` | • **프로필**: 닉네임, 이메일, 아바타 관리<br>
+#### ② AI 비용 폭증
 
-<br>• **연동**: GitHub 토큰 및 RSS 피드 관리<br>
+| 항목       | 내용                                                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **리스크** | GPT-4o-mini 레포 20개 요약 시 요청당 $0.02~0.05. Free Tier 사용자 1,000명 전수 실행 시 월 $20~50 발생. 무제한 허용 시 손익분기 붕괴 |
+| **대응**   | Free Tier AI 크레딧 월 3회 제한. `ai_summary` DB 캐싱 → 재요청 시 OpenAI 호출 없이 반환                                             |
 
-<br>• **결제**: 플랜 업그레이드 및 구독 관리 | **일관성 강화** |
+---
 
-### 11.4 설계 원칙 및 UI 일관성
+### 🟡 Important — MVP 이후 반드시 고려
 
-- **컴포넌트 재사용**: `/dashboard`와 `/settings`는 동일한 사이드바 레이아웃(`app/(dashboard)/layout.tsx`)을 공유하여 사용자에게 심리적 안정감을 제공합니다.
-- **반응형 전략**: 모든 관리 페이지는 모바일에서 탭(Tab) 메뉴로 전환되는 반응형 내비게이션을 지원합니다.
-- **상태 동기화**: `settings/integrations`에서 변경된 데이터 소스는 즉시 `projects` 페이지와 `editor`에 반영되도록 Zustand 스토어를 연동합니다.
+#### ③ 커스텀 도메인 복잡도
+
+| 항목       | 내용                                                                                                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **리스크** | Vercel Domains API로 수백 개 도메인을 동적 관리하려면 별도 서비스 레이어 필요. DNS 전파 지연·SSL 발급 시간 등 UX 문제 복합 |
+| **대응**   | MVP는 서브도메인(`slug.portfolioforge.app`) 방식으로 출시. 커스텀 도메인은 Phase 2 Pro 기능으로 구현                       |
+
+#### ④ 에디터 동시성 문제
+
+| 항목       | 내용                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| **리스크** | 동일 포트폴리오를 두 탭에서 동시 편집 시 마지막 저장이 이전 변경사항 덮어씀                                         |
+| **대응**   | 낙관적 업데이트 + `updatedAt` 충돌 감지(409) → 사용자에게 선택 UI 제공. Phase 3에서 Yjs/CRDT 실시간 협업으로 고도화 |
+
+#### ⑤ ISR 캐시 무효화 타이밍
+
+| 항목       | 내용                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| **리스크** | GitHub Webhook → 데이터 업데이트 → 포트폴리오 반영까지 최대 60초 지연. "실시간 반영" 마케팅 카피와 충돌 가능   |
+| **대응**   | "변경 후 최대 60초 이내 반영" 명시적 고지. 중요 업데이트는 on-demand revalidation(`/api/revalidate`) 별도 구현 |
+
+---
+
+## 8. 월간 운영 비용 추정
+
+> 기준: MAU 1,000명, Pro 전환율 5% 가정
+
+| 항목     | 서비스             | 예상 비용        | 비고                  |
+| -------- | ------------------ | ---------------- | --------------------- |
+| 호스팅   | Vercel Pro         | $20              |                       |
+| DB       | Neon Serverless    | $0 ~ $19         | 무료 티어로 시작 가능 |
+| 캐시     | Upstash Redis      | $0 ~ $10         | Rate Limiter 포함     |
+| 스토리지 | Cloudflare R2      | $0 ~ $5          | Egress 무료           |
+| AI       | OpenAI (캐싱 적용) | $10 ~ $30        | Free 크레딧 제한 효과 |
+| **합계** |                    | **$30 ~ $84/월** |                       |
+
+> 💡 **손익분기**: Pro ($8/월) 사용자 **11명** 전환 시 인프라 비용 전액 커버

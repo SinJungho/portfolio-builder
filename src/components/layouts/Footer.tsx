@@ -1,177 +1,66 @@
-import { Github, Linkedin, Twitter } from "lucide-react";
-
-export function Footer() {
+export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      <div className="max-w-300 mx-auto px-6 py-16">
-        <div className="grid grid-cols-5 gap-8 mb-12">
-          {/* Brand column */}
-          <div className="col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg"></div>
-              <span className="text-white">포트폴리오포지</span>
+    <footer className="bg-slate-900 pt-16 pb-10 px-6 text-gray-400">
+      <div className="max-w-280 mx-auto">
+        {/* top area */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-8 md:gap-12 mb-12">
+          {/* brand */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7.5 h-7.5 rounded-lg bg-[linear-gradient(135deg,#3182F6,#8B5CF6)]" />
+              <span className="text-[16px] font-bold text-white">
+                포트폴리오포지
+              </span>
             </div>
-            <p className="text-gray-400 text-sm">
-              GitHub 프로필을 통해 멋진 개발자 포트폴리오를 자동으로 생성하세요.
+
+            <p className="text-sm leading-[1.7] text-slate-500">
+              개발자의 GitHub를 아름다운 포트폴리오로 자동 변환하는 AI 빌더
             </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
+          </div>
+
+          {[
+            { title: "제품", items: ["기능", "가격", "템플릿", "변경 로그"] },
+            { title: "자료", items: ["문서", "API 참조", "블로그", "지원"] },
+            {
+              title: "회사",
+              items: ["소개", "개인정보처리방침", "이용약관", "문의"],
+            },
+          ].map((col) => (
+            <div key={col.title}>
+              <h4 className="text-sm font-bold text-white mb-4">{col.title}</h4>
+
+              <ul className="flex flex-col gap-2.5">
+                {col.items.map((item) => (
+                  <li key={item}>
+                    <a
+                      href="#"
+                      className="text-sm text-slate-500 no-underline transition-colors duration-200 hover:text-white"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          {/* Product */}
-          <div>
-            <h4 className="text-white mb-4">제품</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  기능
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  가격
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  템플릿
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  변경 로그
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Resources */}
-          <div>
-            <h4 className="text-white mb-4">자료</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  문서
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  API 참조
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  블로그
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  지원
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h4 className="text-white mb-4">회사</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  소개
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  개인정보처리방침
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  약관
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  문의
-                </a>
-              </li>
-            </ul>
-          </div>
+          ))}
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 border-t border-gray-800 flex items-center justify-between text-sm">
-          <p className="text-gray-500">
+        {/* bottom area */}
+        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center md:justify-between gap-4 md:gap-0">
+          <span className="text-[13px] text-gray-400">
             © 2026 포트폴리오포지. 모든 권리 보유.
-          </p>
-          <div className="flex items-center gap-6">
-            <a
-              href="#"
-              className="text-gray-500 hover:text-white transition-colors"
-            >
-              개인정보처리방침
-            </a>
-            <a
-              href="#"
-              className="text-gray-500 hover:text-white transition-colors"
-            >
-              서비스 약관
-            </a>
+          </span>
+
+          <div className="flex gap-2">
+            {["GitHub", "Twitter", "LinkedIn"].map((s) => (
+              <a
+                key={s}
+                href="#"
+                className="px-3.5 py-2 rounded-lg text-[13px] text-slate-500 bg-white/4 border border-slate-800 transition-colors duration-200 hover:text-white"
+              >
+                {s}
+              </a>
+            ))}
           </div>
         </div>
       </div>
