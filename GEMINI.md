@@ -217,88 +217,82 @@ Level 3: 고급 CSS 편집
 
 ---
 
-## 6. 기술 아키텍처
+제시해주신 기획서의 **6. 기술 아키텍처** 섹션을 사용자의 요구사항(Next.js App Router 통합 구현, Tailwind CSS, shadcn/ui)에 맞춰 최적화하여 업데이트해 드립니다.
 
-### 6.1 기술 스택
+Full-stack 프레임워크로서의 Next.js 강점을 살리고, 생산성을 극대화할 수 있는 최신 라이브러리 조합으로 재구성했습니다.
 
-**프론트엔드**
+---
 
-- 프레임워크: Next.js 14 (App Router)
-- 언어: TypeScript 5.x
-- 상태 관리: Zustand + Immer
-- 스타일링: Tailwind CSS + CSS Modules
-- 실시간 통신: Socket.io Client
-- 차트: Recharts
-- 드래그앤드롭: @dnd-kit
+## 6. 기술 아키텍처 (Updated)
 
-**백엔드**
+### 6.1 기술 스택 (Full-stack Next.js)
 
-- 런타임: Node.js 18+
-- API: Next.js API Routes
-- 인증: NextAuth.js
-- 데이터베이스: PostgreSQL (Neon)
-- 캐싱: Redis (Upstash)
-- 작업 큐: BullMQ
+**Core Framework & Language**
 
-**인프라**
+- **Framework**: **Next.js 14+ (App Router)** - 프론트엔드와 백엔드 API를 단일 코드베이스에서 관리
+- **Language**: **TypeScript** - 데이터 모델 및 API 응답의 타입 안정성 확보
+- **Runtime**: Node.js 18+
 
-- 배포: Vercel Pro
-- 파일 저장: AWS S3
-- 모니터링: Sentry
-- 로깅: LogRocket
+**Frontend (UI/UX)**
 
-### 6.2 시스템 아키텍처
+- **Styling**: **Tailwind CSS** - 유틸리티 퍼스트 기반의 빠른 스타일링
+- **Component Library**: **shadcn/ui** - Radix UI 기반의 고품질, 접근성 준수 컴포넌트 활용
+- **State Management**:
+- **Server State**: TanStack Query (React Query) - 서버 데이터 캐싱 및 동기화
+- **Client State**: Zustand - 에디터 설정 및 UI 상태 관리
+
+- **Icons**: Lucide React
+
+**Backend & Data**
+
+- **API**: Next.js **Route Handlers** (Serverless Functions)
+- **Database**: **PostgreSQL** (with Neon or Supabase)
+- **ORM**: **Prisma** 또는 **Drizzle ORM** - Type-safe한 DB 쿼리 및 마이그레이션 관리
+- **Authentication**: **NextAuth.js** (Auth.js) - GitHub OAuth 연동 및 세션 관리
+- **Validation**: **Zod** - API 요청 및 환경 변수 스키마 검증
+
+**Infrastructure & Tools**
+
+- **Deployment**: **Vercel** - Next.js 최적화 배포 및 Edge Functions 활용
+- **Storage**: **AWS S3** 또는 **Uploadthing** - 사용자 업로드 이미지 및 자산 저장
+- **AI Integration**: **OpenAI API** - 프로젝트 요약 및 스토리텔링 큐레이션 생성
+
+### 6.2 데이터 흐름 설계 (Next.js 특화)
+
+Next.js의 Server Components와 Client Components를 전략적으로 분리하여 성능을 최적화합니다.
+
+```mermaid
+graph TD
+    A[User Browser] --> B{Next.js App Router}
+    B --> C[Server Components]
+    B --> D[Client Components]
+
+    C --> E[Server Actions / Prisma]
+    E --> F[(PostgreSQL)]
+
+    D --> G[Zustand State]
+    D --> H[shadcn/ui Components]
+
+    C --> I[External APIs]
+    I --> J[GitHub API]
+    I --> K[OpenAI API]
 
 ```
-┌─────────────────────────────────────────────────┐
-│                클라이언트 (Next.js)              │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐        │
-│  │  실시간   │ │  디자인   │ │  미리보기 │        │
-│  │  에디터   │ │  시스템   │ │   엔진    │        │
-│  └──────────┘ └──────────┘ └──────────┘        │
-└───────────────┬─────────────────────────────────┘
-                │ WebSocket / REST API
-┌───────────────▼─────────────────────────────────┐
-│              BFF 레이어 (Next.js API)           │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐        │
-│  │ GitHub   │ │  인증     │ │  파일    │        │
-│  │  Proxy   │ │ (OAuth)   │ │ 생성기    │        │
-│  └──────────┘ └──────────┘ └──────────┘        │
-└───────────────┬─────────────────────────────────┘
-                │
-┌───────────────▼─────────────────────────────────┐
-│                인프라 서비스                     │
-│  PostgreSQL    Redis      S3        Vercel      │
-└─────────────────────────────────────────────────┘
-```
 
-### 6.3 데이터 모델
+### 6.3 주요 기술적 의사결정
 
-```sql
--- 주요 테이블 구조
-CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  github_id VARCHAR(255),
-  email VARCHAR(255),
-  created_at TIMESTAMP
-);
+1. **Why shadcn/ui?**
 
-CREATE TABLE portfolios (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  config JSONB, -- 디자인 설정
-  published BOOLEAN DEFAULT false,
-  domain VARCHAR(255)
-);
+- 직접 코드를 소유할 수 있어 커스터마이징이 자유롭습니다 (포트폴리오 빌더의 테마 시스템 구현에 필수적).
+- Tailwind CSS와 완벽하게 조화되어 일관된 디자인 시스템 구축이 빠릅니다.
 
-CREATE TABLE projects (
-  id UUID PRIMARY KEY,
-  portfolio_id UUID REFERENCES portfolios(id),
-  github_data JSONB,
-  custom_data JSONB,
-  display_order INTEGER
-);
-```
+2. **Why Server Actions?**
+
+- 별도의 API 엔드포인트를 정의하지 않고도 폼 제출, 데이터 업데이트를 안전하게 처리하여 개발 복잡도를 낮춥니다.
+
+3. **Why Prisma/Drizzle?**
+
+- TypeScript와의 시너지가 극대화되어, DB 스키마 변경 시 프론트엔드까지 즉각적인 타입 체크가 가능합니다.
 
 ---
 
