@@ -3,9 +3,17 @@
 import { cn } from "@/lib/utils";
 import { Github } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
-const NAV_LINKS = ["기능", "가격", "템플릿", "블로그"] as const;
+const NAV_LINKS = [
+  { name: "기능", href: "/features" },
+  { name: "가격", href: "/pricing" },
+  { name: "템플릿", href: "/templates" },
+  { name: "블로그", href: "/blog" },
+  { name: "대시보드", href: "/dashboard" },
+  { name: "에디터", href: "/editor" },
+] as const;
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -47,30 +55,33 @@ export default function Header() {
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((item) => (
-            <a
-              key={item}
-              href={item === "가격" ? "#pricing" : "#"}
+            <Link
+              key={item.name}
+              href={item.href}
               className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
             >
-              {item}
-            </a>
+              {item.name}
+            </Link>
           ))}
         </nav>
 
         {/* CTA */}
         <div className="flex items-center gap-3">
-          <Link
-            href="#"
-            className="hidden md:block text-[14px] font-medium text-ink-500 hover:text-ink-900 transition-colors no-underline"
-          >
-            로그인
+          <Link href="#" passHref>
+            <Button
+              variant="ghost"
+              className="hidden md:block text-[14px] font-medium text-ink-500 hover:text-ink-900 transition-colors"
+            >
+              로그인
+            </Button>
           </Link>
-          <Link
-            href="#"
-            className="btn-pill-primary text-sm px-5 py-2.5 no-underline"
-          >
-            <Github size={15} />
-            무료로 시작하기
+          <Link href="#" passHref>
+            <Button
+              className="btn-pill-primary text-sm px-5 py-2.5"
+            >
+              <Github size={15} />
+              무료로 시작하기
+            </Button>
           </Link>
         </div>
       </div>

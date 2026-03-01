@@ -96,7 +96,7 @@ export default function Hero() {
         {/* CTA */}
         <div
           className={`
-            flex items-center justify-center gap-3
+            flex flex-col md:flex-row items-center justify-center gap-3
             transition-all duration-700
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7.5"}
           `}

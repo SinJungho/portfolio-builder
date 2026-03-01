@@ -50,17 +50,18 @@ export default function Features() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map((f, i) => {
             const Icon = f.icon;
 
             return (
               <Reveal key={i} delay={i * 100}>
-                <div
+                <button
+                  onClick={() => setActive(i)}
                   onMouseEnter={() => setActive(i)}
                   className={`
-                    p-9 rounded-3xl cursor-pointer
-                    transition-all duration-300 ease-in-out
+                    p-9 rounded-3xl cursor-pointer text-left
+                    transition-all duration-300 ease-in-out w-full
                   `}
                   style={{
                     background: active === i ? "#FAFAFA" : "white",
@@ -100,7 +101,7 @@ export default function Features() {
                   <p className="text-[15px] leading-[1.7] text-gray-500 m-0">
                     {f.desc}
                   </p>
-                </div>
+                </button>
               </Reveal>
             );
           })}
