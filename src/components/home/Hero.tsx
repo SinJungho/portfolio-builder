@@ -96,11 +96,7 @@ export default function Hero() {
         {/* CTA */}
         <div
           className={`
-<<<<<<< HEAD
             flex flex-col md:flex-row items-center justify-center gap-3
-=======
-            flex items-center justify-center gap-3
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
             transition-all duration-700
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7.5"}
           `}

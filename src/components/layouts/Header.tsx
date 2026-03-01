@@ -21,8 +21,13 @@ import { ArrowRight, ChevronRight, Github, Menu, User, LayoutDashboard, Settings
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+<<<<<<< HEAD
 import { useEffect, useRef, useState } from "react";
 import CTAButton from "../common/CTAButton";
+=======
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+>>>>>>> 454069b (Feat : 신규 페이지 생성)
 
 const NAV_LINKS = [
   { name: "기능", href: "/features" },
@@ -32,6 +37,7 @@ const NAV_LINKS = [
   { name: "대시보드", href: "/dashboard" },
   { name: "에디터", href: "/editor" },
 ] as const;
+<<<<<<< HEAD
 
 const LogoMark = () => (
   <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center shrink-0">
@@ -60,6 +66,8 @@ const LogoMarkSm = () => (
     </svg>
   </div>
 );
+=======
+>>>>>>> 454069b (Feat : 신규 페이지 생성)
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -111,6 +119,7 @@ export default function Header() {
         {/* 데스크탑 네비게이션 */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((item) => (
+<<<<<<< HEAD
             <Button
               key={item.name}
               variant="ghost"
@@ -317,6 +326,36 @@ export default function Header() {
               </div>
             </SheetContent>
           </Sheet>
+=======
+            <Link
+              key={item.name}
+              href={item.href}
+              className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* CTA */}
+        <div className="flex items-center gap-3">
+          <Link href="#" passHref>
+            <Button
+              variant="ghost"
+              className="hidden md:block text-[14px] font-medium text-ink-500 hover:text-ink-900 transition-colors"
+            >
+              로그인
+            </Button>
+          </Link>
+          <Link href="#" passHref>
+            <Button
+              className="btn-pill-primary text-sm px-5 py-2.5"
+            >
+              <Github size={15} />
+              무료로 시작하기
+            </Button>
+          </Link>
+>>>>>>> 454069b (Feat : 신규 페이지 생성)
         </div>
       </div>
     </header>

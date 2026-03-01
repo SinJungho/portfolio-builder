@@ -24,11 +24,7 @@ export default function FinalCTA() {
           </h2>
 
           {/* description */}
-<<<<<<< HEAD
           <p className="text-[18px] text-gray-200 leading-[1.7] mb-12">
-=======
-          <p className="text-[18px] text-gray-400 leading-[1.7] mb-12">
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
             수백 명의 개발자가 포트폴리오포지로
             <br />
             꿈의 회사에 합격했어요.
@@ -36,11 +32,7 @@ export default function FinalCTA() {
 
           {/* CTA button */}
           <button
-<<<<<<< HEAD
             className="inline-flex items-center gap-2.5 px-9 py-3 md:py-4 rounded-full text-[18px] md:text-lg lg:text-xl font-bold text-white transition-all"
-=======
-            className="inline-flex items-center gap-2.5 px-9 py-4 rounded-full text-[18px] font-bold text-white transition-all"
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
             style={{
               background: TOSS_BLUE,
               boxShadow: "0 8px 32px rgba(49,130,246,0.4)",
@@ -52,11 +44,7 @@ export default function FinalCTA() {
           </button>
 
           {/* sub text */}
-<<<<<<< HEAD
           <div className="mt-5 text-sm text-gray-300">
-=======
-          <div className="mt-5 text-sm text-gray-500">
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
             신용카드 불필요 · 1분이면 완성 · 언제든 취소 가능
           </div>
         </div>

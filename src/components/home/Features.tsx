@@ -50,30 +50,18 @@ export default function Features() {
           </div>
         </Reveal>
 
-<<<<<<< HEAD
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-=======
-        <div className="grid grid-cols-3 gap-5">
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
           {features.map((f, i) => {
             const Icon = f.icon;
 
             return (
               <Reveal key={i} delay={i * 100}>
-<<<<<<< HEAD
                 <button
                   onClick={() => setActive(i)}
                   onMouseEnter={() => setActive(i)}
                   className={`
                     p-9 rounded-3xl cursor-pointer text-left
                     transition-all duration-300 ease-in-out w-full
-=======
-                <div
-                  onMouseEnter={() => setActive(i)}
-                  className={`
-                    p-9 rounded-3xl cursor-pointer
-                    transition-all duration-300 ease-in-out
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
                   `}
                   style={{
                     background: active === i ? "#FAFAFA" : "white",
@@ -113,11 +101,7 @@ export default function Features() {
                   <p className="text-[15px] leading-[1.7] text-gray-500 m-0">
                     {f.desc}
                   </p>
-<<<<<<< HEAD
                 </button>
-=======
-                </div>
->>>>>>> a275093 (Feat : 메인 페이지 컴포넌트 수정)
               </Reveal>
             );
           })}
