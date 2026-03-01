@@ -1,4 +1,4 @@
-import Reveal from "@/components/common/Reveal";
+import Reveal from "../common/Reveal";
 
 export default function SocialProof() {
   const stats = [
