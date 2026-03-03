@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import {
   Sheet,
   SheetContent,
@@ -17,23 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-=======
->>>>>>> 374641b (Feat : 로그인 페이지 및 헤더 수정)
 import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronRight, Github, Menu, User, LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { useEffect, useRef, useState } from "react";
 import CTAButton from "../common/CTAButton";
-=======
-import { Button } from "@/components/ui/button";
-=======
->>>>>>> 374641b (Feat : 로그인 페이지 및 헤더 수정)
-import { useEffect, useState } from "react";
->>>>>>> 454069b (Feat : 신규 페이지 생성)
 
 const NAV_LINKS = [
   { name: "기능", href: "/features" },
@@ -43,7 +32,6 @@ const NAV_LINKS = [
   { name: "대시보드", href: "/dashboard" },
   { name: "에디터", href: "/editor" },
 ] as const;
-<<<<<<< HEAD
 
 const LogoMark = () => (
   <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center shrink-0">
@@ -72,8 +60,6 @@ const LogoMarkSm = () => (
     </svg>
   </div>
 );
-=======
->>>>>>> 454069b (Feat : 신규 페이지 생성)
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -114,25 +100,9 @@ export default function Header() {
       )}
     >
       <div className="max-w-280 mx-auto px-6 h-16 flex items-center justify-between">
-<<<<<<< HEAD
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2 no-underline">
           <LogoMark />
-=======
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 no-underline">
-          <div className="w-8 h-8 rounded-[10px] bg-linear-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center shrink-0">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2.5 7L6 10.5L11.5 3.5"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
->>>>>>> 374641b (Feat : 로그인 페이지 및 헤더 수정)
           <span className="text-[17px] font-bold text-ink-900 tracking-[-0.3px]">
             포트폴리오포지
           </span>
@@ -141,8 +111,6 @@ export default function Header() {
         {/* 데스크탑 네비게이션 */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((item) => (
-<<<<<<< HEAD
-<<<<<<< HEAD
             <Button
               key={item.name}
               variant="ghost"
@@ -349,48 +317,6 @@ export default function Header() {
               </div>
             </SheetContent>
           </Sheet>
-=======
-            <Link
-=======
-            <Button
->>>>>>> 374641b (Feat : 로그인 페이지 및 헤더 수정)
-              key={item.name}
-              variant="ghost"
-              className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
-            >
-              <Link href={item.href}>{item.name}</Link>
-            </Button>
-          ))}
-        </nav>
-
-        {/* CTA */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
-          >
-            <Link href="/login" passHref>
-              로그인
-<<<<<<< HEAD
-            </Button>
-          </Link>
-          <Link href="#" passHref>
-            <Button
-              className="btn-pill-primary text-sm px-5 py-2.5"
-            >
-              <Github size={15} />
-              무료로 시작하기
-            </Button>
-          </Link>
->>>>>>> 454069b (Feat : 신규 페이지 생성)
-=======
-            </Link>
-          </Button>
-          <Button className="px-5 py-3.5">
-            <Github size={18} />
-            GitHub로 시작하기
-          </Button>
->>>>>>> 374641b (Feat : 로그인 페이지 및 헤더 수정)
         </div>
       </div>
     </header>
