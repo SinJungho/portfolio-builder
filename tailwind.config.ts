@@ -1,6 +1,4 @@
-import type { Config } from "tailwindcss/types/config";
-
-const config: Config = {
+const config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
