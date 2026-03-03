@@ -58,7 +58,7 @@ export default function Header() {
             <Button
               key={item.name}
               variant="ghost"
-              className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
+              className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/4 transition-all duration-200 no-underline"
             >
               <Link href={item.href}>{item.name}</Link>
             </Button>
@@ -69,7 +69,7 @@ export default function Header() {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
+            className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/4 transition-all duration-200 no-underline"
           >
             <Link href="/login" passHref>
               로그인
