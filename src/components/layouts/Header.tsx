@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Github } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 const NAV_LINKS = [
@@ -33,10 +33,10 @@ export default function Header() {
           : "bg-transparent border-b border-transparent",
       )}
     >
-      <div className="max-w-[1120px] mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-280 mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 no-underline">
-          <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-[10px] bg-linear-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center shrink-0">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path
                 d="M2.5 7L6 10.5L11.5 3.5"
@@ -55,34 +55,30 @@ export default function Header() {
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((item) => (
-            <Link
+            <Button
               key={item.name}
-              href={item.href}
+              variant="ghost"
               className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
             >
-              {item.name}
-            </Link>
+              <Link href={item.href}>{item.name}</Link>
+            </Button>
           ))}
         </nav>
 
         {/* CTA */}
         <div className="flex items-center gap-3">
-          <Link href="#" passHref>
-            <Button
-              variant="ghost"
-              className="hidden md:block text-[14px] font-medium text-ink-500 hover:text-ink-900 transition-colors"
-            >
+          <Button
+            variant="outline"
+            className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/[0.04] transition-all duration-200 no-underline"
+          >
+            <Link href="/login" passHref>
               로그인
-            </Button>
-          </Link>
-          <Link href="#" passHref>
-            <Button
-              className="btn-pill-primary text-sm px-5 py-2.5"
-            >
-              <Github size={15} />
-              무료로 시작하기
-            </Button>
-          </Link>
+            </Link>
+          </Button>
+          <Button className="px-5 py-3.5">
+            <Github size={18} />
+            GitHub로 시작하기
+          </Button>
         </div>
       </div>
     </header>
