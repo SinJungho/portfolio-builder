@@ -200,11 +200,18 @@ export default function MockPortfolio() {
           <div className="text-[11px] text-slate-600 mb-3 font-medium">
             최근 1년 기여도
           </div>
-          {/*
+           /*
            * ref wrapper: ResizeObserver가 이 요소의 너비를 관찰.
            * overflow-hidden: SVG가 계산 오차로 1~2px 삐져나오는 것 방지.
            * key: blockSize 변경 시 GitHubCalendar 재마운트 → 새 blockSize 적용.
-           */}
+           *
+           * GitHubCalendar props (react-github-calendar → react-activity-calendar):
+           *   blockSize   : 셀 크기(px) — ResizeObserver로 컨테이너에 맞게 동적 계산
+           *   blockMargin : 셀 간격(px) — 2로 고정
+           *   showColorLegend={false}  : 하단 범례 숨김
+           *   showTotalCount={false}   : "N contributions in ..." 텍스트 숨김
+           *   showMonthLabels 기본값   : true (월 레이블 표시)
+           */
           <div ref={wrapperRef} className="w-full overflow-hidden">
             <GitHubCalendar
               key={calKey}
