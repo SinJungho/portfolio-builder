@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { ThemeInput } from "react-activity-calendar";
 import { GitHubCalendar } from "react-github-calendar";
 
@@ -22,7 +23,52 @@ const DARK_THEME: ThemeInput = {
   ],
 };
 
+/**
+ * react-activity-calendar SVG width 계산식 (라이브러리 소스 기반):
+ *   svgWidth = weeks × (blockSize + blockMargin) - blockMargin
+ *
+ * 역산:
+ *   blockSize = floor((containerWidth + blockMargin) / weeks) - blockMargin
+ *
+ * GitHubCalendar는 최근 1년(53주 이하)을 렌더링.
+ * 안전하게 weeks=53 기준으로 계산하고 최소 4 / 최대 12로 클램프.
+ */
+function calcBlockSize(containerWidth: number): number {
+  const margin = 2;
+  const weeks = 53;
+  const size = Math.floor((containerWidth + margin) / weeks) - margin;
+  return Math.min(12, Math.max(4, size));
+}
+
 export default function MockPortfolio() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // blockSize만 state로 관리 (blockMargin은 항상 2로 고정)
+  const [blockSize, setBlockSize] = useState(9);
+  // blockSize 변경 시 GitHubCalendar를 재마운트해 새 props 반영
+  const [calKey, setCalKey] = useState(0);
+  const prevSizeRef = useRef(9);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      if (!width) return;
+
+      const next = calcBlockSize(width);
+      // 값이 실제로 바뀔 때만 state 업데이트 → 불필요한 리렌더 방지
+      if (next !== prevSizeRef.current) {
+        prevSizeRef.current = next;
+        setBlockSize(next);
+        setCalKey((k) => k + 1);
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="relative max-w-[760px] mx-auto rounded-[20px] overflow-hidden shadow-portrait bg-white">
       {/* 브라우저 상단 바 */}
@@ -43,15 +89,8 @@ export default function MockPortfolio() {
 
       {/* 포트폴리오 바디 */}
       <div className="p-8 bg-[#0F172A] min-h-[360px]">
-        {/*
-          반응형 레이아웃:
-            - mobile/tablet (< lg): 세로 스택 — 프로필 → 태그 → 프로젝트 그리드
-            - desktop (lg+): 원본 flex — 프로필(좌) + 프로젝트 그리드(우) 나란히
-        */}
-
-        {/* ── mobile/tablet: 세로 스택 ── */}
+        {/* ── mobile/tablet (< lg): 세로 스택 ── */}
         <div className="lg:hidden">
-          {/* 프로필 헤더 */}
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 rounded-[16px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex-shrink-0" />
             <div>
@@ -63,7 +102,6 @@ export default function MockPortfolio() {
               </div>
             </div>
           </div>
-          {/* 언어 스택 태그 */}
           <div className="flex flex-wrap gap-1.5 mb-4">
             {TECH_TAGS.map((t) => (
               <span
@@ -78,7 +116,6 @@ export default function MockPortfolio() {
               </span>
             ))}
           </div>
-          {/* 프로젝트 2×2 그리드 */}
           <div className="grid grid-cols-2 gap-2.5 mb-6">
             {PROJECTS.map((p) => (
               <div
@@ -106,9 +143,8 @@ export default function MockPortfolio() {
           </div>
         </div>
 
-        {/* ── desktop: 원본 flex 레이아웃 ── */}
+        {/* ── desktop (lg+): 원본 flex 레이아웃 ── */}
         <div className="hidden lg:flex gap-6 mb-6">
-          {/* 프로필 */}
           <div className="flex-shrink-0">
             <div className="w-14 h-14 rounded-[16px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] mb-4" />
             <div className="text-[20px] font-bold text-white leading-tight">
@@ -132,7 +168,6 @@ export default function MockPortfolio() {
               ))}
             </div>
           </div>
-          {/* 프로젝트 카드 2×2 */}
           <div className="flex-1 grid grid-cols-2 gap-2.5">
             {PROJECTS.map((p) => (
               <div
@@ -160,22 +195,37 @@ export default function MockPortfolio() {
           </div>
         </div>
 
-        {/* GitHub 기여도 캘린더 */}
+        {/* ── GitHub 기여도 캘린더 ── */}
         <div>
           <div className="text-[11px] text-slate-600 mb-3 font-medium">
             최근 1년 기여도
           </div>
-          <GitHubCalendar
-            username="torvalds"
-            colorScheme="dark"
-            theme={DARK_THEME}
-            blockSize={9}
-            blockMargin={2}
-            fontSize={9}
-            showColorLegend={false}
-            showTotalCount={false}
-            style={{ color: "#475569" }}
-          />
+          {/*
+           * ref wrapper: ResizeObserver가 이 요소의 너비를 관찰.
+           * overflow-hidden: SVG가 계산 오차로 1~2px 삐져나오는 것 방지.
+           * key: blockSize 변경 시 GitHubCalendar 재마운트 → 새 blockSize 적용.
+           *
+           * GitHubCalendar props (react-github-calendar → react-activity-calendar):
+           *   blockSize   : 셀 크기(px) — ResizeObserver로 컨테이너에 맞게 동적 계산
+           *   blockMargin : 셀 간격(px) — 2로 고정
+           *   showColorLegend={false}  : 하단 범례 숨김
+           *   showTotalCount={false}   : "N contributions in ..." 텍스트 숨김
+           *   showMonthLabels 기본값   : true (월 레이블 표시)
+           */}
+          <div ref={wrapperRef} className="w-full overflow-hidden">
+            <GitHubCalendar
+              key={calKey}
+              username="torvalds"
+              colorScheme="dark"
+              theme={DARK_THEME}
+              blockSize={blockSize}
+              blockMargin={2}
+              fontSize={9}
+              showColorLegend={false}
+              showTotalCount={false}
+              style={{ color: "#475569", width: "100%", maxWidth: "100%" }}
+            />
+          </div>
         </div>
       </div>
     </div>
