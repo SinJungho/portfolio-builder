@@ -20,7 +20,6 @@ const NAV_LINKS = [
   { name: "템플릿", href: "/templates" },
   { name: "블로그", href: "/blog" },
   { name: "대시보드", href: "/dashboard" },
-  { name: "에디터", href: "/editor" },
 ] as const;
 
 const LogoMark = () => (
