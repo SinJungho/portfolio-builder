@@ -13,6 +13,35 @@ const requestSchema = z.object({
   theme: z.string().optional(),
 })
 
+export async function GET() {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = session.user.id
+
+    const portfolios = await prisma.portfolio.findMany({
+      where: { user_id: userId },
+      orderBy: { updated_at: 'desc' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        theme: true,
+        is_published: true,
+        updated_at: true,
+      },
+    })
+
+    return NextResponse.json(portfolios)
+  } catch (error) {
+    console.error('GET /api/portfolios error:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth()

@@ -10,7 +10,7 @@ export default {
         return {
           id: profile.id.toString(),
           name: profile.name ?? profile.login,
-          email: profile.email,
+          email: profile.email || `${profile.id}@users.noreply.github.com`,
           image: profile.avatar_url,
           github_login: profile.login,
           github_id: profile.id,

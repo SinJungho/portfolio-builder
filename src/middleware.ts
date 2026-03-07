@@ -15,16 +15,6 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  if (
-    session &&
-    !(session.user as any).github_bio_verified &&
-    isProtected &&
-    !pathname.startsWith('/onboarding') &&
-    !pathname.startsWith('/api')
-  ) {
-    return NextResponse.redirect(new URL('/onboarding/bio', req.url))
-  }
-
   return NextResponse.next()
 })
 

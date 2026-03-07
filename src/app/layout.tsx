@@ -1,9 +1,9 @@
 import Footer from "@/components/layouts/Footer";
 import Header from "@/components/layouts/Header";
+import AuthProvider from "@/components/providers/AuthProvider";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
-import SessionProvider from "@/components/auth/SessionProvider";
 
 const notoSans = Noto_Sans({ variable: "--font-sans", subsets: ["latin"] });
 
@@ -32,11 +32,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        <SessionProvider>
+        <AuthProvider>
           <Header />
           {children}
           <Footer />
-        </SessionProvider>
+        </AuthProvider>
       </body>
     </html>
   );

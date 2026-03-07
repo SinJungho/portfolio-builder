@@ -30,6 +30,7 @@ const NAV_LINKS = [
   { name: "템플릿", href: "/templates" },
   { name: "블로그", href: "/blog" },
   { name: "대시보드", href: "/dashboard" },
+  { name: "에디터", href: "/editor" },
 ] as const;
 
 const LogoMark = () => (
@@ -69,6 +70,14 @@ export default function Header() {
   const isLoggedIn = status === "authenticated";
   const user = session?.user;
 
+  /**
+   * 하이드레이션 전략:
+   *
+   * ① scrolled className 불일치
+   *    → <header>에 suppressHydrationWarning 적용.
+   *      SSR은 항상 non-scrolled HTML을 내보내고,
+   *      클라이언트가 마운트 직후 scroll 위치를 읽어 필요하면 업데이트.
+   */
   const mountedRef = useRef(false);
 
   useEffect(() => {
