@@ -3,11 +3,9 @@ import Link from "next/link";
 
 export function Sidebar() {
   const navItems = [
-    { icon: Home, label: "Home", active: false },
-    { icon: FolderOpen, label: "My Portfolios", active: true },
-    { icon: Layout, label: "Templates", active: false },
-    { icon: BarChart3, label: "Analytics", active: false },
-    { icon: Settings, label: "Settings", active: false },
+    { icon: Home, label: "대시보드", href: "/dashboard", active: true },
+    { icon: FolderOpen, label: "프로젝트", href: "/projects", active: false },
+    { icon: Settings, label: "설정", href: "/settings", active: false },
   ];
 
   return (
@@ -25,7 +23,7 @@ export function Sidebar() {
             return (
               <li key={item.label}>
                 <Link
-                  href="#"
+                  href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
                     item.active
                       ? "bg-gray-100 text-gray-900 border-l-2 border-gray-900 -ml-0.5"
