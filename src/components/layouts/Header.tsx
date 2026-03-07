@@ -13,6 +13,16 @@ import { ArrowRight, ChevronRight, Github, Menu } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import CTAButton from "../common/CTAButton";
+import { useSession, signOut } from "next-auth/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, User, LayoutDashboard, Settings } from "lucide-react";
 
 const NAV_LINKS = [
   { name: "기능", href: "/features" },
@@ -51,8 +61,13 @@ const LogoMarkSm = () => (
 );
 
 export default function Header() {
+  const { data: session, status } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const isLoading = status === "loading";
+  const isLoggedIn = status === "authenticated";
+  const user = session?.user;
 
   /**
    * 하이드레이션 전략:
@@ -126,19 +141,76 @@ export default function Header() {
 
         {/* 데스크탑 CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Button
-            variant="outline"
-            asChild
-            className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/4 transition-all duration-200"
-          >
-            <Link href="/login">로그인</Link>
-          </Button>
-          <Button asChild className="px-5 py-3.5">
-            <Link href="/login">
-              <Github size={18} />
-              GitHub로 시작하기
-            </Link>
-          </Button>
+          {isLoading ? (
+            <div className="w-24 h-10 rounded-xl bg-ink-50 animate-pulse" />
+          ) : isLoggedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 p-1 rounded-full hover:bg-black/5 transition-colors focus:outline-none">
+                  {user?.image ? (
+                    <img
+                      src={user.image}
+                      alt={user.name || "User"}
+                      className="w-9 h-9 rounded-full border border-ink-100"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
+                      <User size={20} />
+                    </div>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 mt-2">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-bold leading-none text-ink-900">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-ink-500">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard" className="flex items-center">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>대시보드</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>설정</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-red-500 focus:text-red-500"
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>로그아웃</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                asChild
+                className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/4 transition-all duration-200"
+              >
+                <Link href="/login">로그인</Link>
+              </Button>
+              <Button asChild className="px-5 py-3.5">
+                <Link href="/login">
+                  <Github size={18} />
+                  GitHub로 시작하기
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* 모바일 햄버거 */}
@@ -194,22 +266,67 @@ export default function Header() {
               </nav>
 
               {/* 하단 CTA */}
-              <div className="px-4 pb-8 pt-3 border-t border-ink-100 flex flex-col gap-2.5">
-                <CTAButton primary>
-                  <Github size={18} />
-                  GitHub로 시작하기
-                  <ArrowRight size={16} />
-                </CTAButton>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="w-full h-11 rounded-2xl text-[15px] font-medium text-ink-500 hover:text-ink-800 hover:bg-[#F3F4F6] transition-colors duration-200"
-                >
-                  <Link href="/login" onClick={() => setOpen(false)}>
-                    이미 계정이 있으신가요?&nbsp;
-                    <span className="text-[#3182F6] font-semibold">로그인</span>
-                  </Link>
-                </Button>
+              <div className="px-5 pb-8 pt-4 border-t border-ink-100 flex flex-col gap-3">
+                {isLoggedIn ? (
+                  <>
+                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-ink-50 border border-ink-100 mb-2">
+                       {user?.image ? (
+                        <img
+                          src={user.image}
+                          alt={user.name || "User"}
+                          className="w-11 h-11 rounded-full border border-ink-200"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
+                          <User size={24} />
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-bold text-ink-900">{user?.name}</span>
+                        <span className="text-[12px] text-ink-500 truncate max-w-[150px]">{user?.email}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 rounded-2xl text-[15px] font-bold text-ink-700 bg-white"
+                      asChild
+                    >
+                      <Link href="/dashboard" onClick={() => setOpen(false)}>
+                        <LayoutDashboard size={18} className="mr-2" />
+                        대시보드로 가기
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-12 rounded-2xl text-[15px] font-medium text-red-500 hover:bg-red-50"
+                      onClick={() => {
+                        signOut();
+                        setOpen(false);
+                      }}
+                    >
+                      <LogOut size={18} className="mr-2" />
+                      로그아웃
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <CTAButton primary>
+                      <Github size={18} />
+                      GitHub로 시작하기
+                      <ArrowRight size={16} />
+                    </CTAButton>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="w-full h-11 rounded-2xl text-[15px] font-medium text-ink-500 hover:text-ink-800 hover:bg-[#F3F4F6] transition-colors duration-200"
+                    >
+                      <Link href="/login" onClick={() => setOpen(false)}>
+                        이미 계정이 있으신가요?&nbsp;
+                        <span className="text-[#3182F6] font-semibold">로그인</span>
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
