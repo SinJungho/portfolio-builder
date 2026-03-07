@@ -12,4 +12,24 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
 })
 
-export const env = envSchema.parse(process.env)
+// 최상단에서 바로 parse하지 않고 실제 호출 시점에 검증 (lazy validation)
+let _env: z.infer<typeof envSchema> | null = null
+
+export function getEnv(): z.infer<typeof envSchema> {
+  if (!_env) {
+    const result = envSchema.safeParse(process.env)
+    if (!result.success) {
+      console.error('❌ Invalid environment variables:', result.error.format())
+      throw new Error(`Invalid environment variables: ${result.error.message}`)
+    }
+    _env = result.data
+  }
+  return _env
+}
+
+// 기존 코드 호환성 유지용 proxy (런타임 접근 시점에 검증)
+export const env = new Proxy({} as z.infer<typeof envSchema>, {
+  get(_target, prop: string) {
+    return getEnv()[prop as keyof z.infer<typeof envSchema>]
+  },
+})
