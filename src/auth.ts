@@ -39,6 +39,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
+    async signIn({ user, account }) {
+      if (account?.provider === 'github' && user.id && account.access_token) {
+        await prisma.integration.upsert({
+          where: {
+            user_id_provider: {
+              user_id: user.id,
+              provider: 'github',
+            },
+          },
+          update: {
+            access_token: account.access_token,
+            refresh_token: account.refresh_token as string | null,
+          },
+          create: {
+            user_id: user.id,
+            provider: 'github',
+            access_token: account.access_token,
+            refresh_token: account.refresh_token as string | null,
+          },
+        }).catch((err) => console.error('Failed to sync GitHub integration on signIn:', err))
+      }
+    },
     async linkAccount({ user, account }) {
       if (account.provider === 'github' && user.id && account.access_token) {
         await prisma.integration.upsert({

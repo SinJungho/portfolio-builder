@@ -56,13 +56,22 @@ export default async function DomainPage({ params }: Props) {
     }
   }
 
+  const fontMapping: Record<string, string> = {
+    inter: 'font-sans',
+    pretendard: 'font-sans',
+    'fira-code': 'font-mono',
+    playfair: 'font-serif',
+  }
+  const fontClass = fontMapping[(portfolio.design_tokens as any)?.fontFamily || 'inter'] || 'font-sans'
+
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className={`flex flex-col min-h-screen bg-background ${fontClass}`}>
       {/* Viewer 모드에서는 헤더가 다르게 보일 수 있으므로 필요시 전용 헤더 추가 가능 */}
       <main className="flex-1">
         <BlockRenderer 
           blocks={portfolio.blocks as any} 
           projectsData={projectsData} 
+          tokens={portfolio.design_tokens as any}
         />
       </main>
 

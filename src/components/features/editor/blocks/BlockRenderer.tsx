@@ -16,14 +16,23 @@ interface Block {
 interface BlockRendererProps {
   blocks: Block[]
   projectsData?: any[]
+  tokens?: {
+    primaryColor?: string
+    fontFamily?: string
+  }
 }
 
-export default function BlockRenderer({ blocks, projectsData }: BlockRendererProps) {
+export default function BlockRenderer({ blocks, projectsData, tokens }: BlockRendererProps) {
   // position 별로 정렬
   const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position)
 
+  const primaryColor = tokens?.primaryColor || '#3182F6'
+
   return (
-    <div className="flex flex-col w-full">
+    <div 
+      className="flex flex-col w-full"
+      style={{ '--primary': primaryColor } as React.CSSProperties}
+    >
       {sortedBlocks.map((block) => {
         switch (block.block_type) {
           case 'hero':

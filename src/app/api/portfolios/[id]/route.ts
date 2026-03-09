@@ -13,7 +13,29 @@ const patchSchema = z.object({
     .regex(/^[a-z0-9-]+$/)
     .optional(),
   title: z.string().max(255).optional(),
+  design_tokens: z.any().optional(),
 })
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+
+  const { error, portfolio } = await validatePortfolioOwnership(id)
+  if (error) return error
+
+  const fullPortfolio = await prisma.portfolio.findUnique({
+    where: { id },
+    include: {
+      blocks: {
+        orderBy: { position: 'asc' },
+      },
+    },
+  })
+
+  return NextResponse.json({ portfolio: fullPortfolio })
+}
 
 export async function PATCH(
   req: Request,
@@ -32,7 +54,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { theme, slug, title } = parsed.data
+    const { theme, slug, title, design_tokens } = parsed.data
 
     // If slug is being changed, check for conflicts
     if (slug && slug !== portfolio!.slug) {
@@ -53,6 +75,7 @@ export async function PATCH(
         ...(theme && { theme }),
         ...(slug && { slug }),
         ...(title !== undefined && { title }),
+        ...(design_tokens && { design_tokens }),
       },
     })
 

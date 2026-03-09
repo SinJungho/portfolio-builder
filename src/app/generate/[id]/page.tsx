@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import ConnectStep from './steps/connect'
 import AnalyzeStep from './steps/analyze'
 import GenerateStep from './steps/generate'
+import AdjustStep from './steps/adjust'
 
 type Step = 'connect' | 'analyze' | 'generate' | 'adjust'
 
@@ -42,11 +43,6 @@ export default async function GeneratePage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // adjust는 아직 미구현 → generate로 리다이렉트
-  if (step === 'adjust') {
-    redirect(`/generate/${id}?step=generate`)
-  }
-
   const stepInfo = getStepInfo(step as Step)
 
   return (
@@ -64,17 +60,16 @@ export default async function GeneratePage({ params, searchParams }: Props) {
           <div className="flex items-center gap-3">
             {/* 단계 인디케이터 */}
             <div className="flex items-center gap-1.5">
-              {step !== 'adjust' &&
-                [1, 2, 3].map((n) => (
-                  <span
-                    key={n}
-                    className={`inline-block h-2 w-2 rounded-full transition-colors ${
-                      n <= stepInfo.current
-                        ? 'bg-primary'
-                        : 'bg-muted-foreground/30'
-                    }`}
-                  />
-                ))}
+              {[1, 2, 3].map((n) => (
+                <span
+                  key={n}
+                  className={`inline-block h-2 w-2 rounded-full transition-colors ${
+                    n <= stepInfo.current
+                      ? 'bg-primary'
+                      : 'bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
             </div>
             <span className="text-sm font-medium text-muted-foreground">
               {stepInfo.label}
@@ -88,6 +83,7 @@ export default async function GeneratePage({ params, searchParams }: Props) {
         {step === 'connect' && <ConnectStep portfolioId={id} />}
         {step === 'analyze' && <AnalyzeStep portfolioId={id} />}
         {step === 'generate' && <GenerateStep portfolioId={id} />}
+        {step === 'adjust' && <AdjustStep portfolioId={id} />}
       </main>
     </div>
   )

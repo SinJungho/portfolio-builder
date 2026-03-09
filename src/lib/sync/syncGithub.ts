@@ -44,13 +44,23 @@ export async function syncGithubData({
       where: { user_id_provider: { user_id: userId, provider: 'github' } },
     })
 
-    if (!integration || !integration.access_token) {
-      throw new Error('Integration not found or missing access token')
+    let accessToken = integration?.access_token
+
+    // Fallback: If not in Integration table, try to get from Account table (NextAuth)
+    if (!accessToken) {
+      const account = await prisma.account.findFirst({
+        where: { userId, provider: 'github' },
+      })
+      accessToken = account?.access_token
+    }
+
+    if (!accessToken) {
+      throw new Error('GitHub access token not found. Please try logging out and in again.')
     }
 
     // 1. Fetch repositories
     await updateProgress(10)
-    const repos = await fetchUserRepos(integration.access_token)
+    const repos = await fetchUserRepos(accessToken)
     await updateProgress(30, { synced_count: 0 })
 
     const total = repos.length
@@ -77,7 +87,7 @@ export async function syncGithubData({
         // Cache hit if not forced and readme already exists
         if (force || !readme) {
           const owner = repo.full_name.split('/')[0]
-          readme = await fetchRepoReadme(integration.access_token, owner, repo.name)
+          readme = await fetchRepoReadme(accessToken, owner, repo.name)
         }
 
         const fullRawData = {
@@ -130,9 +140,15 @@ export async function syncGithubData({
       }
     }
 
-    await prisma.integration.update({
-      where: { id: integration.id },
-      data: { synced_at: new Date() },
+    await prisma.integration.upsert({
+      where: { user_id_provider: { user_id: userId, provider: 'github' } },
+      update: { synced_at: new Date() },
+      create: {
+        user_id: userId,
+        provider: 'github',
+        access_token: accessToken,
+        synced_at: new Date(),
+      },
     })
 
     await updateProgress(100, { status: 'completed' })

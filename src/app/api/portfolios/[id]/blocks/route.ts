@@ -4,16 +4,16 @@ import { validatePortfolioOwnership } from '@/lib/api/validatePortfolioOwnership
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-const putSchema = z.object({
-  blocks: z.array(
-    z.object({
-      id: z.string().uuid(),
-      position: z.number().int(),
-    })
-  ),
+const blocksUpdateSchema = z.object({
+  blocks: z.array(z.object({
+    id: z.string().uuid(),
+    is_visible: z.boolean().optional(),
+    position: z.number().optional(),
+    config: z.any().optional(),
+  }))
 })
 
-export async function PUT(
+export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -24,7 +24,7 @@ export async function PUT(
 
   try {
     const body = await req.json()
-    const parsed = putSchema.safeParse(body)
+    const parsed = blocksUpdateSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
@@ -32,35 +32,29 @@ export async function PUT(
 
     const { blocks } = parsed.data
 
-    // Verify all blocks belong to this portfolio
-    const blockIds = blocks.map((b) => b.id)
-    const existingBlocksCount = await prisma.portfolioBlock.count({
-      where: {
-        id: { in: blockIds },
-        portfolio_id: id,
-      },
-    })
-
-    if (existingBlocksCount !== blocks.length) {
-      return NextResponse.json({ error: 'One or more blocks not found' }, { status: 400 })
-    }
-
-    // Transaction for bulk update
+    // Batch update blocks using transaction
     await prisma.$transaction(
-      blocks.map((b) =>
+      blocks.map(block => 
         prisma.portfolioBlock.update({
-          where: { id: b.id },
-          data: { position: b.position },
+          where: { 
+            id: block.id,
+            portfolio_id: id // Ensure the block belongs to this portfolio
+          },
+          data: {
+            ...(block.is_visible !== undefined && { is_visible: block.is_visible }),
+            ...(block.position !== undefined && { position: block.position }),
+            ...(block.config && { config: block.config as any }),
+          }
         })
       )
     )
 
-    // Revalidate
+    // Revalidate the portfolio viewer page
     revalidatePath(`/${portfolio!.slug}`)
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('PUT reorder blocks error:', err)
+    console.error('PATCH portfolio blocks error:', err)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
