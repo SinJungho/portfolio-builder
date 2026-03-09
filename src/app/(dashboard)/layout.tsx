@@ -1,11 +1,20 @@
-export default function layout() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold">대시보드 (Dashboard) Page</h1>
-      <p className="text-lg">
-        이 페이지는 아직 개발 중입니다. 포트폴리오를 선택하거나 새로 생성할 수
-        있습니다.
-      </p>
-    </div>
-  );
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (!(session.user as any).github_bio_verified) {
+    redirect("/onboarding/bio");
+  }
+
+  return <div className="flex min-h-screen flex-col">{children}</div>;
 }
