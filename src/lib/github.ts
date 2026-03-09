@@ -20,7 +20,7 @@ export async function fetchUserRepos(accessToken: string): Promise<GithubRepo[]>
   while (true) {
     const res = await fetch(`https://api.github.com/user/repos?per_page=${perPage}&page=${page}&sort=pushed&direction=desc`, {
       headers: {
-        Authorization: `token ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         Accept: 'application/vnd.github.v3+json',
         'User-Agent': 'PortfolioForge-App',
       },
