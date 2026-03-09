@@ -5,7 +5,6 @@ import { SettingsNav } from "@/components/features/settings/SettingsNav";
 import { Sidebar } from "@/components/layouts/Sidebar";
 import { useState } from "react";
 
-
 export default function Page() {
   const [activeSection, setActiveSection] = useState<
     "profile" | "account" | "integrations" | "billing" | "danger"

@@ -68,3 +68,27 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+
+  const { error, portfolio } = await validatePortfolioOwnership(id)
+  if (error) return error
+
+  try {
+    await prisma.portfolio.delete({
+      where: { id },
+    })
+
+    // Revalidate the slug so it returns 404
+    revalidatePath(`/${portfolio!.slug}`)
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('DELETE portfolio error:', err)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}
