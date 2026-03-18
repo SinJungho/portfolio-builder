@@ -1,5 +1,5 @@
-import { signIn } from '@/auth'
-import { Button } from '@/components/ui/button'
+import { signIn } from "@/auth";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   return (
@@ -9,8 +9,8 @@ export default function LoginPage() {
         <p className="text-muted-foreground">GitHub 계정으로 시작하세요</p>
         <form
           action={async () => {
-            'use server'
-            await signIn('github', { redirectTo: '/dashboard' })
+            "use server";
+            await signIn("github", { redirectTo: "/dashboard" });
           }}
         >
           <Button type="submit" size="lg">
@@ -19,5 +19,5 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }
