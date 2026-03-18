@@ -1,184 +1,195 @@
-import { create } from 'zustand'
-import { immer } from 'zustand/middleware/immer'
-import {
-  updateBlockStatus,
-  updateBlockConfig,
-  reorderBlocksApi,
-  updatePortfolioApi,
-} from '@/lib/api/portfolio'
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
 export type Block = {
-  id: string
-  block_type: 'hero' | 'project_grid' | 'skills' | 'blog_feed' | 'contact'
-  position: number
-  config: Record<string, unknown>
-  is_visible: boolean
-  is_ai_generated: boolean
-}
+  id: string;
+  block_type: "hero" | "project_grid" | "skills" | "blog_feed" | "contact";
+  position: number;
+  config: Record<string, unknown>;
+  is_visible: boolean;
+  is_ai_generated: boolean;
+};
 
-type PortfolioState = {
-  portfolioId: string | null
-  blocks: Block[]
-  theme: string
-  isPublished: boolean
-  publishedUrl: string | null
-  isSaving: boolean
-}
+export type PortfolioStore = {
+  // 상태
+  portfolioId: string | null;
+  blocks: Block[];
+  theme: string;
+  isPublished: boolean;
+  publishedUrl: string | null;
+  isSaving: boolean; // API 호출 중 여부
 
-type PortfolioActions = {
+  // 초기화
   initialize: (data: {
-    portfolioId: string
-    blocks: Block[]
-    theme: string
-    isPublished: boolean
-    publishedUrl: string | null
-  }) => void
-  toggleBlock: (blockId: string) => Promise<void>
-  reorderBlocks: (reordered: Block[]) => Promise<void>
-  setTheme: (theme: string) => Promise<void>
+    portfolioId: string;
+    blocks: Block[];
+    theme: string;
+    isPublished: boolean;
+    publishedUrl: string | null;
+  }) => void;
+
+  // 액션
+  toggleBlock: (blockId: string) => Promise<void>;
+  reorderBlocks: (reordered: Block[]) => Promise<void>;
+  setTheme: (theme: string) => Promise<void>;
   updateOptionalField: (
     blockId: string,
-    config: Partial<Record<string, unknown>>
-  ) => Promise<void>
-}
+    config: Partial<Record<string, unknown>>,
+  ) => Promise<void>;
+};
 
-export const usePortfolioStore = create<PortfolioState & PortfolioActions>()(
+export const usePortfolioStore = create<PortfolioStore>()(
   immer((set, get) => ({
-    // 상태 초기값
     portfolioId: null,
     blocks: [],
-    theme: 'minimalist',
+    theme: "minimalist",
     isPublished: false,
     publishedUrl: null,
     isSaving: false,
 
-    // 초기화
     initialize: (data) => {
       set((state) => {
-        state.portfolioId = data.portfolioId
-        state.blocks = data.blocks
-        state.theme = data.theme
-        state.isPublished = data.isPublished
-        state.publishedUrl = data.publishedUrl
-      })
+        state.portfolioId = data.portfolioId;
+        state.blocks = data.blocks;
+        state.theme = data.theme;
+        state.isPublished = data.isPublished;
+        state.publishedUrl = data.publishedUrl;
+      });
     },
 
-    // 블록 표시 여부 토글
-    toggleBlock: async (blockId) => {
-      const { portfolioId, blocks } = get()
-      if (!portfolioId) return
+    toggleBlock: async (blockId: string) => {
+      const { portfolioId, blocks } = get();
+      if (!portfolioId) return;
 
-      const blockIndex = blocks.findIndex((b) => b.id === blockId)
-      if (blockIndex === -1) return
-
-      const previousStatus = blocks[blockIndex].is_visible
-      const nextStatus = !previousStatus
+      const previousBlocks = [...blocks];
 
       // 낙관적 업데이트
       set((state) => {
-        state.blocks[blockIndex].is_visible = nextStatus
-        state.isSaving = true
-      })
+        const block = state.blocks.find((b) => b.id === blockId);
+        if (block) {
+          block.is_visible = !block.is_visible;
+        }
+        state.isSaving = true;
+      });
+
+      const updatedBlock = get().blocks.find((b) => b.id === blockId);
+      if (!updatedBlock) return;
 
       try {
-        await updateBlockStatus(portfolioId, blockId, { is_visible: nextStatus })
-      } catch (error) {
-        console.error('Failed to toggle block:', error)
+        const res = await fetch(
+          `/api/portfolios/${portfolioId}/blocks/${blockId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_visible: updatedBlock.is_visible }),
+          },
+        );
+        if (!res.ok) throw new Error("Update failed");
+      } catch (e) {
         // 롤백
         set((state) => {
-          state.blocks[blockIndex].is_visible = previousStatus
-        })
+          state.blocks = previousBlocks;
+        });
       } finally {
         set((state) => {
-          state.isSaving = false
-        })
+          state.isSaving = false;
+        });
       }
     },
 
-    // 블록 순서 변경
-    reorderBlocks: async (reordered) => {
-      const { portfolioId, blocks: previousBlocks } = get()
-      if (!portfolioId) return
+    reorderBlocks: async (reordered: Block[]) => {
+      const { portfolioId, blocks: previousBlocks } = get();
+      if (!portfolioId) return;
 
-      // 낙관적 업데이트 (UI 반영을 위해 전달받은 순서로 교체)
       set((state) => {
-        state.blocks = reordered
-        state.isSaving = true
-      })
+        state.blocks = reordered;
+        state.isSaving = true;
+      });
 
       try {
-        await reorderBlocksApi(portfolioId, {
+        const payload = {
           blocks: reordered.map((b) => ({ id: b.id, position: b.position })),
-        })
-      } catch (error) {
-        console.error('Failed to reorder blocks:', error)
-        // 롤백
+        };
+        const res = await fetch(`/api/portfolios/${portfolioId}/blocks`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Update failed");
+      } catch (e) {
         set((state) => {
-          state.blocks = previousBlocks
-        })
+          state.blocks = previousBlocks;
+        });
       } finally {
         set((state) => {
-          state.isSaving = false
-        })
+          state.isSaving = false;
+        });
       }
     },
 
-    // 테마 설정
-    setTheme: async (theme) => {
-      const { portfolioId, theme: previousTheme } = get()
-      if (!portfolioId) return
+    setTheme: async (theme: string) => {
+      const { portfolioId, theme: prevTheme } = get();
+      if (!portfolioId) return;
 
-      // 낙관적 업데이트
       set((state) => {
-        state.theme = theme
-        state.isSaving = true
-      })
+        state.theme = theme;
+        state.isSaving = true;
+      });
 
       try {
-        await updatePortfolioApi(portfolioId, { theme })
-      } catch (error) {
-        console.error('Failed to set theme:', error)
-        // 롤백
+        const res = await fetch(`/api/portfolios/${portfolioId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ theme }),
+        });
+        if (!res.ok) throw new Error("Update failed");
+      } catch (e) {
         set((state) => {
-          state.theme = previousTheme
-        })
+          state.theme = prevTheme;
+        });
       } finally {
         set((state) => {
-          state.isSaving = false
-        })
+          state.isSaving = false;
+        });
       }
     },
 
-    // 블록 설정 업데이트 (Email, LinkedIn 등 선택 필드)
-    updateOptionalField: async (blockId, configUpdate) => {
-      const { portfolioId, blocks } = get()
-      if (!portfolioId) return
+    updateOptionalField: async (
+      blockId: string,
+      config: Partial<Record<string, unknown>>,
+    ) => {
+      const { portfolioId, blocks } = get();
+      if (!portfolioId) return;
 
-      const blockIndex = blocks.findIndex((b) => b.id === blockId)
-      if (blockIndex === -1) return
+      const previousBlocks = [...blocks];
 
-      const previousConfig = { ...blocks[blockIndex].config }
-      const nextConfig = { ...previousConfig, ...configUpdate }
-
-      // 낙관적 업데이트
       set((state) => {
-        state.blocks[blockIndex].config = nextConfig
-        state.isSaving = true
-      })
+        const block = state.blocks.find((b) => b.id === blockId);
+        if (block) {
+          block.config = { ...block.config, ...config };
+        }
+        state.isSaving = true;
+      });
 
       try {
-        await updateBlockConfig(portfolioId, blockId, { config: nextConfig })
-      } catch (error) {
-        console.error('Failed to update config:', error)
-        // 롤백
+        const res = await fetch(
+          `/api/portfolios/${portfolioId}/blocks/${blockId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ config }),
+          },
+        );
+        if (!res.ok) throw new Error("Update failed");
+      } catch (e) {
         set((state) => {
-          state.blocks[blockIndex].config = previousConfig
-        })
+          state.blocks = previousBlocks;
+        });
       } finally {
         set((state) => {
-          state.isSaving = false
-        })
+          state.isSaving = false;
+        });
       }
     },
-  }))
-)
+  })),
+);

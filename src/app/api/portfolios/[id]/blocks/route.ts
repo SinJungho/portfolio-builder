@@ -1,60 +1,65 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { validatePortfolioOwnership } from '@/lib/api/validatePortfolioOwnership'
-import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-const blocksUpdateSchema = z.object({
+const reorderBlocksSchema = z.object({
   blocks: z.array(z.object({
-    id: z.string().uuid(),
-    is_visible: z.boolean().optional(),
-    position: z.number().optional(),
-    config: z.any().optional(),
-  }))
-})
+    id: z.string(),
+    position: z.number(),
+  })),
+});
 
-export async function PATCH(
+export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
-
-  const { error, portfolio } = await validatePortfolioOwnership(id)
-  if (error) return error
-
   try {
-    const body = await req.json()
-    const parsed = blocksUpdateSchema.safeParse(body)
+    const { id } = await params;
+    const { error, portfolio } = await validatePortfolioOwnership(id);
+    if (error) return error;
 
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    let json = {};
+    try {
+      json = await req.json();
+    } catch (e) {
+      // ignore
     }
 
-    const { blocks } = parsed.data
+    const { success, data, error: zError } = reorderBlocksSchema.safeParse(json);
+    if (!success) {
+      return NextResponse.json({ error: zError.message }, { status: 400 });
+    }
 
-    // Batch update blocks using transaction
+    const existingBlocks = await prisma.portfolioBlock.findMany({
+      where: { portfolio_id: id },
+      select: { id: true },
+    });
+
+    const validBlockIds = new Set(existingBlocks.map(b => b.id));
+    for (const b of data.blocks) {
+      if (!validBlockIds.has(b.id)) {
+        return NextResponse.json({ error: `Block ${b.id} does not belong to this portfolio` }, { status: 400 });
+      }
+    }
+
     await prisma.$transaction(
-      blocks.map(block => 
+      data.blocks.map((block) => 
         prisma.portfolioBlock.update({
-          where: { 
-            id: block.id,
-            portfolio_id: id // Ensure the block belongs to this portfolio
-          },
-          data: {
-            ...(block.is_visible !== undefined && { is_visible: block.is_visible }),
-            ...(block.position !== undefined && { position: block.position }),
-            ...(block.config && { config: block.config as any }),
-          }
+          where: { id: block.id },
+          data: { position: block.position },
         })
       )
-    )
+    );
 
-    // Revalidate the portfolio viewer page
-    revalidatePath(`/${portfolio!.slug}`)
+    if (portfolio?.slug) {
+      revalidatePath(`/${portfolio.slug}`);
+    }
 
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    console.error('PATCH portfolio blocks error:', err)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (error: any) {
+    console.error("PUT /api/portfolios/[id]/blocks error:", error);
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }

@@ -1,117 +1,71 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { validatePortfolioOwnership } from '@/lib/api/validatePortfolioOwnership'
-import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
+import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
-const patchSchema = z.object({
-  theme: z.enum(['minimalist', 'creative', 'corporate', 'dark', 'pastel', 'tech']).optional(),
-  slug: z
-    .string()
-    .min(3)
-    .max(50)
-    .regex(/^[a-z0-9-]+$/)
+const updatePortfolioSchema = z.object({
+  theme: z
+    .enum(["minimalist", "creative", "corporate", "dark", "pastel", "tech"])
     .optional(),
-  title: z.string().max(255).optional(),
-  design_tokens: z.any().optional(),
-})
-
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-
-  const { error, portfolio } = await validatePortfolioOwnership(id)
-  if (error) return error
-
-  const fullPortfolio = await prisma.portfolio.findUnique({
-    where: { id },
-    include: {
-      blocks: {
-        orderBy: { position: 'asc' },
-      },
-    },
-  })
-
-  return NextResponse.json({ portfolio: fullPortfolio })
-}
+  slug: z.string().optional(),
+  title: z.string().optional(),
+});
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params
-
-  const { error, portfolio } = await validatePortfolioOwnership(id)
-  if (error) return error
-
   try {
-    const body = await req.json()
-    const parsed = patchSchema.safeParse(body)
+    const { id } = await params;
+    const { error, portfolio } = await validatePortfolioOwnership(id);
+    if (error) return error;
 
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    let json = {};
+    try {
+      json = await req.json();
+    } catch (e) {
+      // ignore
     }
 
-    const { theme, slug, title, design_tokens } = parsed.data
+    const {
+      success,
+      data,
+      error: zError,
+    } = updatePortfolioSchema.safeParse(json);
+    if (!success) {
+      return NextResponse.json({ error: zError.message }, { status: 400 });
+    }
 
-    // If slug is being changed, check for conflicts
-    if (slug && slug !== portfolio!.slug) {
-      const conflict = await prisma.portfolio.findUnique({
-        where: { slug },
-        select: { id: true },
-      })
+    const updateData: any = {};
+    if (data.theme !== undefined) updateData.theme = data.theme;
+    if (data.title !== undefined) updateData.title = data.title;
 
-      if (conflict) {
-        return NextResponse.json({ error: 'slug_conflict' }, { status: 409 })
+    if (data.slug && data.slug !== portfolio?.slug) {
+      const existing = await prisma.portfolio.findUnique({
+        where: { slug: data.slug },
+      });
+      if (existing) {
+        return NextResponse.json({ error: "slug_conflict" }, { status: 409 });
       }
+      updateData.slug = data.slug;
     }
 
-    // Update portfolio
     const updatedPortfolio = await prisma.portfolio.update({
       where: { id },
-      data: {
-        ...(theme && { theme }),
-        ...(slug && { slug }),
-        ...(title !== undefined && { title }),
-        ...(design_tokens && { design_tokens }),
-      },
-    })
+      data: updateData,
+    });
 
-    // Revalidate old and new slug
-    revalidatePath(`/${portfolio!.slug}`)
-    if (slug && slug !== portfolio!.slug) {
-      revalidatePath(`/${slug}`)
+    if (updatedPortfolio.slug) {
+      revalidatePath(`/${updatedPortfolio.slug}`);
     }
 
-    return NextResponse.json({ portfolio: updatedPortfolio })
-  } catch (err) {
-    console.error('PATCH portfolio error:', err)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-  }
-}
-
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-
-  const { error, portfolio } = await validatePortfolioOwnership(id)
-  if (error) return error
-
-  try {
-    await prisma.portfolio.delete({
-      where: { id },
-    })
-
-    // Revalidate the slug so it returns 404
-    revalidatePath(`/${portfolio!.slug}`)
-
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    console.error('DELETE portfolio error:', err)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({ portfolio: updatedPortfolio }, { status: 200 });
+  } catch (error: any) {
+    console.error("PATCH /api/portfolios/[id] error:", error);
+    return NextResponse.json(
+      { error: error.message || "Internal server error" },
+      { status: 500 },
+    );
   }
 }

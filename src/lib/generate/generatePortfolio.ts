@@ -1,244 +1,228 @@
-import { prisma } from '@/lib/prisma'
-import { redis, JOB_KEY, type JobStatus } from '@/lib/redis'
-import { env } from '@/lib/env'
-import { OpenAI } from 'openai'
+import { prisma } from "@/lib/prisma";
+import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
+import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-function calculateAiScore(p: any): number {
-  if (p.ai_score !== null && p.ai_score !== undefined) return p.ai_score
-
-  let readmeQuality = 0.0
-  let recency = 0.1
-  let stars = Math.min((p.stargazers_count || 0) / 100, 1.0)
-
-  const rawData = p.raw_data as any || {}
-  const readme = rawData.readme || ''
-
-  if (readme) {
-    if (readme.length < 300) {
-      readmeQuality = 0.3
-    } else {
-      readmeQuality = 0.6
-      if (readme.includes('![')) readmeQuality += 0.2
-      if (readme.includes('```')) readmeQuality += 0.1
-    }
+async function updateJobProgress(jobId: string, updates: Partial<JobStatus>) {
+  const key = JOB_KEY(jobId);
+  const existingJobStr = await redis.get(key);
+  if (existingJobStr) {
+    let existingJob = typeof existingJobStr === 'string' ? JSON.parse(existingJobStr) : existingJobStr;
+    const newJob = { ...existingJob, ...updates };
+    await redis.set(key, JSON.stringify(newJob), { ex: JOB_TTL });
   }
-
-  if (p.pushed_at) {
-    const days = (new Date().getTime() - new Date(p.pushed_at).getTime()) / (1000 * 3600 * 24)
-    if (days <= 30) recency = 1.0
-    else if (days <= 90) recency = 0.7
-    else if (days <= 180) recency = 0.4
-  }
-
-  return stars * 0.3 + recency * 0.4 + readmeQuality * 0.3
 }
 
-export async function generatePortfolio({
-  jobId,
-  portfolioId,
-  userId,
-  autoPublish,
-}: {
-  jobId: string
-  portfolioId: string
-  userId: string
-  autoPublish: boolean
+export async function generatePortfolio(params: {
+  jobId: string;
+  portfolioId: string;
+  userId: string;
+  autoPublish: boolean;
 }): Promise<void> {
-  const updateProgress = async (progress: number, updates: Partial<JobStatus> = {}) => {
-    try {
-      const key = JOB_KEY(jobId)
-      const cached = await redis.get(key)
-      let current: JobStatus = cached
-        ? typeof cached === 'string' ? JSON.parse(cached) : cached
-        : {
-            status: 'pending',
-            progress: 0,
-            portfolio_id: portfolioId,
-            user_id: userId,
-            auto_publish: autoPublish,
-          }
-
-      current = { ...current, ...updates, progress }
-      await redis.set(key, JSON.stringify(current), { ex: 600 })
-    } catch (err) {
-      console.error(`Failed to update progress for job ${jobId}:`, err)
-    }
-  }
+  const { jobId, portfolioId, userId, autoPublish } = params;
 
   try {
-    // progress 0
-    await updateProgress(0, { status: 'processing' })
+    await updateJobProgress(jobId, { status: "processing", progress: 0 });
 
-    // progress 10: users, raw_projects 조회
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        raw_projects: true,
-        integrations: {
-          where: { is_active: true },
-        },
-      },
-    })
+    });
 
-    if (!user) throw new Error('User not found')
-    await updateProgress(10)
+    if (!user) throw new Error("User not found");
 
-    // progress 30: hero 블록 생성
-    const languageCounts: Record<string, number> = {}
-    let totalProjects = 0
+    const rawProjects = await prisma.rawProject.findMany({
+      where: { user_id: userId, is_fork: false },
+    });
 
-    user.raw_projects.forEach((p) => {
-      if (p.language) {
-        languageCounts[p.language] = (languageCounts[p.language] || 0) + 1
+    await updateJobProgress(jobId, { progress: 10 });
+
+    // Calculate ai_score if null
+    const projectsWithScore = rawProjects.map(p => {
+      let score = p.ai_score;
+      if (score === null) {
+        let readme_quality = 0.0;
+        if (p.raw_data) {
+          const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
+          const readme = rawData?.readme || "";
+          if (!readme) {
+            readme_quality = 0.0;
+          } else if (readme.length < 300) {
+            readme_quality = 0.3;
+          } else {
+            readme_quality = 0.6;
+            if (readme.includes("![")) readme_quality += 0.2;
+            if (readme.includes("```")) readme_quality += 0.1;
+            readme_quality = Math.min(readme_quality, 1.0);
+          }
+        }
+
+        let recency = 0.1;
+        if (p.pushed_at) {
+          const days = (Date.now() - new Date(p.pushed_at).getTime()) / (1000 * 60 * 60 * 24);
+          if (days <= 30) recency = 1.0;
+          else if (days <= 90) recency = 0.7;
+          else if (days <= 180) recency = 0.4;
+        }
+
+        const starsNorm = Math.min(p.stargazers_count / 100, 1.0);
+        score = starsNorm * 0.3 + recency * 0.4 + readme_quality * 0.3;
       }
-      totalProjects++
-    })
+      return { ...p, calculatedScore: score ?? p.stargazers_count };
+    });
 
-    const sortedLangs = Object.entries(languageCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+    const topProjects = projectsWithScore
+      .sort((a, b) => b.calculatedScore - a.calculatedScore)
+      .slice(0, 4);
 
-    const skillsString = sortedLangs.map((l) => l[0]).join(', ') || '알 수 없음'
+    // Language aggregation
+    const languageCounts: Record<string, number> = {};
+    let totalProjects = rawProjects.length;
+    rawProjects.forEach(p => {
+      if (p.language) {
+        languageCounts[p.language] = (languageCounts[p.language] || 0) + 1;
+      }
+    });
 
-    let subheadline = user.github_bio?.substring(0, 50) || '안녕하세요. 개발자입니다.'
-    const prompt = `GitHub bio: ${user.github_bio || '없음'}\n사용 언어: ${skillsString}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`
+    const skills = Object.entries(languageCounts)
+      .map(([name, count]) => ({
+        name,
+        level: Math.max(10, Math.round((count / Math.max(totalProjects, 1)) * 100)),
+      }))
+      .sort((a, b) => b.level - a.level)
+      .slice(0, 8);
+
+    // AI subheadline
+    const bio = user.github_bio || "";
+    let subheadline = bio.substring(0, 50);
 
     try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-      })
-      if (response.choices[0]?.message?.content) {
-        subheadline = response.choices[0].message.content.trim().substring(0, 200) // DB limit
+      const skillsStr = skills.map(s => s.name).join(", ");
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "user",
+          content: `GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`,
+        }],
+      });
+      if (completion.choices[0]?.message?.content) {
+        subheadline = completion.choices[0].message.content;
       }
-    } catch (openaiErr) {
-      console.error('OpenAI generation failed, using fallback:', openaiErr)
-      // subheadline fallback already assigned
+    } catch (e) {
+      console.error("OpenAI subheadline error:", e);
     }
 
-    const heroBlock = {
+    await updateJobProgress(jobId, { progress: 30 });
+
+    const portfolioBlocksData: any[] = [];
+
+    // Hero Block
+    portfolioBlocksData.push({
       portfolio_id: portfolioId,
-      block_type: 'hero',
+      block_type: "hero",
       position: 0,
       config: {
-        headline: user.name || user.github_login || '개발자',
+        headline: user.name || user.github_login || "Developer",
         subheadline,
-        bio: user.github_bio || '',
+        bio: user.github_bio || "",
         show_github_stats: true,
       },
       is_visible: true,
       is_ai_generated: true,
-    }
+    });
 
-    await updateProgress(30)
+    await updateJobProgress(jobId, { progress: 50 });
 
-    // progress 50: project_grid, skills 블록 생성
-    const eligibleProjects = user.raw_projects
-      .filter((p) => !p.is_fork)
-      .map((p) => ({ ...p, calculatedScore: calculateAiScore(p) }))
-      .sort((a, b) => {
-        if (a.calculatedScore !== b.calculatedScore) {
-          return b.calculatedScore - a.calculatedScore
-        }
-        return (b.stargazers_count || 0) - (a.stargazers_count || 0)
-      })
-      .slice(0, 4)
-
-    const projectGridBlock = {
+    // Project Grid Block
+    portfolioBlocksData.push({
       portfolio_id: portfolioId,
-      block_type: 'project_grid',
+      block_type: "project_grid",
       position: 1,
       config: {
-        layout: 'grid',
+        layout: "grid",
         columns: 2,
-        project_ids: eligibleProjects.map((p) => p.id),
+        project_ids: topProjects.map(p => p.id),
         show_tech_stack: true,
       },
       is_visible: true,
       is_ai_generated: true,
-    }
+    });
 
-    const skills = sortedLangs.map(([name, count]) => ({
-      name,
-      level: Math.max(10, Math.round((count / (totalProjects || 1)) * 100)),
-    }))
-
-    const skillsBlock = {
+    // Skills Block
+    portfolioBlocksData.push({
       portfolio_id: portfolioId,
-      block_type: 'skills',
+      block_type: "skills",
       position: 2,
       config: {
-        chart_type: 'radar',
+        chart_type: "radar",
         skills,
       },
       is_visible: true,
       is_ai_generated: true,
-    }
+    });
 
-    await updateProgress(50)
+    await updateJobProgress(jobId, { progress: 70 });
 
-    // progress 70: contact, blog_feed 블록 생성
-    const contactConfig: Record<string, string> = {
+    // Contact Block
+    const contactConfig: any = {
       github_url: `https://github.com/${user.github_login}`,
-    }
-
-    const missing_optional_fields = ['linkedin_url', 'website_url']
-
+    };
     if (user.email) {
-      contactConfig.email = user.email
-    } else {
-      missing_optional_fields.push('email')
+      contactConfig.email = user.email;
     }
 
-    const contactBlock = {
+    portfolioBlocksData.push({
       portfolio_id: portfolioId,
-      block_type: 'contact',
+      block_type: "contact",
       position: 3,
       config: contactConfig,
       is_visible: true,
       is_ai_generated: true,
-    }
+    });
 
-    const newBlocks: any[] = [heroBlock, projectGridBlock, skillsBlock, contactBlock]
+    // Blog Feed Block
+    const blogIntegrations = await prisma.integration.findMany({
+      where: {
+        user_id: userId,
+        provider: { in: ["tistory", "velog", "medium"] },
+        is_active: true,
+      },
+    });
 
-    const blogIntegration = user.integrations.find((i) =>
-      ['tistory', 'velog', 'medium'].includes(i.provider)
-    )
-
-    if (blogIntegration) {
-      newBlocks.push({
+    if (blogIntegrations.length > 0) {
+      portfolioBlocksData.push({
         portfolio_id: portfolioId,
-        block_type: 'blog_feed',
+        block_type: "blog_feed",
         position: 4,
         config: {
-          integration_provider: blogIntegration.provider,
+          integration_provider: blogIntegrations[0].provider,
           max_items: 3,
           show_thumbnail: true,
         },
         is_visible: true,
         is_ai_generated: true,
-      })
+      });
     }
 
-    await updateProgress(70)
+    await updateJobProgress(jobId, { progress: 85 });
 
-    // progress 85: portfolio_blocks DB 저장 완료
-    await prisma.portfolioBlock.deleteMany({ where: { portfolio_id: portfolioId } })
     await prisma.portfolioBlock.createMany({
-      data: newBlocks,
-    })
+      data: portfolioBlocksData,
+    });
 
-    await updateProgress(85)
+    await updateJobProgress(jobId, { progress: 95 });
 
-    // progress 95: is_published: true 저장 + revalidation
-    let published_url: string | null = null
-    const portfolio = await prisma.portfolio.findUnique({
-      where: { id: portfolioId },
-    })
+    let publishedUrl = undefined;
+    let finalSlug = "";
 
-    if (autoPublish && portfolio) {
+    const pUpdate = await prisma.portfolio.findUnique({
+      where: { id: portfolioId }
+    });
+    if (pUpdate) {
+      finalSlug = pUpdate.slug;
+    }
+
+    if (autoPublish && finalSlug) {
       await prisma.portfolio.update({
         where: { id: portfolioId },
         data: {
@@ -246,33 +230,31 @@ export async function generatePortfolio({
           auto_published: true,
           published_at: new Date(),
         },
-      })
-      published_url = `${env.NEXT_PUBLIC_APP_URL}/${portfolio.slug}`
+      });
 
-      try {
-        await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/revalidate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug: portfolio.slug }),
-        })
-      } catch (err) {
-        console.error('Failed to trigger revalidate:', err)
-      }
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      fetch(`${appUrl}/api/revalidate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: finalSlug }),
+      }).catch(console.error);
+
+      publishedUrl = appUrl.includes("localhost") ? `http://localhost:3000/${finalSlug}` : `https://${finalSlug}.portfolioforge.app`;
     }
 
-    await updateProgress(95)
+    const missing_optional_fields = [];
+    if (!user.email) missing_optional_fields.push("email");
+    missing_optional_fields.push("linkedin_url", "website_url");
 
-    // progress 100: status: 'completed'
-    await updateProgress(100, {
-      status: 'completed',
-      published_url,
+    await updateJobProgress(jobId, {
+      status: "completed",
+      progress: 100,
+      published_url: publishedUrl,
       missing_optional_fields,
-    })
+    });
+
   } catch (error: any) {
-    console.error('generatePortfolio process failed:', error)
-    await updateProgress(0, {
-      status: 'failed',
-      error: error.message || String(error),
-    })
+    console.error("generatePortfolio error:", error);
+    await updateJobProgress(jobId, { status: "failed", error: error.message });
   }
 }
