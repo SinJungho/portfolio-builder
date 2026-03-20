@@ -102,3 +102,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return new NextResponse(null, { status: 401 });
+    }
+
+    const { user } = session;
+
+    const portfolios = await prisma.portfolio.findMany({
+      where: { user_id: user.id },
+      orderBy: { created_at: "desc" },
+    });
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { plan: true, ai_credits: true, github_bio_verified: true }
+    });
+    
+    // Also see sync status
+    const integration = await prisma.integration.findFirst({
+      where: { user_id: user.id, provider: "github" },
+      orderBy: { synced_at: "desc" }
+    });
+
+    return NextResponse.json({
+      portfolios,
+      user: dbUser,
+      github_synced_at: integration?.synced_at || null,
+    });
+  } catch (error: any) {
+    console.error("GET /api/portfolios error:", error);
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+  }
+}

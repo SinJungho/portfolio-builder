@@ -60,3 +60,51 @@ export async function PATCH(
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string; blockId: string }> }
+) {
+  try {
+    const { id, blockId } = await params;
+    const { error, portfolio } = await validatePortfolioOwnership(id);
+    if (error) return error;
+
+    const block = await prisma.portfolioBlock.findFirst({
+      where: {
+        id: blockId,
+        portfolio_id: id,
+      },
+    });
+
+    if (!block) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    await prisma.portfolioBlock.delete({
+      where: { id: blockId },
+    });
+
+    // Reorder remaining blocks
+    const remainingBlocks = await prisma.portfolioBlock.findMany({
+      where: { portfolio_id: id },
+      orderBy: { position: "asc" },
+    });
+
+    for (let i = 0; i < remainingBlocks.length; i++) {
+      await prisma.portfolioBlock.update({
+        where: { id: remainingBlocks[i].id },
+        data: { position: i },
+      });
+    }
+
+    if (portfolio?.slug) {
+      revalidatePath(`/${portfolio.slug}`);
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error: any) {
+    console.error("DELETE /api/portfolios/[id]/blocks/[blockId] error:", error);
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+  }
+}

@@ -21,6 +21,8 @@ export async function POST(req: Request) {
 
     const portfolio_id = json.portfolio_id;
     const auto_publish = json.auto_publish ?? true;
+    const project_ids = json.project_ids;
+    const ai_focus = json.ai_focus;
 
     if (!portfolio_id) {
       return NextResponse.json({ error: "portfolio_id is required" }, { status: 400 });
@@ -85,6 +87,8 @@ export async function POST(req: Request) {
         portfolio_id,
         user_id: user.id,
         auto_publish,
+        project_ids,
+        ai_focus,
       }),
     }).catch(console.error); // Fire and forget
 

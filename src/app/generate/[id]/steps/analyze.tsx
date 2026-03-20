@@ -47,21 +47,7 @@ export default function AnalyzeStep({
 
   useEffect(() => {
     if (data?.status === "completed") {
-      // API call to generate
-      fetch("/api/portfolios/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio_id: portfolioId, auto_publish: true }),
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.error) {
-            setErrorMsg(d.error);
-          } else {
-            router.push(`/generate/${portfolioId}?step=generate&generate_job_id=${d.job_id}`);
-          }
-        })
-        .catch((e) => setErrorMsg(e.message));
+      router.push(`/generate/${portfolioId}?step=configure`);
     } else if (data?.status === "failed") {
       setErrorMsg(data.error || "분석에 실패했습니다.");
     }

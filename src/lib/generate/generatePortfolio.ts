@@ -19,8 +19,10 @@ export async function generatePortfolio(params: {
   portfolioId: string;
   userId: string;
   autoPublish: boolean;
+  projectIds?: string[];
+  goal?: string;
 }): Promise<void> {
-  const { jobId, portfolioId, userId, autoPublish } = params;
+  const { jobId, portfolioId, userId, autoPublish, projectIds, goal } = params;
 
   try {
     await updateJobProgress(jobId, { status: "processing", progress: 0 });
@@ -37,43 +39,59 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 10 });
 
-    // Calculate ai_score if null
-    const projectsWithScore = rawProjects.map(p => {
-      let score = p.ai_score;
-      if (score === null) {
-        let readme_quality = 0.0;
-        if (p.raw_data) {
-          const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
-          const readme = rawData?.readme || "";
-          if (!readme) {
-            readme_quality = 0.0;
-          } else if (readme.length < 300) {
-            readme_quality = 0.3;
-          } else {
-            readme_quality = 0.6;
-            if (readme.includes("![")) readme_quality += 0.2;
-            if (readme.includes("```")) readme_quality += 0.1;
-            readme_quality = Math.min(readme_quality, 1.0);
+    let topProjects: any[] = [];
+
+    if (projectIds && projectIds.length > 0) {
+      // Use manually selected projects
+      const selectedProjects = rawProjects.filter(p => projectIds.includes(p.id));
+      topProjects = selectedProjects
+        .map(p => {
+          let score = p.ai_score;
+          if (score === null) {
+            score = p.stargazers_count;
           }
+          return { ...p, calculatedScore: score ?? 0 };
+        })
+        .sort((a, b) => b.calculatedScore - a.calculatedScore);
+    } else {
+      // AI auto-pick logic
+      const projectsWithScore = rawProjects.map(p => {
+        let score = p.ai_score;
+        if (score === null) {
+          let readme_quality = 0.0;
+          if (p.raw_data) {
+            const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
+            const readme = rawData?.readme || "";
+            if (!readme) {
+              readme_quality = 0.0;
+            } else if (readme.length < 300) {
+              readme_quality = 0.3;
+            } else {
+              readme_quality = 0.6;
+              if (readme.includes("![")) readme_quality += 0.2;
+              if (readme.includes("```")) readme_quality += 0.1;
+              readme_quality = Math.min(readme_quality, 1.0);
+            }
+          }
+
+          let recency = 0.1;
+          if (p.pushed_at) {
+            const days = (Date.now() - new Date(p.pushed_at).getTime()) / (1000 * 60 * 60 * 24);
+            if (days <= 30) recency = 1.0;
+            else if (days <= 90) recency = 0.7;
+            else if (days <= 180) recency = 0.4;
+          }
+
+          const starsNorm = Math.min(p.stargazers_count / 100, 1.0);
+          score = starsNorm * 0.3 + recency * 0.4 + readme_quality * 0.3;
         }
+        return { ...p, calculatedScore: score ?? p.stargazers_count };
+      });
 
-        let recency = 0.1;
-        if (p.pushed_at) {
-          const days = (Date.now() - new Date(p.pushed_at).getTime()) / (1000 * 60 * 60 * 24);
-          if (days <= 30) recency = 1.0;
-          else if (days <= 90) recency = 0.7;
-          else if (days <= 180) recency = 0.4;
-        }
-
-        const starsNorm = Math.min(p.stargazers_count / 100, 1.0);
-        score = starsNorm * 0.3 + recency * 0.4 + readme_quality * 0.3;
-      }
-      return { ...p, calculatedScore: score ?? p.stargazers_count };
-    });
-
-    const topProjects = projectsWithScore
-      .sort((a, b) => b.calculatedScore - a.calculatedScore)
-      .slice(0, 4);
+      topProjects = projectsWithScore
+        .sort((a, b) => b.calculatedScore - a.calculatedScore)
+        .slice(0, 4);
+    }
 
     // Language aggregation
     const languageCounts: Record<string, number> = {};
@@ -98,11 +116,15 @@ export async function generatePortfolio(params: {
 
     try {
       const skillsStr = skills.map(s => s.name).join(", ");
+      const userGoal = goal ? `목표: ${goal}\n` : "";
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
+          role: "system",
+          content: "당신은 개발자 포트폴리오 전문가입니다."
+        }, {
           role: "user",
-          content: `GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`,
+          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`,
         }],
       });
       if (completion.choices[0]?.message?.content) {
@@ -212,9 +234,7 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 95 });
 
-    let publishedUrl = undefined;
     let finalSlug = "";
-
     const pUpdate = await prisma.portfolio.findUnique({
       where: { id: portfolioId }
     });
@@ -238,9 +258,12 @@ export async function generatePortfolio(params: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: finalSlug }),
       }).catch(console.error);
-
-      publishedUrl = appUrl.includes("localhost") ? `http://localhost:3000/${finalSlug}` : `https://${finalSlug}.portfolioforge.app`;
     }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const publishedUrl = (autoPublish && finalSlug) 
+      ? (appUrl.includes("localhost") ? `http://localhost:3000/${finalSlug}` : `https://${finalSlug}.portfolioforge.app`)
+      : null;
 
     const missing_optional_fields = [];
     if (!user.email) missing_optional_fields.push("email");

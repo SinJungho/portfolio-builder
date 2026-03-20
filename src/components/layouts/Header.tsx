@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronRight, Github, Menu } from "lucide-react";
+import { ArrowRight, ChevronRight, Github, Menu, Sparkles, LogOut, User, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import CTAButton from "../common/CTAButton";
@@ -22,7 +22,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, LayoutDashboard, Settings } from "lucide-react";
 
 const NAV_LINKS = [
   { name: "기능", href: "/features" },
@@ -33,30 +32,14 @@ const NAV_LINKS = [
 ] as const;
 
 const LogoMark = () => (
-  <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center shrink-0">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path
-        d="M2.5 7L6 10.5L11.5 3.5"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-[0_4px_12px_rgba(49,130,246,0.3)] shrink-0">
+    <Sparkles className="h-5 w-5" />
   </div>
 );
 
 const LogoMarkSm = () => (
-  <div className="w-7 h-7 rounded-[9px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center shrink-0">
-    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-      <path
-        d="M2.5 7L6 10.5L11.5 3.5"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-[0_3px_10px_rgba(49,130,246,0.3)] shrink-0">
+    <Sparkles className="h-4 w-4" />
   </div>
 );
 
@@ -120,8 +103,8 @@ export default function Header() {
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2 no-underline">
           <LogoMark />
-          <span className="text-[17px] font-bold text-ink-900 tracking-[-0.3px]">
-            포트폴리오포지
+          <span className="text-[19px] font-bold text-ink-900 tracking-tight">
+            PortfolioForge
           </span>
         </Link>
 
@@ -240,8 +223,8 @@ export default function Header() {
                     onClick={() => setOpen(false)}
                   >
                     <LogoMarkSm />
-                    <span className="text-[16px] font-bold text-ink-900 tracking-[-0.3px]">
-                      포트폴리오포지
+                    <span className="text-[17px] font-bold text-ink-900 tracking-tight">
+                      PortfolioForge
                     </span>
                   </Link>
                 </SheetTitle>

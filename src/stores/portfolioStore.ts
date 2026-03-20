@@ -36,6 +36,11 @@ export type PortfolioStore = {
     blockId: string,
     config: Partial<Record<string, unknown>>,
   ) => Promise<void>;
+  deleteBlock: (blockId: string) => Promise<void>;
+  updateBlockConfig: (
+    blockId: string,
+    config: Record<string, unknown>,
+  ) => Promise<void>;
 };
 
 export const usePortfolioStore = create<PortfolioStore>()(
@@ -167,6 +172,71 @@ export const usePortfolioStore = create<PortfolioStore>()(
         const block = state.blocks.find((b) => b.id === blockId);
         if (block) {
           block.config = { ...block.config, ...config };
+        }
+        state.isSaving = true;
+      });
+
+      try {
+        const res = await fetch(
+          `/api/portfolios/${portfolioId}/blocks/${blockId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ config }),
+          },
+        );
+        if (!res.ok) throw new Error("Update failed");
+      } catch (e) {
+        set((state) => {
+          state.blocks = previousBlocks;
+        });
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
+    },
+
+    deleteBlock: async (blockId: string) => {
+      const { portfolioId, blocks: previousBlocks } = get();
+      if (!portfolioId) return;
+
+      set((state) => {
+        state.blocks = state.blocks.filter((b) => b.id !== blockId);
+        // Re-index positions
+        state.blocks.forEach((b, i) => {
+          b.position = i;
+        });
+        state.isSaving = true;
+      });
+
+      try {
+        const res = await fetch(
+          `/api/portfolios/${portfolioId}/blocks/${blockId}`,
+          {
+            method: "DELETE",
+          },
+        );
+        if (!res.ok) throw new Error("Delete failed");
+      } catch (e) {
+        set((state) => {
+          state.blocks = previousBlocks;
+        });
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
+    },
+
+    updateBlockConfig: async (blockId: string, config: Record<string, unknown>) => {
+      const { portfolioId, blocks: previousBlocks } = get();
+      if (!portfolioId) return;
+
+      set((state) => {
+        const block = state.blocks.find((b) => b.id === blockId);
+        if (block) {
+          block.config = config;
         }
         state.isSaving = true;
       });

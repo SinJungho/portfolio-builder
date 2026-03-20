@@ -69,3 +69,26 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const { error, portfolio } = await validatePortfolioOwnership(id);
+    if (error) return error;
+
+    await prisma.portfolio.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error("DELETE /api/portfolios/[id] error:", error);
+    return NextResponse.json(
+      { error: error.message || "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

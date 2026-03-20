@@ -1,674 +1,264 @@
-문서를 다시 정확히 참조해서 프롬프트를 작성하겠습니다.충분히 파악했습니다. 각 Step별 프롬프트를 작성합니다.
+당신은 PortfolioForge 프로젝트의 시니어 풀스택 엔지니어입니다.
+첨부된 PLANNING.md와 GEMINI.md를 완전히 숙지한 상태에서 아래 작업을 순서대로 수행하세요.
 
 ---
 
-## Step 1 프롬프트 — `POST /api/portfolios`
+## 프로젝트 컨텍스트 요약
 
-````
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 `app/api/portfolios/route.ts`를 구현해줘.
+- **서비스**: GitHub 연동 → AI 분석 → 포트폴리오 즉시 자동 생성·배포 플랫폼
+- **기술 스택**: Next.js 14 (App Router) + TypeScript + Tailwind CSS + shadcn/ui + Zustand + TanStack Query + Prisma + Neon PostgreSQL
+- **현재 상태**: GitHub 연동 → 실시간 분석 → AI 생성 → 배포로 이어지는 백엔드/자동화 파이프라인(Phase 1~3)은 완성됨
+- **남은 작업**: 프론트엔드 UI 3개 화면 + 마무리 보완
 
 ---
 
-## DB 스키마 (관련 테이블만)
+## 작업 1: 미세 조정(Adjust) UI — `app/generate/[id]/steps/adjust.tsx`
 
-```prisma
-model portfolios {
-  id              String   @id @default(uuid())
-  user_id         String
-  slug            String
-  title           String?
-  theme           String   @default("minimalist")
-  design_tokens   Json?
-  generation_mode String   @default("auto")
-  auto_published  Boolean  @default(true)
-  custom_domain   String?
-  is_published    Boolean  @default(false)
-  seo_title       String?
-  seo_description String?
-  og_image_url    String?
-  view_count      Int      @default(0)
-  published_at    DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  @@unique([user_id, slug])
+### 배경
+
+- 현재 이 파일에는 더미(Placeholder) UI만 존재함
+- 포트폴리오가 즉시 자동 배포된 _이후_ 사용자가 선택적으로 진입하는 화면
+- "재배포" 버튼은 절대 없음 — 모든 변경은 변경 즉시 on-demand revalidation으로 배포 페이지에 자동 반영됨
+
+### 구현 요구사항
+
+**1-1. Zustand 스토어 연동**
+`usePortfolioStore`에서 다음 액션을 사용하여 UI를 구성하세요:
+
+- `toggleBlock(blockId)` → 블록 표시/숨김 토글
+- `reorderBlocks(fromIndex, toIndex)` → 블록 순서 변경
+- `setTheme(theme)` → 테마 변경
+- `updateOptionalField(field, value)` → 선택적 보완 필드 업데이트
+
+**1-2. 블록 목록 패널 (좌측)**
+
+- `usePortfolioStore`에서 `blocks` 배열을 가져와 리스트로 렌더링
+- 각 블록 카드에 포함할 요소:
+  - 블록 타입 아이콘 (hero → User, project_grid → Grid, skills → BarChart, contact → Mail, blog_feed → Rss) — Lucide React 사용
+  - 블록 이름 한글 레이블 (hero → "소개", project_grid → "프로젝트", skills → "기술 스택", contact → "연락처", blog_feed → "블로그")
+  - `is_visible` 상태를 반영하는 토글 스위치 (shadcn/ui `Switch` 컴포넌트) → 변경 시 `toggleBlock` 호출 + `PATCH /api/portfolios/:id/blocks/:blockId` 즉시 호출
+  - 순서 변경을 위한 ↑ / ↓ 버튼 → `reorderBlocks` 호출 + `PUT /api/portfolios/:id/blocks` 즉시 호출
+  - `is_ai_generated: true`인 블록에는 "AI 생성" 뱃지 표시
+
+**1-3. 테마 선택 패널 (우측 상단)**
+PLANNING.md의 6개 프리셋을 카드 그리드로 표시:
+
+- Minimalist, Creative, Corporate, Dark, Pastel, Tech
+- 현재 선택된 테마는 강조 테두리로 표시
+- 선택 시 `setTheme` 호출 + `PATCH /api/portfolios/:id` 즉시 호출
+- 각 테마 카드에는 미니 색상 팔레트 스와치 3개 표시
+
+**1-4. 선택적 보완 패널 (우측 하단)**
+TanStack Query로 `GET /api/portfolios/generate/:job_id`의 `missing_optional_fields`를 조회하여,
+미등록 항목에 대해 인라인 입력 카드를 렌더링:
+
+- `email` → 이메일 입력 필드
+- `linkedin_url` → LinkedIn URL 입력 필드
+- `website_url` → 개인 웹사이트 URL 입력 필드
+- 입력 후 포커스 아웃(onBlur) 시 `updateOptionalField` + `PATCH /api/portfolios/:id/blocks/:contactBlockId` 자동 저장
+- 저장 완료 시 shadcn/ui `toast`로 "저장되었습니다" 알림
+
+**1-5. 상단 헤더 바**
+
+- 좌측: "← 대시보드로" 링크
+- 중앙: 배포된 URL (`{slug}.portfolioforge.app`) — 클릭 시 새 탭 오픈
+- 우측: "배포 URL 복사" 버튼 (Clipboard API), "포트폴리오 보기" 버튼
+
+**1-6. API 호출 패턴**
+모든 변경은 낙관적 업데이트(optimistic update) 방식으로 처리하세요:
+
+1. `usePortfolioStore` 로컬 상태 즉시 반영
+2. TanStack Query `useMutation`으로 API 비동기 호출
+3. 실패 시 로컬 상태 롤백 + `toast` 에러 알림
+
+---
+
+## 작업 2: 퍼블릭 포트폴리오 뷰어 — `app/[slug]/page.tsx` 및 블록 컴포넌트
+
+### 배경
+
+- ISR 렌더링 (`revalidate: 60`) 적용된 공개 페이지
+- `portfolioforge.app/{slug}` URL로 접근하는 최종 결과물
+- Output Layer와 미세 조정 미리보기는 동일한 `<PortfolioPreview>` 컴포넌트를 공유해야 함
+- WCAG 2.1 색상 대비도 기준 충족 필수
+
+### 구현 요구사항
+
+**2-1. `app/[slug]/page.tsx` — ISR 서버 컴포넌트**
+
+```typescript
+// 구현할 로직
+export const revalidate = 60;
+
+export async function generateMetadata({ params }) {
+  // portfolios + users 조인으로 seo_title, seo_description, og_image_url 조회
+  // og:image, twitter:card 메타태그 자동 생성
 }
 
-model users {
-  id          String  @id @default(uuid())
-  github_login String? @unique
-  plan        String  @default("free")
-  ai_credits  Int     @default(3)
-}
-````
-
----
-
-## POST /api/portfolios 스펙
-
-**Request body**: `{ slug?: string, theme?: string }`
-
-- slug는 optional. 생략 시 `github_login` 기반으로 자동 생성
-
-**slug 자동 생성 규칙**:
-
-- 기본값: `github_login` (예: `kimdev`)
-- portfolios 테이블 전체에서 해당 slug가 이미 존재하면 숫자 suffix 자동 부여: `kimdev-2`, `kimdev-3`, ...
-- 사용자가 직접 입력한 경우: 영문 소문자·숫자·하이픈만 허용, 3~50자 (Zod로 검증)
-- slug는 전체 사용자 기준 전역 유일
-
-**응답**:
-
-- 성공: `201 { portfolio_id: string, slug: string }`
-- 미인증: `401`
-- Free 플랜이고 portfolios 수 >= 1: `403 { error: 'plan_limit_exceeded', current_count: number, limit: 1, upgrade_url: '/settings/billing' }`
-- Zod 검증 실패: `400 { error: string }`
-
-**내부 처리 순서**:
-
-1. `getServerSession()`으로 세션 확인 → 없으면 401
-2. DB에서 `users` 조회하여 `plan`, `github_login` 확인
-3. `plan === 'free'`이면 기존 portfolios 수 COUNT → 1 이상이면 403
-4. slug 결정: 요청에 slug 없으면 `github_login`으로 시작, 충돌 시 suffix 순차 탐색
-5. `portfolios` 테이블에 INSERT
-6. `{ portfolio_id, slug }` 반환
-
----
-
-## 주의사항
-
-- 모든 DB 작업은 Prisma client 사용
-- 인증은 NextAuth v5의 `auth()` 함수 사용
-- 에러 응답은 `Response.json({ error: ... }, { status: ... })` 형태로 통일
-- slug 중복 탐색 시 무한루프 방지를 위해 최대 10회 시도 후 실패 처리
-
-```
-
----
-
-## Step 2 프롬프트 — `POST /api/portfolios/generate`
-
-```
-
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 `app/api/portfolios/generate/route.ts`를 구현해줘.
-
----
-
-## POST /api/portfolios/generate 스펙
-
-**Request body**: `{ portfolio_id: string, auto_publish?: boolean }`
-
-- `auto_publish` 기본값: `true`
-
-**응답**:
-
-- 성공: `202 { job_id: string, estimated_seconds: 30 }`
-- 미인증: `401`
-- `ai_credits` 부족: `402 { error: 'insufficient_credits', credits_remaining: 0 }`
-- 잘못된 portfolio_id (존재하지 않거나 본인 소유 아님): `404`
-
-**내부 처리 순서**:
-
-1. `auth()`로 세션 확인
-2. `portfolio_id`로 portfolios 조회 → 없거나 `user_id !== session.user.id`이면 404
-3. `users.ai_credits` 확인 → 0이면 402
-4. `ai_credits` 1 차감 (`UPDATE users SET ai_credits = ai_credits - 1`)
-5. `job_id` 생성 (`crypto.randomUUID()`)
-6. Upstash Redis에 job 초기 상태 저장 (TTL 10분):
-   ```json
-   {
-     "status": "pending",
-     "progress": 0,
-     "portfolio_id": "...",
-     "user_id": "...",
-     "auto_publish": true
-   }
-   ```
-7. `generatePortfolio()`를 백그라운드에서 kick-off
-   - Vercel 환경이므로 `waitUntil`을 사용할 수 없음
-   - 대신 `fetch('/api/portfolios/generate/run', { method: 'POST', body: JSON.stringify({ job_id, portfolio_id, user_id, auto_publish }) })`를 await 없이 호출 (fire-and-forget)
-   - 이 내부 fetch는 Authorization 헤더로 `INTERNAL_API_SECRET` 환경변수를 사용해 보호
-8. `{ job_id, estimated_seconds: 30 }` 즉시 반환
-
----
-
-## Redis job 상태 타입
-
-```typescript
-type JobStatus = {
-  status: "pending" | "processing" | "completed" | "failed";
-  progress: number; // 0~100
-  portfolio_id: string;
-  user_id: string;
-  auto_publish: boolean;
-  blocks?: any[];
-  published_url?: string;
-  missing_optional_fields?: string[];
-  error?: string;
-};
-```
-
----
-
-## 주의사항
-
-- Upstash Redis는 `@upstash/redis` 패키지의 `Redis.fromEnv()` 사용
-- Redis key 형식: `generate_job:{job_id}`
-- 크레딧 차감과 job 생성은 원자적으로 처리되어야 함 (차감 성공 후 job 저장 실패 시 크레딧 복구 로직 필요)
-- 내부 API 호출 URL은 `process.env.NEXT_PUBLIC_APP_URL + '/api/portfolios/generate/run'` 사용
-
-```
-
----
-
-## Step 3 프롬프트 — `generatePortfolio()` 내부 로직
-
-```
-
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 두 파일을 구현해줘.
-
-1. `app/api/portfolios/generate/run/route.ts` — 내부 전용 실행 엔드포인트
-2. `src/lib/generate/generatePortfolio.ts` — 실제 생성 로직
-
----
-
-## 1. run/route.ts 스펙
-
-- `INTERNAL_API_SECRET` 헤더 검증 → 불일치 시 `401`
-- body에서 `{ job_id, portfolio_id, user_id, auto_publish }` 파싱
-- `generatePortfolio()`를 호출하고 결과를 Redis에 저장
-- 이 엔드포인트 자체는 `200 { ok: true }` 를 즉시 반환하고, generatePortfolio는 내부적으로 진행
-
----
-
-## 2. generatePortfolio() 스펙
-
-함수 시그니처:
-
-```typescript
-async function generatePortfolio(params: {
-  jobId: string;
-  portfolioId: string;
-  userId: string;
-  autoPublish: boolean;
-}): Promise<void>;
-```
-
-**처리 순서 및 Redis progress 업데이트 타이밍**:
-
-```
-progress 0  → status: 'processing' 으로 변경
-progress 10 → users, raw_projects 조회 완료
-progress 30 → hero 블록 생성 (GPT-4o-mini subheadline 생성)
-progress 50 → project_grid, skills 블록 생성
-progress 70 → contact, blog_feed 블록 생성
-progress 85 → portfolio_blocks DB 저장 완료
-progress 95 → is_published: true 저장 + revalidation 트리거
-progress 100 → status: 'completed', published_url, missing_optional_fields 저장
-```
-
-**블록 생성 상세 규칙**:
-
-hero 블록:
-
-- `headline`: `user.name`
-- `subheadline`: GPT-4o-mini 호출. 프롬프트: `"GitHub bio: {bio}\n사용 언어: {skills}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로."`
-- `bio`: `user.github_bio` (항상 존재)
-- `show_github_stats`: true
-
-project_grid 블록:
-
-- `raw_projects`에서 `is_fork: false`, `ai_score DESC` 상위 4개 선택
-- `ai_score`가 null인 레포는 `stargazers_count DESC`로 폴백
-
-skills 블록:
-
-- `raw_projects`의 `language` 필드 집계 → 언어별 레포 수 비율로 level(0~100) 계산
-- level = Math.round((해당 언어 레포 수 / 전체 레포 수) \* 100), 최소 10 보장
-- 상위 8개 언어만 포함
-
-contact 블록:
-
-- `github_url`: `https://github.com/{user.github_login}`
-- `email`: `user.email` (null이면 필드 자체 제외)
-
-blog_feed 블록:
-
-- `integrations` 테이블에서 `user_id`, `provider IN ('tistory','velog','medium')`, `is_active: true` 조회
-- 있으면 블록 추가, 없으면 생략
-
-**missing_optional_fields 계산**:
-
-- `user.email`이 없으면 `'email'` 추가
-- 항상 `'linkedin_url'`, `'website_url'` 추가 (MVP에서 모든 사용자 대상)
-
-**즉시 배포 처리**:
-
-- `auto_publish: true`이면:
-  1. `portfolios` 업데이트: `{ is_published: true, auto_published: true, published_at: new Date() }`
-  2. `fetch(process.env.NEXT_PUBLIC_APP_URL + '/api/revalidate', { method: 'POST', body: JSON.stringify({ slug }) })`
-
-**에러 처리**:
-
-- try-catch로 전체 래핑
-- 에러 발생 시 Redis job 상태를 `{ status: 'failed', error: error.message }`로 업데이트
-- GPT-4o-mini 호출 실패 시 subheadline 폴백: `user.github_bio` 앞 50자 그대로 사용
-
----
-
-## readme_quality 점수 산정 (ai_score 계산 보조 함수)
-
-이미 raw_projects에 ai_score가 저장되어 있다고 가정하고 조회만 함.
-단, ai_score가 null인 레포에 대해서는 아래 공식으로 즉석 계산:
-
-````
-readme_quality:
-- README(raw_data.readme) 없음 → 0.0
-- 300자 미만 → 0.3
-- 300자 이상 → 0.6
-- 300자 이상 + '!['포함 → +0.2
-- 300자 이상 + '```' 포함 → +0.1
-- 최대 1.0
-
-recency: 마지막 push로부터 경과 시간 기준
-- 30일 이내 → 1.0
-- 90일 이내 → 0.7
-- 180일 이내 → 0.4
-- 이후 → 0.1
-
-ai_score = stars * 0.3 + recency * 0.4 + readme_quality * 0.3
-(stars는 Math.min(stargazers_count / 100, 1.0)로 정규화)
-````
-
----
-
-## 주의사항
-
-- OpenAI SDK: `openai` 패키지, `new OpenAI({ apiKey: process.env.OPENAI_API_KEY })`
-- GPT 모델: `gpt-4o-mini`
-- Redis key 형식: `generate_job:{jobId}`
-- Redis 업데이트는 `redis.set(key, JSON.stringify(updated), { ex: 600 })` 형태
-- Prisma `portfolio_blocks.createMany` 사용
-
-```
-
----
-
-## Step 4 프롬프트 — `GET /api/portfolios/generate/:job_id`
-
-```
-
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 `app/api/portfolios/generate/[job_id]/route.ts`를 구현해줘.
-
----
-
-## GET /api/portfolios/generate/:job_id 스펙
-
-**응답**:
-
-- 성공: `200 { status, progress, blocks?, published_url?, missing_optional_fields?, error? }`
-- 미인증: `401`
-- job 없음: `404 { error: 'job_not_found' }`
-- 본인 job 아님: `403 { error: 'forbidden' }`
-
-**내부 처리 순서**:
-
-1. `auth()`로 세션 확인
-2. Redis에서 `generate_job:{job_id}` 조회 → 없으면 404
-3. `job.user_id !== session.user.id`이면 403
-4. job 상태 그대로 반환 (status, progress, blocks, published_url, missing_optional_fields, error)
-
----
-
-## 클라이언트 폴링 규칙 (주석으로 명시)
-
-- 폴링 간격: 3초
-- 타임아웃: 60초 (20회 초과 시 클라이언트에서 타임아웃 처리)
-- `status: 'completed'` 또는 `status: 'failed'` 수신 시 폴링 중단
-
----
-
-## 주의사항
-
-- Redis 값은 JSON.parse로 파싱
-- 응답 타입 정의 포함할 것 (export type GenerateJobResponse)
-- 이 타입은 클라이언트 폴링 훅에서 재사용할 수 있도록 `src/types/generate.ts`에 별도 export
-
-```
-
----
-
-## Step 5 프롬프트 — `/generate/[id]` 4단계 UI
-
-```
-
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 generate 플로우 UI 파일들을 구현해줘.
-
----
-
-## 파일 목록
-
-1. `app/generate/[id]/layout.tsx`
-2. `app/generate/[id]/page.tsx`
-3. `app/generate/[id]/steps/connect.tsx`
-4. `app/generate/[id]/steps/analyze.tsx`
-5. `app/generate/[id]/steps/generate.tsx`
-
-(adjust.tsx는 Step 6·7 완료 후 별도 구현)
-
----
-
-## 1. layout.tsx
-
-- 전체화면 레이아웃 (사이드바 없음, `min-h-screen`)
-- 상단 헤더: 좌측 "PortfolioForge" 로고(텍스트), 우측 현재 단계 표시 ("1 / 3")
-- 현재 phase는 searchParams의 `step` 값으로 결정:
-  - 없음 또는 `connect` → 1/3
-  - `analyze` → 2/3
-  - `generate` → 3/3
-  - `adjust` → 헤더에 "미세 조정" 텍스트 표시
-
-## 2. page.tsx
-
-- Server Component
-- `params.id`로 portfolio 존재 여부 확인 (없으면 notFound())
-- `searchParams.step` 값에 따라 해당 step 컴포넌트 렌더링:
-  - 없음 → `<ConnectStep portfolioId={id} />`
-  - `analyze` → `<AnalyzeStep portfolioId={id} />`
-  - `generate` → `<GenerateStep portfolioId={id} />`
-  - `adjust` → 추후 구현 (현재는 `/generate/{id}?step=generate`로 리다이렉트)
-- 각 step 컴포넌트는 `'use client'`
-
-## 3. connect.tsx — Phase 01
-
-**역할**: GitHub 연동 확인 + 레포 수집 트리거 후 analyze로 자동 이동
-
-**동작 순서**:
-
-1. 마운트 시 `POST /api/integrations/github/sync` 호출
-2. 응답에서 `job_id` 수신
-3. 완료 화면 없이 바로 `router.push('/generate/{portfolioId}?step=analyze&sync_job_id={job_id}')` 이동
-
-**UI**:
-
-- 중앙 정렬, 스피너 + "GitHub 데이터를 가져오는 중..." 텍스트
-- 에러 시: 에러 메시지 + "다시 시도" 버튼
-
-## 4. analyze.tsx — Phase 02
-
-**역할**: sync job 폴링 → 완료 시 generate 단계로 자동 이동
-
-**props**: `{ portfolioId: string }` + URL에서 `sync_job_id` 파싱 (useSearchParams)
-
-**동작**:
-
-- `GET /api/integrations/github/sync/{sync_job_id}` 3초 간격 폴링 (useQuery + refetchInterval)
-- `status: 'completed'` → `POST /api/portfolios/generate` 호출 → `generate_job_id` 수신 → `router.push('/generate/{portfolioId}?step=generate&generate_job_id={job_id}')`
-- 120초 타임아웃: 폴링 40회 초과 시 타임아웃 처리
-
-**UI**:
-
-- 진행률 바 (progress 값 반영)
-- 단계별 메시지: pending → "분석 준비 중...", processing → "레포지토리 분석 중... ({synced_count}개 완료)"
-- 타임아웃/실패 시: "시간이 오래 걸리고 있어요" + "다시 시도" 버튼
-
-## 5. generate.tsx — Phase 03
-
-**역할**: generate job 폴링 → completed 시 완료 화면 표시
-
-**props**: `{ portfolioId: string }` + URL에서 `generate_job_id` 파싱
-
-**동작**:
-
-- `GET /api/portfolios/generate/{generate_job_id}` 3초 간격 폴링
-- `status: 'completed'` → 폴링 중단 → 완료 화면으로 전환
-- 60초 타임아웃 (20회)
-
-**완료 화면 UI**:
-
-```
-┌──────────────────────────────────────────────────────┐
-│  🎉 포트폴리오가 생성되었습니다!                     │
-│                                                      │
-│  {slug}.portfolioforge.app                           │
-│  (클릭 시 클립보드 복사 + 토스트 알림)               │
-│                                                      │
-│  [배포 URL 열기 ↗]    [미세 조정하기 →]              │
-│                                                      │
-│  💡 블록 순서·테마·연락처는 미세 조정에서 변경 가능  │
-└──────────────────────────────────────────────────────┘
-```
-
-- "배포 URL 열기": `published_url` 새 탭
-- "미세 조정하기": `router.push('/generate/{portfolioId}?step=adjust')`
-
-**폴링 중 UI**:
-
-- 진행률 바 (progress 반영)
-- 메시지: "포트폴리오를 구성하는 중..." → "거의 다 됐어요..."(progress >= 80)
-
----
-
-## 공통 주의사항
-
-- 폴링은 TanStack Query `useQuery`의 `refetchInterval` 옵션 사용
-- `status: 'completed' | 'failed'`이면 `refetchInterval: false`로 폴링 중단
-- 에러 상태는 `shadcn/ui`의 `Alert` 컴포넌트로 표시
-- 로딩 스피너는 Tailwind `animate-spin` 사용
-- 모든 클라이언트 컴포넌트 상단에 `'use client'` 선언
-
-```
-
----
-
-## Step 6 프롬프트 — Zustand `portfolioStore`
-
-```
-
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 `src/stores/portfolioStore.ts`를 구현해줘.
-
----
-
-## 스토어 상태 타입
-
-```typescript
-type Block = {
-  id: string;
-  block_type: "hero" | "project_grid" | "skills" | "blog_feed" | "contact";
-  position: number;
-  config: Record<string, unknown>;
-  is_visible: boolean;
-  is_ai_generated: boolean;
-};
-
-type PortfolioStore = {
-  // 상태
-  portfolioId: string | null;
-  blocks: Block[];
-  theme: string;
-  isPublished: boolean;
-  publishedUrl: string | null;
-  isSaving: boolean; // API 호출 중 여부 (낙관적 업데이트 후 저장 중 표시용)
-
-  // 초기화
-  initialize: (data: {
-    portfolioId: string;
-    blocks: Block[];
-    theme: string;
-    isPublished: boolean;
-    publishedUrl: string | null;
-  }) => void;
-
-  // 액션
-  toggleBlock: (blockId: string) => Promise<void>;
-  reorderBlocks: (reordered: Block[]) => Promise<void>;
-  setTheme: (theme: string) => Promise<void>;
-  updateOptionalField: (
-    blockId: string,
-    config: Partial<Record<string, unknown>>,
-  ) => Promise<void>;
-};
-```
-
----
-
-## 각 액션 구현 규칙
-
-**공통**: 모든 액션은 낙관적 업데이트(UI 먼저 반영) 후 API 호출. API 실패 시 이전 상태로 롤백.
-
-**toggleBlock(blockId)**:
-
-- 로컬 상태에서 해당 block의 `is_visible` 토글
-- `PATCH /api/portfolios/{portfolioId}/blocks/{blockId}` 호출: `{ is_visible: !prev }`
-
-**reorderBlocks(reordered)**:
-
-- 로컬 상태 blocks를 reordered로 교체
-- `PUT /api/portfolios/{portfolioId}/blocks` 호출: `{ blocks: reordered.map(b => ({ id: b.id, position: b.position })) }`
-
-**setTheme(theme)**:
-
-- 로컬 상태 theme 업데이트
-- `PATCH /api/portfolios/{portfolioId}` 호출: `{ theme }`
-
-**updateOptionalField(blockId, config)**:
-
-- 로컬 상태에서 해당 block의 config를 merge 업데이트
-- `PATCH /api/portfolios/{portfolioId}/blocks/{blockId}` 호출: `{ config }`
-
----
-
-## 주의사항
-
-- `isSaving`은 API 호출 시작 시 true, 완료/실패 시 false
-- 롤백은 액션 호출 전 상태를 로컬 변수에 저장해두고 catch에서 복원
-- API fetch는 별도 `src/lib/api/portfolio.ts`에 함수로 분리하고 store에서 import해서 사용
-- Zustand `immer` 미들웨어 사용 (불변성 편의)
-
-```
-
----
-
-## Step 7 프롬프트 — 블록 수정 API 3종
-
-```
-
-Next.js 15 환경입니다. params와 searchParams는 Promise 타입이므로 await해서 사용해주세요.
-
-아래 스펙대로 3개의 API Route Handler를 구현해줘.
-
----
-
-## 공통 소유권 검증 규칙
-
-모든 엔드포인트에서 아래 검증을 먼저 수행:
-
-1. `auth()`로 세션 확인 → 없으면 401
-2. `portfolioId`로 portfolios 조회 → 없으면 404
-3. `portfolio.user_id !== session.user.id` → 403 `{ error: 'forbidden' }`
-4. 검증 통과 후 실제 로직 수행
-5. 모든 성공 응답 후 `revalidatePath('/[slug]', 'page')` 또는 내부 `/api/revalidate` 호출
-
----
-
-## 1. PATCH /api/portfolios/[id]/blocks/[blockId]
-
-파일: `app/api/portfolios/[id]/blocks/[blockId]/route.ts`
-
-**Request body** (Zod 검증):
-
-```typescript
-{
-  is_visible?: boolean
-  config?: Record<string, unknown>  // Partial BlockConfig
+export default async function PortfolioPage({ params }) {
+  // slug로 portfolio + portfolio_blocks + raw_projects 조회
+  // is_published: false면 notFound() 반환
+  // is_visible: false인 블록은 필터링하여 렌더링에서 제외
+  // position 기준 오름차순 정렬
+  // <PortfolioPreview> 컴포넌트에 데이터 전달
 }
 ```
 
-**처리**:
+**2-2. `src/preview/PortfolioPreview.tsx` — 공유 컴포넌트**
 
-- `portfolio_blocks` 테이블에서 `id === blockId AND portfolio_id === portfolioId` 조회 → 없으면 404
-- 전달된 필드만 PATCH (`is_visible`, `config` 각각 undefined면 skip)
-- 성공: `200 { block: updatedBlock }`
-- revalidation 트리거
+- 미세 조정 화면(`?step=adjust`)과 퍼블릭 뷰어(`/[slug]`) 양쪽에서 사용
+- `blocks`, `theme`, `designTokens`를 props로 받아 렌더링
+- 테마별 CSS 변수를 루트에 적용 (Minimalist, Creative, Corporate, Dark, Pastel, Tech 각각 정의)
 
----
+**2-3. 블록별 렌더링 컴포넌트 (각각 독립 파일로)**
 
-## 2. PUT /api/portfolios/[id]/blocks
+`src/preview/blocks/HeroBlock.tsx`:
 
-파일: `app/api/portfolios/[id]/blocks/route.ts` (PUT 메서드 추가)
+- `headline` (이름), `subheadline` (AI 생성 소개 문구) 표시
+- GitHub avatar 이미지 (next/image 최적화)
+- `show_github_stats: true`이면 GitHub 기여도 히트맵 시각화 (단순 SVG 또는 캘린더 그리드)
+- 배경: 테마별 그라디언트 또는 패턴 적용
 
-**Request body** (Zod 검증):
+`src/preview/blocks/ProjectGridBlock.tsx`:
 
-```typescript
-{
-  blocks: Array<{ id: string; position: number }>;
-}
-```
+- `project_ids`로 `raw_projects` 테이블에서 프로젝트 데이터 조회
+- `layout: 'grid'` → CSS Grid, `'list'` → 세로 리스트
+- 각 카드: 프로젝트명, `ai_summary`, 기술 태그(`ai_tags`), GitHub 링크, ⭐ star 수
+- 카드 hover 시 살짝 올라오는 애니메이션 (Tailwind `hover:scale-105 transition-transform`)
 
-**처리**:
+`src/preview/blocks/SkillsBlock.tsx`:
 
-- blocks 배열의 각 id가 해당 portfolio 소속인지 검증
-- `prisma.$transaction`으로 position 일괄 업데이트
-- 성공: `200 { ok: true }`
-- revalidation 트리거
+- `chart_type: 'radar'` → Recharts `RadarChart` (shadcn/ui 차트 래퍼 사용)
+- `chart_type: 'bar'` → Recharts `BarChart`
+- `chart_type: 'tag_cloud'` → 폰트 사이즈 가중치 기반 태그 클라우드 (CSS만으로 구현)
+- 모든 차트는 반응형 (`ResponsiveContainer`)
 
----
+`src/preview/blocks/ContactBlock.tsx`:
 
-## 3. PATCH /api/portfolios/[id]
+- GitHub URL, 이메일, LinkedIn URL, 웹사이트 URL 버튼 렌더링
+- 없는 필드는 렌더링하지 않음
+- 클릭 시 `POST /api/analytics/event` (event_type: 'contact_click') 자동 전송
+- 아이콘: Lucide React (Github, Mail, Linkedin, Globe)
 
-파일: `app/api/portfolios/[id]/route.ts`
+`src/preview/blocks/BlogFeedBlock.tsx`:
 
-**Request body** (Zod 검증, 허용 필드만):
+- `feed_items` 테이블에서 `integration_provider` 기준으로 최신 `max_items`개 조회
+- 썸네일 있으면 이미지 표시 (`show_thumbnail: true`)
+- 포스팅 제목, 발행일, 외부 링크 표시
 
-```typescript
-{
-  theme?: z.enum(['minimalist', 'creative', 'corporate', 'dark', 'pastel', 'tech'])
-  slug?: string  // 변경 시 slug 중복 검사 필요
-  title?: string
-}
-```
+**2-4. 방문자 이벤트 수집**
 
-**처리**:
-
-- 전달된 필드만 PATCH
-- `slug` 변경 요청 시: 다른 portfolios에서 해당 slug 사용 여부 확인 → 중복이면 `409 { error: 'slug_conflict' }`
-- 성공: `200 { portfolio: updatedPortfolio }`
-- revalidation 트리거
+- 페이지 진입 시 자동으로 `POST /api/analytics/event` 호출 (event_type: 'page_view')
+- 클라이언트 컴포넌트 `<AnalyticsTracker portfolioId={id} />` 분리 구현
+- `session_id`는 `sessionStorage`에 UUID v4로 생성·저장
 
 ---
 
-## revalidation 처리 방식
+## 작업 3: 대시보드 화면 — `app/(dashboard)/dashboard/page.tsx`
 
-직접 `revalidatePath`를 사용하되, 이 API Route는 Edge Runtime이 아닌 Node.js Runtime에서 실행:
+### 배경
 
-```typescript
-import { revalidatePath } from "next/cache";
-// portfolio의 slug를 조회하여
-revalidatePath(`/${portfolio.slug}`);
-```
+- 로그인한 사용자가 포트폴리오를 관리하는 메인 작업 공간
+- PLANNING.md의 "재방문 사용자 처리 플로우" 반영 필수
+- Free 플랜 사용자가 포트폴리오 1개 보유 시 "새 포트폴리오 만들기" 버튼 비활성화 + 업그레이드 유도
+
+### 구현 요구사항
+
+**3-1. 포트폴리오 카드 목록**
+TanStack Query로 `GET /api/portfolios` 호출하여 카드 그리드 렌더링.
+각 카드에 포함:
+
+- 포트폴리오 이름 + slug
+- 배포 상태 뱃지 (is_published: true → 초록 "배포 중" / false → 회색 "미배포")
+- 테마 뱃지
+- 생성일 (상대 시간, 예: "3일 전")
+- 버튼 3개:
+  - "포트폴리오 보기" → `{slug}.portfolioforge.app` 새 탭 오픈
+  - "미세 조정" → `/generate/{id}?step=adjust` 이동
+  - "삭제" → `DELETE /api/portfolios/:id` 호출 + 확인 다이얼로그 (shadcn/ui `AlertDialog`)
+
+**3-2. "새 포트폴리오 만들기" CTA**
+
+- Free 플랜 + 포트폴리오 0개: 눈에 띄는 CTA 카드 (점선 테두리 + Plus 아이콘)
+- Free 플랜 + 포트폴리오 1개 이상: 버튼 비활성화 + "Pro로 업그레이드하면 무제한 생성 가능" 툴팁
+- Pro 플랜: 항상 활성화
+- 클릭 시: `POST /api/portfolios` 호출 → 성공 시 `/generate/{portfolio_id}` 이동
+
+**3-3. GitHub 연동 상태 배너**
+페이지 상단에 연동 상태 확인:
+
+- GitHub 미연동: 주황 배너 "GitHub 연동이 필요합니다" + "연동하기" 버튼
+- GitHub bio 미등록: 노란 배너 "GitHub bio를 등록하면 포트폴리오 품질이 향상됩니다" + 설정 링크
+- 마지막 동기화 시간 표시 (`synced_at` 기준, 예: "1시간 전 동기화됨")
+
+**3-4. AI 크레딧 현황 (Free 플랜)**
+
+- 사이드바 하단 또는 헤더에 크레딧 잔량 표시: "이번 달 생성 횟수: 2/3회 사용"
+- `ai_credits` 0이면 주황 경고 + "Pro로 업그레이드" 링크
+
+**3-5. 빈 상태(Empty State)**
+포트폴리오가 0개일 때:
+
+- 일러스트 또는 아이콘 + "아직 포트폴리오가 없어요"
+- "GitHub 연동하고 5분 만에 포트폴리오 만들기" CTA 버튼
 
 ---
 
-## 공통 주의사항
+## 작업 4: 마무리 보완 사항
 
-- 모든 응답은 `Response.json()` 사용
-- Zod 스키마는 각 파일 상단에 정의
-- 소유권 검증 로직은 `src/lib/api/validatePortfolioOwnership.ts`로 분리하고 3개 파일 모두에서 import해서 사용
+**4-1. 생성 완료 화면 개선 (`app/generate/[id]/steps/generate.tsx`)**
+Phase 03 완료 시 보여주는 화면:
 
-```
+- 배포된 URL을 크고 눈에 띄게 표시 (shadcn/ui `Card` + 복사 버튼)
+- "포트폴리오 보기" 버튼 (primary) + "미세 조정하기" 버튼 (secondary)
+- `missing_optional_fields`가 있으면 "💡 이메일과 LinkedIn을 추가하면 더 완성도 높은 포트폴리오가 됩니다" 인라인 안내
+- 소셜 공유 버튼 (Twitter/X, LinkedIn) — 공유 텍스트: "GitHub으로 포트폴리오를 5분 만에 만들었어요! 👉 {url}"
+
+**4-2. `/onboarding/bio` 페이지 품질 개선**
+현재 안내 페이지가 부정적으로 보이지 않도록:
+
+- 타이틀: "포트폴리오를 더 잘 만들기 위한 마지막 준비 단계예요 👋"
+- GitHub bio 작성 예시 3가지 (백엔드, 프론트엔드, 풀스택 각각):
+  - `"Backend Engineer. Java/Spring Boot/PostgreSQL. Interested in distributed systems."`
+  - `"Frontend Developer. React/TypeScript. UX-focused. Open to work."`
+  - `"Fullstack Engineer. Node.js/React/AWS. Open-source contributor."`
+- 예시 클릭 시 클립보드 복사
+- GitHub 설정 페이지 직접 링크: `https://github.com/settings/profile`
+- "등록 완료했어요" 버튼 → `GET /api/integrations/github/bio` 재호출 → bio 확인 시 `/dashboard` 이동
+
+**4-3. 전역 에러 처리 및 로딩 상태**
+
+- `app/error.tsx` (글로벌 에러 바운더리)
+- `app/loading.tsx` (글로벌 로딩 스켈레톤)
+- `app/(dashboard)/dashboard/loading.tsx` — 포트폴리오 카드 스켈레톤 (shadcn/ui `Skeleton`)
+- TanStack Query `isError` 상태에 shadcn/ui `Alert` 컴포넌트로 에러 안내
+
+**4-4. 반응형 레이아웃 검증**
+
+- 대시보드 사이드바: 모바일(< 768px)에서 하단 탭 메뉴로 전환 (shadcn/ui `Sheet` 활용)
+- `/[slug]` 퍼블릭 뷰어: 모바일에서 ProjectGrid columns를 1로 자동 축소
+- 미세 조정 화면: 모바일에서 좌/우 패널을 탭 형태로 전환
 
 ---
 
-7개 프롬프트 모두 작성했습니다. 각 프롬프트는 이전 Step의 결과물을 전제로 하므로 **Step 1 → 7 순서대로** Claude에게 전달하면 됩니다. Step 3은 분량이 크니 `generatePortfolio()` 로직과 `run/route.ts`를 한 번에 처리하기 어려우면 둘로 나눠서 보내도 됩니다.
-```
+## 구현 시 반드시 지켜야 할 원칙
+
+1. **"재배포" 버튼은 절대 만들지 마세요.** 모든 변경은 즉시 revalidation으로 자동 반영됩니다.
+2. **블록 직접 추가/삭제 UI는 MVP 범위 외입니다.** `is_visible` 토글과 `position` 순서 변경만 구현하세요.
+3. **`<PortfolioPreview>` 컴포넌트는 반드시 하나로 통일하세요.** 미세 조정 미리보기와 `/[slug]` 퍼블릭 뷰어가 동일 컴포넌트를 재사용해야 "보이는 것 = 실제 결과물"이 보장됩니다.
+4. **모든 API 요청은 TanStack Query (`useQuery`, `useMutation`)를 사용하세요.** 직접 `fetch` 호출은 지양합니다.
+5. **shadcn/ui 컴포넌트 우선 사용.** 커스텀 컴포넌트는 shadcn/ui로 충당 불가한 경우에만 작성하세요.
+6. **TypeScript strict 모드 유지.** `any` 타입 사용 금지. GEMINI.md의 Zod 스키마(`BlockConfigSchema`, `DesignTokenSchema`)를 재사용하세요.
+7. **GitHub bio는 항상 존재한다고 가정하세요.** 미세 조정 화면 및 퍼블릭 뷰어 진입 시점에는 bio 검증이 완료된 상태입니다.
+
+---
+
+## 작업 순서 권장
+
+1. `src/preview/PortfolioPreview.tsx` + 블록 컴포넌트 5개 (공유 기반 컴포넌트 먼저)
+2. `app/[slug]/page.tsx` (ISR 퍼블릭 뷰어)
+3. `app/generate/[id]/steps/adjust.tsx` (미세 조정 UI)
+4. `app/(dashboard)/dashboard/page.tsx` (대시보드)
+5. 마무리 보완 4가지
+
+각 파일 작성 후 TypeScript 컴파일 오류가 없는지 확인하고 다음 파일로 넘어가세요.
