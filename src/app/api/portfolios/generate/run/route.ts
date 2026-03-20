@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { job_id, portfolio_id, user_id, auto_publish } = body;
+    const { job_id, portfolio_id, user_id, auto_publish, project_ids, ai_focus } = body;
 
     if (!job_id || !portfolio_id || !user_id) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -23,6 +23,8 @@ export async function POST(req: Request) {
       portfolioId: portfolio_id,
       userId: user_id,
       autoPublish: auto_publish ?? true,
+      projectIds: project_ids,
+      goal: ai_focus,
     }).catch(console.error);
 
     return NextResponse.json({ ok: true }, { status: 200 });
