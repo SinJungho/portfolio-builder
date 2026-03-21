@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardHeader } from "@/components/layouts/DashboardHeader";
+import { Sidebar } from "@/components/layouts/Sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -19,8 +20,11 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F8F9FA]">
-      <DashboardHeader />
-      <main className="flex-1">{children}</main>
+      <Sidebar />
+      <div className="flex flex-col flex-1 md:pl-64">
+        <DashboardHeader />
+        <main className="flex-1 pb-24 md:pb-0">{children}</main>
+      </div>
     </div>
   );
 }
