@@ -51,7 +51,18 @@ export async function PATCH(
     });
 
     if (portfolio?.slug) {
-      revalidatePath(`/${portfolio.slug}`);
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/revalidate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+          },
+          body: JSON.stringify({ slug: portfolio.slug }),
+        });
+      } catch (e) {
+        console.error("Revalidate explicitly failed:", e);
+      }
     }
 
     return NextResponse.json({ block: updatedBlock }, { status: 200 });
@@ -99,7 +110,18 @@ export async function DELETE(
     }
 
     if (portfolio?.slug) {
-      revalidatePath(`/${portfolio.slug}`);
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/revalidate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+          },
+          body: JSON.stringify({ slug: portfolio.slug }),
+        });
+      } catch (e) {
+        console.error("Revalidate explicitly failed:", e);
+      }
     }
 
     return new NextResponse(null, { status: 204 });
