@@ -102,6 +102,38 @@ export async function generatePortfolio(params: {
       }
     });
 
+    // AI Summary logic for top Projects
+    for (const p of topProjects) {
+      if (!p.ai_summary) {
+        try {
+          let readme = "";
+          if (p.raw_data) {
+             const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
+             readme = rawData?.readme || "";
+          }
+          if (readme && readme.length > 50) {
+            const completion = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                { role: "system", content: "당신은 IT 채용 담당자입니다. 프로젝트 README를 2~3문장의 핵심 요약으로 정리해주세요." },
+                { role: "user", content: `프로젝트 이름: ${p.name}\n설명: ${p.description || ""}\nREADME: ${readme.substring(0, 3000)}` }
+              ]
+            });
+            const summary = completion.choices[0]?.message?.content || "";
+            p.ai_summary = summary;
+            
+            // Cache the result to DB
+            await prisma.rawProject.update({
+              where: { id: p.id },
+              data: { ai_summary: summary }
+            });
+          }
+        } catch (e) {
+          console.error("OpenAI summary error for project:", p.name, e);
+        }
+      }
+    }
+
     const skills = Object.entries(languageCounts)
       .map(([name, count]) => ({
         name,

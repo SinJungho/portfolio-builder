@@ -10,6 +10,9 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1),
   INTERNAL_API_SECRET: z.string().min(1),
   NEXT_PUBLIC_APP_URL: z.string().url(),
+  ENCRYPTION_KEY: z.string().length(64), // hex 인코딩 기준 32바이트 = 64자
+  GITHUB_WEBHOOK_SECRET: z.string().min(1),
+  SENTRY_DSN: z.string().url().optional(),
 })
 
 // 최상단에서 바로 parse하지 않고 실제 호출 시점에 검증 (lazy validation)

@@ -57,7 +57,18 @@ export async function PATCH(
     });
 
     if (updatedPortfolio.slug) {
-      revalidatePath(`/${updatedPortfolio.slug}`);
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/revalidate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+          },
+          body: JSON.stringify({ slug: updatedPortfolio.slug }),
+        });
+      } catch (e) {
+        console.error("Revalidate explicitly failed:", e);
+      }
     }
 
     return NextResponse.json({ portfolio: updatedPortfolio }, { status: 200 });
