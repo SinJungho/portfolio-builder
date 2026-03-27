@@ -34,29 +34,11 @@ export async function POST(req: Request) {
     // Fetch user details
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { plan: true, github_login: true },
+      select: { github_login: true },
     });
 
     if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (dbUser.plan === "free") {
-      const existingCount = await prisma.portfolio.count({
-        where: { user_id: user.id },
-      });
-
-      if (existingCount >= 1) {
-        return NextResponse.json(
-          {
-            error: "plan_limit_exceeded",
-            current_count: existingCount,
-            limit: 1,
-            upgrade_url: "/settings/billing",
-          },
-          { status: 403 }
-        );
-      }
     }
 
     const baseSlug = requestedSlug || dbUser.github_login || `user-${user.id.substring(0, 5)}`;
@@ -119,7 +101,7 @@ export async function GET(req: Request) {
 
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { plan: true, ai_credits: true, github_bio_verified: true }
+      select: { github_bio_verified: true }
     });
     
     // Also see sync status

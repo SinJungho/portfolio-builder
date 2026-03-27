@@ -27,9 +27,8 @@
 - [ ] **소유권 검증 필요 여부**: portfolio/block을 수정하는 API인가?
   - 해당한다면 → `portfolio.user_id !== session.user.id` 검증 + `403 forbidden` 반환 코드 포함
 
-- [ ] **Free 플랜 제한 적용 여부**: 포트폴리오 생성 또는 ai_credits 차감이 포함되는가?
-  - 포트폴리오 생성 → `existingCount >= 1` 체크 + `403 plan_limit_exceeded` 반환
-  - AI 생성 실행 → `ai_credits <= 0` 체크 + `402 insufficient_credits` 반환
+
+- [ ] **소유권 검증 필요 여부**: portfolio/block을 수정하는 API인가?
 
 - [ ] **OpenAI 호출 포함 여부**: AI 분석/요약 코드가 포함되는가?
   - 포함된다면 → DB에서 `ai_summary` 캐시 먼저 확인 → 있으면 OpenAI 호출 없이 반환
@@ -153,7 +152,6 @@ if (!verifyGitHubWebhook(sig, body, process.env.GITHUB_WEBHOOK_SECRET)) {
 - [ ] OpenAI 호출 전 `ai_summary` 캐시 확인 로직이 있는가?
 - [ ] GitHub API 호출 전 Redis 캐시 확인 로직이 있는가?
 - [ ] 모델이 `gpt-4o-mini`인가? (`gpt-4o` 사용 시 수정)
-- [ ] Free 플랜 크레딧/포트폴리오 수 제한 검증이 있는가?
 
 ### 아키텍처
 
@@ -187,11 +185,9 @@ GET  /api/integrations/github/sync/:job_id
 # 포트폴리오
 POST /api/portfolios                  body: { slug?, theme? }
      → 201: { portfolio_id, slug }
-     → 403: { error: 'plan_limit_exceeded', limit: 1, upgrade_url }
 
 POST /api/portfolios/generate         body: { portfolio_id, auto_publish?: true }
      → 202: { job_id, estimated_seconds }
-     → 402: { error: 'insufficient_credits' }
 GET  /api/portfolios/generate/:job_id
      → 200: { status, progress, blocks?, published_url?, missing_optional_fields?, error? }
 
@@ -231,8 +227,7 @@ Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, P
 | **Step 3** | **에디터 고도화 2** | 디자인 토큰 편집기 구현 (테마 프리셋 선택을 넘어 색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
 | **Step 4** | **품질 보증 (QA)** | 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
 | **Step 5** | **분석 대시보드** | `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
-| **Step 6** | **비즈니스 (BM)** | Stripe 결제 시스템 연동 (Free → Pro 플랜 구독 결제 UI 및 Webhook 처리 결제망 연결) | `api/webhooks/stripe/route.ts` |
-| **Step 7** | **인프라 고도화** | Vercel Domains API 연동으로 Pro 플랜 유저 대상 커스텀 도메인(Custom Domain) 발급 및 매핑 지원 | `api/domains/route.ts` |
+| **Step 6** | **인프라 고도화** | Vercel Domains API 연동으로 유저 대상 커스텀 도메인(Custom Domain) 발급 및 매핑 지원 | `api/domains/route.ts` |
 
 > 앞으로의 요청은 위 **Step 1 ~ Step 7**의 순서에 입각하여 하나씩 전개합니다.
 > 각 Step을 시작할 때는 반드시 기존과 동일하게 **Pre-flight 검증**을 먼저 거치고 구현을 시작합니다.

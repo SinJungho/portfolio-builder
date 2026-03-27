@@ -119,7 +119,7 @@ export default function Hero() {
           `}
           style={{ transitionDelay: "700ms" }}
         >
-          신용카드 없이 · 기본 기능 무료 · 1분이면 완성
+          신용카드 없이 · 평생 완전 무료 · 1분이면 완성
         </p>
 
         {/* Mock UI */}

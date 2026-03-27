@@ -42,10 +42,6 @@ export default function DashboardPage() {
         body: JSON.stringify({}),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (body.error === "plan_limit_exceeded") {
-          throw new Error("Free 플랜은 포트폴리오 1개만 생성 가능합니다. Pro로 업그레이드해주세요.");
-        }
         throw new Error("생성에 실패했습니다.");
       }
       return res.json();
@@ -89,9 +85,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { portfolios, user, github_synced_at } = data;
-  const isFree = user?.plan === "free";
-  const hasReachedLimit = isFree && portfolios.length >= 1;
+  const { portfolios, github_synced_at } = data;
 
   return (
     <div className="max-w-7xl mx-auto py-10 md:py-16 px-6 flex flex-col gap-10 animate-in fade-in duration-700">
@@ -116,7 +110,7 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
-        ) : !user?.github_bio_verified ? (
+        ) : !data.user?.github_bio_verified ? (
           <div className="w-full p-5 bg-yellow-50 border border-yellow-100 rounded-[24px] text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-yellow-100 rounded-xl">
@@ -143,12 +137,6 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-[22px] font-extrabold tracking-tight text-[#191F28]">내 포트폴리오</h2>
-          {isFree && (
-            <div className="px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#3182F6]" />
-              <span className="text-[13px] font-bold text-[#3182F6]">남은 AI 크레딧: {user.ai_credits}회</span>
-            </div>
-          )}
         </div>
         
         {portfolios.length === 0 ? (
@@ -175,32 +163,16 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {/* Create New Card */}
             <button
-              disabled={hasReachedLimit || createMutation.isPending}
-              onClick={() => !hasReachedLimit && createMutation.mutate()}
-              className={`
-                group relative flex flex-col items-center justify-center border-2 border-dashed rounded-[32px] p-8 min-h-[280px] transition-all duration-300
-                ${hasReachedLimit
-                  ? "bg-gray-50/50 border-gray-200 cursor-not-allowed"
-                  : "bg-white border-gray-200 hover:border-[#3182F6] hover:bg-blue-50/30 hover:shadow-xl hover:shadow-blue-500/5"}
-              `}
+              disabled={createMutation.isPending}
+              onClick={() => createMutation.mutate()}
+              className="group relative flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-[32px] p-8 min-h-[280px] bg-white hover:border-[#3182F6] hover:bg-blue-50/30 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300"
             >
-              <div className={`
-                p-4 rounded-full mb-5 transition-transform group-hover:scale-110 duration-300
-                ${hasReachedLimit ? "bg-gray-100 text-gray-400" : "bg-blue-50 text-[#3182F6]"}
-              `}>
+              <div className="p-4 bg-blue-50 text-[#3182F6] rounded-full mb-5 transition-transform group-hover:scale-110 duration-300">
                 <Plus className="w-8 h-8" />
               </div>
-              <span className={`text-[17px] font-extrabold ${hasReachedLimit ? "text-gray-400" : "text-[#191F28]"}`}>
+              <span className="text-[17px] font-extrabold text-[#191F28]">
                 새 포트폴리오 만들기
               </span>
-              
-              {hasReachedLimit && (
-                <div className="mt-4 px-4 py-2 bg-gray-100 rounded-xl">
-                  <span className="text-[12px] font-bold text-gray-400 text-center leading-relaxed">
-                    무료 플랜은 1개까지 생성 가능합니다.
-                  </span>
-                </div>
-              )}
             </button>
 
             {/* Portfolio Cards */}

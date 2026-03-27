@@ -19,7 +19,7 @@ export default function Footer() {
           </div>
 
           {[
-            { title: "제품", items: ["기능", "가격", "템플릿", "변경 로그"] },
+            { title: "제품", items: ["기능", "템플릿", "변경 로그"] },
             { title: "자료", items: ["문서", "API 참조", "블로그", "지원"] },
             {
               title: "회사",

@@ -137,7 +137,6 @@ TypeScript 에코시스템 성숙도와 팀 협업 시 스키마 가독성을 �
    GitHub API ──── Webhook ──► /api/webhooks/github
    OpenAI API (GPT-4o-mini)
    Cloudflare R2 (이미지·에셋, S3 호환)
-   Stripe (결제, Phase 2)
 ```
 
 ### 즉시 배포 데이터 흐름
@@ -162,8 +161,7 @@ TypeScript 에코시스템 성숙도와 팀 협업 시 스키마 가독성을 �
 
 | 테이블             | 핵심 컬럼                                                    | 설명                                                                                  |
 | ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `users`            | `plan`, `ai_credits`, `github_bio_verified`                  | NextAuth 연동. `github_bio_verified`로 bio 확인 상태 관리. `plan(free/pro/team)`      |
-| `integrations`     | `provider`, `access_token`                                   | GitHub·블로그 연동. `access_token`은 AES-256 암호화 저장 필수                         |
+| `users`            | `github_bio_verified`, `github_login`                        | NextAuth 연동. `github_bio_verified`로 bio 확인 상태 관리.                             |
 | `raw_projects`     | `ai_score`, `ai_summary`                                     | GitHub 레포 원본 + AI 분석 결과. `UNIQUE(user_id, source, external_id)`               |
 | `portfolios`       | `slug`, `design_tokens`, `generation_mode`, `auto_published` | 사용자당 복수 생성. `auto_published`: 즉시 배포 여부 추적                             |
 | `portfolio_blocks` | `block_type`, `config`, `is_visible`                         | 자동 생성 블록. `is_visible`로 ON/OFF 토글 관리. `is_ai_generated`으로 생성 출처 추적 |
@@ -181,11 +179,9 @@ CREATE TABLE users (
   avatar_url           TEXT,
   github_login         VARCHAR(100) UNIQUE,
   github_id            BIGINT UNIQUE,
+  github_id            BIGINT UNIQUE,
   github_bio           TEXT,                        -- GitHub bio 캐싱 (필수 항목)
   github_bio_verified  BOOLEAN DEFAULT FALSE,       -- bio 확인 완료 여부
-  plan                 VARCHAR(20) DEFAULT 'free',  -- free | pro | team
-  plan_expires_at      TIMESTAMPTZ,
-  ai_credits           INTEGER DEFAULT 3,           -- Free: 포트폴리오 자동 생성 월 3회, 월초 리셋
   created_at           TIMESTAMPTZ DEFAULT NOW(),
   updated_at           TIMESTAMPTZ DEFAULT NOW()
 );
@@ -238,7 +234,7 @@ CREATE TABLE portfolios (
   design_tokens    JSONB,                    -- 색상·폰트·spacing 커스텀 값
   generation_mode  VARCHAR(20) DEFAULT 'auto', -- auto(자동 생성) | custom(Phase 2 에디터)
   auto_published   BOOLEAN DEFAULT TRUE,     -- 즉시 배포 여부 (기본값 true)
-  custom_domain    TEXT,                     -- Pro 전용 (Phase 2)
+  custom_domain    TEXT,                     -- 커스텀 도메인 (Phase 2)
   is_published     BOOLEAN DEFAULT FALSE,
   seo_title        VARCHAR(255),
   seo_description  TEXT,
@@ -449,7 +445,7 @@ POST /api/portfolios
 | Auth         | Required                                                                                                                 |
 | Request      | `{ slug?: string, theme?: string }` — slug 생략 시 `github_login` 기반 자동 생성                                         |
 | Response 201 | `{ portfolio_id: string, slug: string }` → 클라이언트가 `/generate/{portfolio_id}`로 이동                                |
-| Response 403 | `{ error: 'plan_limit_exceeded', current_count: 1, limit: 1, upgrade_url: '/settings/billing' }` — Free 플랜 1개 초과 시 |
+| Response 201 | `{ portfolio_id: string, slug: string }` → 클라이언트가 `/generate/{portfolio_id}`로 이동                                |
 
 **slug 자동 생성 규칙**
 
@@ -458,28 +454,7 @@ POST /api/portfolios
 - 사용자가 직접 지정할 경우: 영문 소문자·숫자·하이픈만 허용, 3~50자
 - slug는 전체 사용자 기준 전역 유일 (`portfolios` 테이블 전체에서 UNIQUE)
 
-**Free 플랜 포트폴리오 수 제한 강제**
-
-```typescript
-// POST /api/portfolios 내부 검증 로직
-const existingCount = await prisma.portfolios.count({
-  where: { user_id: userId },
-});
-
-if (user.plan === "free" && existingCount >= 1) {
-  return Response.json(
-    {
-      error: "plan_limit_exceeded",
-      current_count: existingCount,
-      limit: 1,
-      upgrade_url: "/settings/billing",
-    },
-    { status: 403 },
-  );
-}
-```
-
-> ℹ️ **Free 플랜 제한**: 포트폴리오 1개 초과 시 생성 불가. 대시보드에서 기존 포트폴리오 삭제 후 재생성하거나 Pro로 업그레이드 필요.
+// POST /api/portfolios 내부 검증 로직은 이제 슬러그 중복 여부만 체크합니다.
 
 #### AI 자동 생성 + 즉시 배포 실행
 
@@ -495,7 +470,7 @@ POST /api/portfolios/generate
 | Auth         | Required                                                                |
 | Request      | `{ portfolio_id: string, auto_publish?: boolean }` — 기본값: `true`     |
 | Response 202 | `{ job_id: string, estimated_seconds: number }` — 비동기 처리           |
-| Response 402 | `{ error: 'insufficient_credits', credits_remaining: 0 }` — 크레딧 소진 |
+| Response 202 | `{ job_id: string, estimated_seconds: number }` — 비동기 처리           |
 
 ```
 GET /api/portfolios/generate/:job_id
@@ -942,7 +917,7 @@ app/
 | 자동 생성 플로우 | `/generate/[id]`             | 4단계 플로우 (연동→분석→생성+즉시배포→완료). 전체화면             | MVP 핵심        |
 | 미세 조정        | `/generate/[id]?step=adjust` | 블록 ON/OFF·순서·테마 조정. 변경 즉시 배포 반영. 재배포 버튼 없음 | 선택 사항       |
 | 데이터 관리      | `/projects`                  | GitHub 레포 동기화 리스트, AI 분석 현황                           |                 |
-| 통합 설정        | `/settings`                  | 프로필/계정, GitHub·RSS 연동, 플랜·결제 내역                      |                 |
+| 통합 설정        | `/settings`                  | 프로필/계정, GitHub·RSS 연동                                    |                 |
 | 분석 대시보드    | `/analytics/[id]`            | 일별 방문자, 블록 클릭률, 레퍼러, 전환율                          | Pro 전용        |
 | 포트폴리오 출력  | `/[slug]`                    | ISR 렌더링, OG 이미지 자동 생성, 이벤트 수집                      | 60s revalidate  |
 

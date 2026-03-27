@@ -46,9 +46,11 @@ export default function MockPortfolio() {
   const [blockSize, setBlockSize] = useState(9);
   // blockSize 변경 시 GitHubCalendar를 재마운트해 새 props 반영
   const [calKey, setCalKey] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const prevSizeRef = useRef(9);
 
   useEffect(() => {
+    setMounted(true);
     const el = wrapperRef.current;
     if (!el) return;
 
@@ -92,7 +94,7 @@ export default function MockPortfolio() {
         {/* ── mobile/tablet (< lg): 세로 스택 ── */}
         <div className="lg:hidden">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-[16px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex-shrink-0" />
+            <div className="w-14 h-14 rounded-[16px] bg-linear-to-br from-[#3182F6] to-[#6366F1] shrink-0" />
             <div>
               <div className="text-[20px] font-bold text-white leading-tight">
                 김재민
@@ -131,7 +133,7 @@ export default function MockPortfolio() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    className="w-2 h-2 rounded-full shrink-0"
                     style={{ background: p.color }}
                   />
                   <span className="text-[11px] text-slate-500">
@@ -145,8 +147,8 @@ export default function MockPortfolio() {
 
         {/* ── desktop (lg+): 원본 flex 레이아웃 ── */}
         <div className="hidden lg:flex gap-6 mb-6">
-          <div className="flex-shrink-0">
-            <div className="w-14 h-14 rounded-[16px] bg-gradient-to-br from-[#3182F6] to-[#6366F1] mb-4" />
+          <div className="shrink-0">
+            <div className="w-14 h-14 rounded-[16px] bg-linear-to-br from-[#3182F6] to-[#6366F1] mb-4" />
             <div className="text-[20px] font-bold text-white leading-tight">
               김재민
             </div>
@@ -183,7 +185,7 @@ export default function MockPortfolio() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    className="w-2 h-2 rounded-full shrink-0"
                     style={{ background: p.color }}
                   />
                   <span className="text-[11px] text-slate-500">
@@ -213,18 +215,20 @@ export default function MockPortfolio() {
            *   showMonthLabels 기본값   : true (월 레이블 표시)
            */}
           <div ref={wrapperRef} className="w-full overflow-hidden">
-            <GitHubCalendar
-              key={calKey}
-              username="torvalds"
-              colorScheme="dark"
-              theme={DARK_THEME}
-              blockSize={blockSize}
-              blockMargin={2}
-              fontSize={9}
-              showColorLegend={false}
-              showTotalCount={false}
-              style={{ color: "#475569", width: "100%", maxWidth: "100%" }}
-            />
+            {mounted && (
+              <GitHubCalendar
+                key={calKey}
+                username="torvalds"
+                colorScheme="dark"
+                theme={DARK_THEME}
+                blockSize={blockSize}
+                blockMargin={2}
+                fontSize={9}
+                showColorLegend={false}
+                showTotalCount={false}
+                style={{ color: "#475569", width: "100%", maxWidth: "100%" }}
+              />
+            )}
           </div>
         </div>
       </div>

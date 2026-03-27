@@ -11,7 +11,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id
         token.github_login = (user as any).github_login
-        token.plan = (user as any).plan ?? 'free'
         token.github_bio_verified = (user as any).github_bio_verified ?? false
       } else if (token.id && !token.github_bio_verified) {
         // 세션 쿠키에는 false라고 되어있지만, 실제 DB에서 업데이트되었는지 실시간 확인
@@ -29,7 +28,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id
         session.user.github_login = token.github_login
-        session.user.plan = token.plan
         session.user.github_bio_verified = token.github_bio_verified
       }
       return session

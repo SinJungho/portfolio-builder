@@ -7,7 +7,7 @@ import { useState } from "react";
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState<
-    "profile" | "account" | "integrations" | "billing" | "danger"
+    "profile" | "account" | "integrations" | "danger"
   >("profile");
 
   return (

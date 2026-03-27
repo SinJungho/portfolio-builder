@@ -36,22 +36,6 @@ export async function POST(req: Request) {
       return new NextResponse(null, { status: 404 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { ai_credits: true },
-    });
-
-    if (!dbUser || dbUser.ai_credits <= 0) {
-      return NextResponse.json(
-        { error: "insufficient_credits", credits_remaining: 0 },
-        { status: 402 }
-      );
-    }
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { ai_credits: { decrement: 1 } },
-    });
 
     const job_id = crypto.randomUUID();
 
@@ -66,11 +50,6 @@ export async function POST(req: Request) {
     try {
       await redis.set(JOB_KEY(job_id), JSON.stringify(initialJobStatus), { ex: JOB_TTL });
     } catch (e) {
-      // rollback credits if redis fails
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { ai_credits: { increment: 1 } },
-      });
       throw e;
     }
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";

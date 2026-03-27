@@ -25,7 +25,6 @@ import {
 
 const NAV_LINKS = [
   { name: "기능", href: "/features" },
-  { name: "가격", href: "/pricing" },
   { name: "템플릿", href: "/templates" },
   { name: "블로그", href: "/blog" },
   { name: "대시보드", href: "/dashboard" },
@@ -137,7 +136,7 @@ export default function Header() {
                       className="w-9 h-9 rounded-full border border-ink-100"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
+                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
                       <User size={20} />
                     </div>
                   )}
@@ -260,7 +259,7 @@ export default function Header() {
                           className="w-11 h-11 rounded-full border border-ink-200"
                         />
                       ) : (
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
+                        <div className="w-11 h-11 rounded-full bg-linear-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
                           <User size={24} />
                         </div>
                       )}
