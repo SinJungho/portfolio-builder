@@ -284,17 +284,20 @@ export async function generatePortfolio(params: {
         },
       });
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
       fetch(`${appUrl}/api/revalidate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-internal-secret": process.env.INTERNAL_API_SECRET || ""
+        },
         body: JSON.stringify({ slug: finalSlug }),
       }).catch(console.error);
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
     const publishedUrl = (autoPublish && finalSlug) 
-      ? (appUrl.includes("localhost") ? `http://localhost:3000/${finalSlug}` : `https://${finalSlug}.portfolioforge.app`)
+      ? (appUrl.includes("127.0.0.1") || appUrl.includes("localhost") ? `http://localhost:3000/${finalSlug}` : `https://${finalSlug}.portfolioforge.app`)
       : null;
 
     const missing_optional_fields = [];

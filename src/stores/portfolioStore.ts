@@ -41,6 +41,7 @@ export type PortfolioStore = {
     blockId: string,
     config: Record<string, unknown>,
   ) => Promise<void>;
+  addBlock: (block_type: string) => Promise<void>;
 };
 
 export const usePortfolioStore = create<PortfolioStore>()(
@@ -255,6 +256,37 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set((state) => {
           state.blocks = previousBlocks;
         });
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
+    },
+
+    addBlock: async (block_type: string) => {
+      const { portfolioId } = get();
+      if (!portfolioId) return;
+
+      set((state) => {
+        state.isSaving = true;
+      });
+
+      try {
+        const res = await fetch(`/api/portfolios/${portfolioId}/blocks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ block_type }),
+        });
+        
+        if (!res.ok) throw new Error("Add block failed");
+        
+        const newBlock = await res.json();
+        
+        set((state) => {
+          state.blocks.push(newBlock);
+        });
+      } catch (e) {
+        console.error("Failed to add block", e);
       } finally {
         set((state) => {
           state.isSaving = false;

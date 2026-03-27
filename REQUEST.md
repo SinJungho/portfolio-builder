@@ -209,15 +209,30 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 
 ## 🗺️ 현재 단계 및 다음 작업 우선순위
 
-**현재**: Phase 1 MVP — UI 95% 완성, 런칭 준비 단계
+**현재**: Phase 2 Step 2 (완료) 🎉 → **Phase 2 Step 3 (디자인 토큰 편집기) 진입 단계**
 
-| 우선순위 | 작업                                   | 관련 파일                                          |
-| -------- | -------------------------------------- | -------------------------------------------------- |
-| 🔴 P0    | GitHub Webhook 처리                    | `app/api/webhooks/github/route.ts`                 |
-| 🔴 P0    | Upstash Redis 실연동 (Rate Limit 캐싱) | `src/lib/redis.ts`                                 |
-| 🟠 P1    | Sentry 에러 모니터링 연동              | `src/lib/sentry.ts`, `sentry.*.config.ts`          |
-| 🟠 P1    | 동적 sitemap.xml + OG 이미지 자동 생성 | `app/sitemap.ts`, `app/[slug]/opengraph-image.tsx` |
-| 🟡 P2    | Lighthouse 90+ CI 자동화               | `.github/workflows/lighthouse.yml`                 |
+### ✅ Phase 1 MVP 완성도 요약 (완료)
+- GitHub Oauth & Webhook 연동 (Push 시 캐시 무효화 및 재배포)
+- 포트폴리오 자동 배포 엔진 구축 (`gpt-4o-mini` 요약, `ai_score` 배열)
+- Upstash Redis, Sentry 에러 트래킹, Lighthouse CI 인프라 통합
+- 서브도메인 라우팅 미들웨어 적용 (`[slug].portfolioforge.app` 형태 지원)
+- 동적 sitemap.xml 및 사용자별 오픈그래프(OG) 이미지 생성기 탑재
 
-**Phase 2 예정 (요청해도 지금 구현하지 않음)**:
-Stripe 결제 / 커스텀 도메인 / 방문자 분석 대시보드 / WYSIWYG 에디터 / 디자인 토큰 편집기
+---
+
+### 🚀 Phase 2: 개발 선형 플로우 (예정 목록)
+
+Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, Pro 플랜 수익 모델을 도입하여 비즈니스 가치를 창출하는 단계입니다. 다음 **Step 단위**로 선형적(Linear) 구현을 진행해야 합니다. 
+
+| 순서 | 카테고리 | 핵심 작업 (개발 선형 플로우) | 관련 예상 컴포넌트 / API |
+| :---: | :--- | :--- | :--- |
+| **Step 1** | **외부 데이터 확장** | [완료] 블로그 RSS 피드 연동 (Tistory, Velog, Medium 지원) 및 `feed_items` DB 수집 파이프라인 | `api/integrations/rss/route.ts` |
+| **Step 2** | **에디터 고도화 1** | [완료] `dnd-kit` 기반 WYSIWYG 블록 에디터 도입 및 생성 타임아웃/상태 동기화 이슈 해결 | `generate/[id]/steps/adjust.tsx` |
+| **Step 3** | **에디터 고도화 2** | 디자인 토큰 편집기 구현 (테마 프리셋 선택을 넘어 색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
+| **Step 4** | **품질 보증 (QA)** | 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
+| **Step 5** | **분석 대시보드** | `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
+| **Step 6** | **비즈니스 (BM)** | Stripe 결제 시스템 연동 (Free → Pro 플랜 구독 결제 UI 및 Webhook 처리 결제망 연결) | `api/webhooks/stripe/route.ts` |
+| **Step 7** | **인프라 고도화** | Vercel Domains API 연동으로 Pro 플랜 유저 대상 커스텀 도메인(Custom Domain) 발급 및 매핑 지원 | `api/domains/route.ts` |
+
+> 앞으로의 요청은 위 **Step 1 ~ Step 7**의 순서에 입각하여 하나씩 전개합니다.
+> 각 Step을 시작할 때는 반드시 기존과 동일하게 **Pre-flight 검증**을 먼저 거치고 구현을 시작합니다.

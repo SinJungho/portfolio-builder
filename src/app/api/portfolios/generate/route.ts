@@ -73,8 +73,7 @@ export async function POST(req: Request) {
       });
       throw e;
     }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
     
     fetch(`${appUrl}/api/portfolios/generate/run`, {
       method: "POST",
