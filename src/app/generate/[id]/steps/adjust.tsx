@@ -49,6 +49,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableBlockItem } from "./components/SortableBlockItem";
+
 const blockTypeIcons: Record<string, React.ReactNode> = {
   hero: <User className="w-5 h-5 text-current" />,
   project_grid: <Grid className="w-5 h-5 text-current" />,
@@ -111,7 +128,8 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     setTheme, 
     updateOptionalField,
     deleteBlock,
-    updateBlockConfig
+    updateBlockConfig,
+    addBlock,
   } = usePortfolioStore();
   
   const [copied, setCopied] = useState(false);
@@ -172,6 +190,24 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     reorderBlocks(newBlocks);
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = blocks.findIndex(b => b.id === active.id);
+      const newIndex = blocks.findIndex(b => b.id === over.id);
+      const newBlocks = arrayMove(blocks, oldIndex, newIndex);
+      newBlocks.forEach((b, i) => (b.position = i));
+      reorderBlocks(newBlocks);
+    }
+  };
+
   const contactBlock = blocks.find(b => b.block_type === "contact");
 
   const handleOptionalChange = (field: string, value: string) => {
@@ -227,100 +263,33 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
             {isSaving && <Loader2 className="inline w-5 h-5 animate-spin text-blue-500" />}
           </h2>
         </div>
-        <div className="space-y-4">
-          {blocks.map((block, index) => (
-            <div 
-              key={block.id} 
-              className={`
-                group flex flex-col p-5 sm:p-6 border rounded-[24px] bg-white transition-all duration-300 gap-5
-                ${!block.is_visible ? "opacity-40 grayscale bg-gray-50/50" : "shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]"}
-              `}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={blocks.map(b => b.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="flex items-center gap-4 w-full min-w-0">
-                <div 
-                  className={`p-3 rounded-2xl transition-colors shrink-0 ${!block.is_visible ? "bg-gray-100" : "bg-blue-50"}`}
-                  style={{ color: !block.is_visible ? "#ADB5BD" : "#3182F6" }}
-                >
-                  {blockTypeIcons[block.block_type] || <Grid className="w-6 h-6" />}
-                </div>
-                <div className="space-y-1 overflow-hidden min-w-0 flex-1">
-                  <h3 className="font-bold text-[17px] text-[#191F28] truncate">{blockTypeLabels[block.block_type] || block.block_type}</h3>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    {block.is_ai_generated && (
-                      <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 bg-blue-50 text-blue-500 rounded-md tracking-wider">AI Generated</span>
-                    )}
-                    {block.block_type === 'project_grid' && block.is_visible && (
-                      <button 
-                        onClick={() => openProjectEditor(block)}
-                        className="group/edit inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-[#3182F6] text-[#3182F6] hover:text-white rounded-full text-[12px] font-bold transition-all duration-300 shadow-sm shadow-blue-500/5 active:scale-95 whitespace-nowrap"
-                      >
-                        <Settings className="w-3.5 h-3.5 transition-transform group-hover/edit:rotate-45" />
-                        <span>프로젝트 설정</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
+              <div className="space-y-4">
+                {blocks.map((block, index) => (
+                  <SortableBlockItem
+                    key={block.id}
+                    block={block}
+                    index={index}
+                    totalBlocks={blocks.length}
+                    icon={blockTypeIcons[block.block_type] || <Grid className="w-6 h-6" />}
+                    onToggle={toggleBlock}
+                    onDelete={deleteBlock}
+                    onMoveUp={moveUp}
+                    onMoveDown={moveDown}
+                    onOpenProjectEditor={openProjectEditor}
+                  />
+                ))}
               </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-black/5 mt-auto">
-                <div className="flex items-center gap-3">
-                  <div className="flex rounded-xl overflow-hidden border border-black/5">
-                    <button 
-                      onClick={() => moveUp(index)} 
-                      disabled={index === 0} 
-                      className="p-2.5 bg-gray-50 hover:bg-gray-100 disabled:opacity-20 transition-colors"
-                      title="위로 이동"
-                    >
-                      <ArrowUp className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => moveDown(index)} 
-                      disabled={index === blocks.length - 1} 
-                      className="p-2.5 bg-gray-50 hover:bg-gray-100 border-l border-black/5 disabled:opacity-20 transition-colors"
-                      title="아래로 이동"
-                    >
-                      <ArrowDown className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="h-10 w-px bg-black/5 mx-1" />
-                  <div className="flex items-center px-1">
-                    <Switch
-                      checked={block.is_visible}
-                      onCheckedChange={() => toggleBlock(block.id)}
-                      className="data-[state=checked]:bg-[#3182F6] scale-100"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <button className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="w-[90vw] max-w-[400px] rounded-[32px] border-none shadow-2xl p-8">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-[20px] font-extrabold text-[#191F28]">블록을 완전히 삭제할까요?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-[15px] font-medium leading-relaxed text-[#4E5968]">
-                          이 블록과 관련된 모든 설정이 영구적으로 삭제됩니다. 보이지 않게만 하고 싶다면 스위치를 꺼주세요.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
-                        <AlertDialogCancel className="w-full sm:w-auto rounded-2xl h-11 border-black/5 font-bold order-2 sm:order-1">취소</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteBlock(block.id)}
-                          className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white rounded-2xl h-11 font-bold px-6 shadow-lg shadow-red-500/20 order-1 sm:order-2"
-                        >
-                          네, 삭제할게요
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </div>
-          ))}
+            </SortableContext>
+          </DndContext>
           {blocks.length === 0 && (
             <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-100 rounded-[32px] gap-4">
                <div className="p-4 bg-gray-50 rounded-full text-gray-300">
@@ -329,7 +298,37 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
                <p className="text-gray-400 font-bold">추가된 블록이 없습니다.</p>
             </div>
           )}
-        </div>
+          
+          <div className="pt-6 border-t border-black/5 mt-6">
+            <div className="flex flex-col gap-1 mb-4">
+              <h4 className="text-[15px] font-bold text-[#191F28]">새로운 블록 추가</h4>
+              <p className="text-[12px] text-gray-400 font-medium">내 포트폴리오를 더 풍성하게 만들어보세요.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {Object.keys(blockTypeLabels).map(type => {
+                const isUnique = type === 'hero' || type === 'contact';
+                const alreadyExists = isUnique && blocks.some(b => b.block_type === type);
+                
+                return (
+                  <button
+                    key={type}
+                    onClick={() => addBlock(type)}
+                    disabled={isSaving || alreadyExists}
+                    className={`
+                      flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all border
+                      ${alreadyExists 
+                        ? "bg-gray-50 border-black/3 text-gray-300 cursor-not-allowed" 
+                        : "bg-white border-black/5 text-[#4E5968] hover:border-[#3182F6] hover:text-[#3182F6] hover:shadow-sm active:scale-95"
+                      }
+                    `}
+                  >
+                    {alreadyExists ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    {blockTypeLabels[type]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
       </div>
     </div>
   );
@@ -575,4 +574,3 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     </div>
   );
 }
-

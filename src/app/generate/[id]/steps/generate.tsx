@@ -49,7 +49,7 @@ export default function GenerateStep({
       if (
         query.state.data?.status === "completed" ||
         query.state.data?.status === "failed" ||
-        timeoutsCount.current >= 20
+        timeoutsCount.current >= 60 // 3s * 60 = 180s (3 minutes)
       ) {
         return false;
       }
@@ -59,9 +59,23 @@ export default function GenerateStep({
     enabled: !!generateJobId,
   });
 
+  // DB Fallback check
+  const { data: dbCheck } = useQuery({
+    queryKey: ["portfolio-status", portfolioId],
+    queryFn: async () => {
+      const res = await fetch(`/api/portfolios/${portfolioId}/status`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!(error || data?.status === "failed" || timeoutsCount.current >= 60),
+    refetchInterval: (query) => (query.state.data?.is_published ? false : 5000),
+  });
+
+  const isActuallyFinished = dbCheck?.is_published || data?.status === "completed";
+
   // --- Content Rendering ---
   const renderContent = () => {
-    if (error || data?.status === "failed" || timeoutsCount.current >= 20) {
+    if (!isActuallyFinished && (error || data?.status === "failed" || timeoutsCount.current >= 60)) {
       return (
         <div
           className="
@@ -78,7 +92,7 @@ export default function GenerateStep({
             생성에 실패했습니다
           </h2>
           <p className="text-[15px] text-gray-500 leading-[1.7] mb-8">
-            {data?.error || (timeoutsCount.current >= 20 ? "시간이 오래 걸리고 있어요. 다시 시도해주세요." : "예기치 않은 오류가 발생했습니다.")}
+            {data?.error || (timeoutsCount.current >= 60 ? "시간이 오래 걸리고 있어요. 다시 시도해주세요." : "예기치 않은 오류가 발생했습니다.")}
           </p>
           <button
             onClick={() => { timeoutsCount.current = 0; refetch(); }}
@@ -99,10 +113,10 @@ export default function GenerateStep({
       );
     }
 
-    if (data?.status === "completed") {
-      const pubUrl = data.published_url || `/${portfolioId}`;
+    if (isActuallyFinished) {
+      const pubUrl = data?.published_url || dbCheck?.published_url || `/${portfolioId}`;
       const fullUrl = pubUrl.startsWith("http") ? pubUrl : `${typeof window !== "undefined" ? window.location.origin : ""}${pubUrl.startsWith("/") ? pubUrl : `/${pubUrl}`}`;
-      const missingFields = data.missing_optional_fields || [];
+      const missingFields = data?.missing_optional_fields || [];
       const shareText = encodeURIComponent(`GitHub으로 포트폴리오를 5분 만에 만들었어요! 👉 ${fullUrl}`);
 
       return (

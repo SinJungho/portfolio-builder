@@ -6,11 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "webhook:dev": "npx smee-client -u https://smee.io/3WfzDziiaf5Gl3o -t http://localhost:3000/api/webhooks/github"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@base-ui/react": "^1.0.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-neon": "^7.4.2",
     "@prisma/adapter-pg": "^7.4.2",
@@ -43,6 +47,7 @@
     "react-dom": "19.2.3",
     "react-github-calendar": "^5.0.5",
     "recharts": "^2.15.4",
+    "rss-parser": "^3.13.0",
     "shadcn": "^3.6.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",

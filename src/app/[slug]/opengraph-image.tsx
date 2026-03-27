@@ -1,8 +1,5 @@
 import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
-import { env } from '@/lib/env';
-
-export const runtime = 'edge';
 export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: { slug: string } }) {
