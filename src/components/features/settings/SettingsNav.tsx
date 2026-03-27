@@ -1,7 +1,7 @@
 interface SettingsNavProps {
-  activeSection: "profile" | "account" | "integrations" | "billing" | "danger";
+  activeSection: "profile" | "account" | "integrations" | "danger";
   onSectionChange: (
-    section: "profile" | "account" | "integrations" | "billing" | "danger"
+    section: "profile" | "account" | "integrations" | "danger"
   ) => void;
 }
 
@@ -13,7 +13,6 @@ export function SettingsNav({
     { id: "profile" as const, label: "Profile" },
     { id: "account" as const, label: "Account" },
     { id: "integrations" as const, label: "Integrations" },
-    { id: "billing" as const, label: "Billing" },
     { id: "danger" as const, label: "Danger Zone" },
   ];
 

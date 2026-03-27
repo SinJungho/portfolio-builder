@@ -1,7 +1,7 @@
 "use client";
 
+import { Github, Linkedin, Twitter } from "lucide-react";
 import Link from "next/link";
-import { Github, Twitter, Linkedin } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -28,7 +28,6 @@ export default function Footer() {
               title: "제품",
               items: [
                 { name: "기능", href: "/features" },
-                { name: "가격", href: "/pricing" },
                 { name: "템플릿", href: "/templates" },
                 { name: "변경 로그", href: "/changelog" },
               ],

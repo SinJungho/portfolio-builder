@@ -4,7 +4,6 @@ import { Features } from "@/components/features/marketing/Features";
 import { FinalCTA } from "@/components/features/marketing/FinalCTA";
 import { Hero } from "@/components/features/marketing/Hero";
 import { HowItWorks } from "@/components/features/marketing/HowItWorks";
-import Pricing from "@/components/home/Pricing";
 import Testimonials from "@/components/home/Testimonials";
 
 export default function Page() {
@@ -15,7 +14,6 @@ export default function Page() {
         <HowItWorks />
         <Features />
         <Testimonials />
-        <Pricing />
         <FinalCTA />
       </main>
     </div>

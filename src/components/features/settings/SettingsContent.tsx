@@ -4,7 +4,7 @@ import { IntegrationsSection } from "./IntegrationsSection";
 import { ProfileSection } from "./ProfileSection";
 
 interface SettingsContentProps {
-  activeSection: "profile" | "account" | "integrations" | "billing" | "danger";
+  activeSection: "profile" | "account" | "integrations" | "danger";
 }
 
 export function SettingsContent({ activeSection }: SettingsContentProps) {
@@ -13,12 +13,6 @@ export function SettingsContent({ activeSection }: SettingsContentProps) {
       {activeSection === "profile" && <ProfileSection />}
       {activeSection === "account" && <AccountSection />}
       {activeSection === "integrations" && <IntegrationsSection />}
-      {activeSection === "billing" && (
-        <div>
-          <h2 className="text-gray-900 mb-6">Billing</h2>
-          <p className="text-gray-600">Billing settings coming soon...</p>
-        </div>
-      )}
       {activeSection === "danger" && <DangerZoneSection />}
     </div>
   );
