@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       data: {
         user_id: user.id,
         slug: finalSlug,
-        theme: theme || "minimalist",
+        theme: theme || "minimal",
       },
       select: {
         id: true,
