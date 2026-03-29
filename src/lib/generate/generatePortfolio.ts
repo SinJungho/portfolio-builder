@@ -115,17 +115,24 @@ export async function generatePortfolio(params: {
             const completion = await openai.chat.completions.create({
               model: "gpt-4o-mini",
               messages: [
-                { role: "system", content: "당신은 IT 채용 담당자입니다. 프로젝트 README를 2~3문장의 핵심 요약으로 정리해주세요." },
-                { role: "user", content: `프로젝트 이름: ${p.name}\n설명: ${p.description || ""}\nREADME: ${readme.substring(0, 3000)}` }
-              ]
+                { 
+                  role: "system", 
+                  content: "당신은 IT 채용 담당자이자 포트폴리오 전문가입니다. 프로젝트 README를 분석하여 채용에 도움이 되는 핵심 정보를 추출해주세요. 반드시 JSON 형식으로만 응답해야 합니다." 
+                },
+                { 
+                  role: "user", 
+                  content: `프로젝트 이름: ${p.name}\n설명: ${p.description || ""}\nREADME: ${readme.substring(0, 3000)}\n\n위 정보를 바탕으로 다음 필드를 포함한 JSON으로 응답해주세요:\n- headline: 프로젝트를 한 줄로 설명하는 매력적인 문구\n- highlights: 주요 기능이나 기술적 성취 (2~3개 불렛 포인트)\n- demo_url: 라이브 데모 URL (README에서 찾을 수 있으면 포함, 없으면 null)\n- role: 개발자로서의 역할 (유추 가능하면 작성, 아니면 null)` 
+                }
+              ],
+              response_format: { type: "json_object" }
             });
-            const summary = completion.choices[0]?.message?.content || "";
-            p.ai_summary = summary;
+            const summaryData = completion.choices[0]?.message?.content || "{}";
+            p.ai_summary = summaryData;
             
             // Cache the result to DB
             await prisma.rawProject.update({
               where: { id: p.id },
-              data: { ai_summary: summary }
+              data: { ai_summary: summaryData }
             });
           }
         } catch (e) {
