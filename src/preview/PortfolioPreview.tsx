@@ -1,9 +1,12 @@
+"use client";
+
 import React from "react";
 import HeroBlock from "./blocks/HeroBlock";
 import ProjectGridBlock from "./blocks/ProjectGridBlock";
 import SkillsBlock from "./blocks/SkillsBlock";
 import ContactBlock from "./blocks/ContactBlock";
 import BlogFeedBlock from "./blocks/BlogFeedBlock";
+import { resolveTheme } from "./themes";
 
 type Block = {
   id: string;
@@ -20,42 +23,57 @@ interface PortfolioPreviewProps {
 }
 
 export default function PortfolioPreview({ blocks, theme, designTokens }: PortfolioPreviewProps) {
-  // 간단한 테마 기반 CSS 변수 적용
-  const themeClasses: Record<string, string> = {
-    minimalist: "bg-white text-gray-900 border-gray-200",
-    creative: "bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-slate-800",
-    corporate: "bg-slate-50 text-slate-900",
-    dark: "bg-zinc-950 text-zinc-50 border-zinc-800",
-    pastel: "bg-rose-50 text-rose-900",
-    tech: "bg-[#0d1117] text-[#c9d1d9] font-mono",
-  };
-
-  const currentThemeClass = themeClasses[theme] || themeClasses.minimalist;
+  const t = resolveTheme(theme);
 
   const visibleBlocks = blocks
     .filter((b) => b.is_visible)
     .sort((a, b) => a.position - b.position);
 
   return (
-    <div className={`min-h-screen w-full font-sans transition-colors duration-300 ${currentThemeClass}`}>
-      <div className="max-w-5xl mx-auto px-6 py-12 md:py-20 flex flex-col gap-20">
-        {visibleBlocks.map((block) => {
-          switch (block.block_type) {
-            case "hero":
-              return <HeroBlock key={block.id} config={block.config} />;
-            case "project_grid":
-              return <ProjectGridBlock key={block.id} config={block.config} />;
-            case "skills":
-              return <SkillsBlock key={block.id} config={block.config} />;
-            case "contact":
-              return <ContactBlock key={block.id} config={block.config} />;
-            case "blog_feed":
-              return <BlogFeedBlock key={block.id} config={block.config} />;
-            default:
-              return null;
-          }
-        })}
-      </div>
+    <div
+      className="w-full"
+      style={{
+        backgroundColor: t.bg,
+        color: t.text,
+        backgroundImage: t.pageBgGradient || "none",
+        fontFamily: "'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
+        scrollBehavior: "smooth",
+      }}
+    >
+      {visibleBlocks.map((block) => {
+        // Hero uses full-bleed (no container)
+        if (block.block_type === "hero") {
+          return (
+            <div key={block.id} className="max-w-[1100px] mx-auto px-6 md:px-8">
+              <HeroBlock config={block.config} theme={t} />
+            </div>
+          );
+        }
+
+        // Contact is nearly full bleed
+        if (block.block_type === "contact") {
+          return (
+            <div key={block.id} className="max-w-[1100px] mx-auto px-6 md:px-8 py-12 md:py-16">
+              <ContactBlock config={block.config} theme={t} />
+            </div>
+          );
+        }
+
+        // All other blocks: contained with generous spacing
+        return (
+          <div key={block.id} className="max-w-[1100px] mx-auto px-6 md:px-8 py-16 md:py-24">
+            {block.block_type === "project_grid" && (
+              <ProjectGridBlock config={block.config} theme={t} />
+            )}
+            {block.block_type === "skills" && (
+              <SkillsBlock config={block.config} theme={t} />
+            )}
+            {block.block_type === "blog_feed" && (
+              <BlogFeedBlock config={block.config} theme={t} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

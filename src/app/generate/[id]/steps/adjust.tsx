@@ -83,12 +83,11 @@ const blockTypeLabels: Record<string, string> = {
 };
 
 const themes = [
-  { id: "minimalist", name: "Minimalist", colors: ["#ffffff", "#f3f4f6", "#111827"] },
-  { id: "creative", name: "Creative", colors: ["#eef2ff", "#c7d2fe", "#312e81"] },
-  { id: "corporate", name: "Corporate", colors: ["#f8fafc", "#cbd5e1", "#0f172a"] },
-  { id: "dark", name: "Dark", colors: ["#09090b", "#27272a", "#f4f4f5"] },
-  { id: "pastel", name: "Pastel", colors: ["#fff1f2", "#fecdd3", "#881337"] },
-  { id: "tech", name: "Tech", colors: ["#0d1117", "#161b22", "#c9d1d9"] },
+  { id: "minimal", name: "Minimal", desc: "깔끔한 화이트", colors: ["#FFFFFF", "#3182F6", "#191F28"] },
+  { id: "midnight", name: "Midnight", desc: "다크 네온", colors: ["#09090B", "#A78BFA", "#FAFAFA"] },
+  { id: "ocean", name: "Ocean", desc: "시원한 블루", colors: ["#F0FDFF", "#0EA5E9", "#0C4A6E"] },
+  { id: "forest", name: "Forest", desc: "자연 그린", colors: ["#F0FDF4", "#10B981", "#14532D"] },
+  { id: "sunset", name: "Sunset", desc: "따뜻한 오렌지", colors: ["#FFFBF5", "#F97316", "#431407"] },
 ];
 
 interface RawProject {

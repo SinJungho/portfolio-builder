@@ -1,113 +1,166 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import React, { useEffect, useRef, useState } from "react";
+import type { ThemeTokens } from "../themes";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 interface SkillsBlockProps {
   config: {
     chart_type: "radar" | "bar" | "tag_cloud";
     skills: Array<{ name: string; level: number }>;
   };
+  theme: ThemeTokens;
 }
 
-export default function SkillsBlock({ config }: SkillsBlockProps) {
-  const { chart_type, skills } = config;
+const SKILL_CATEGORIES: Record<string, string[]> = {
+  Frontend: ["React", "Vue", "Angular", "Next.js", "Nuxt", "Svelte", "HTML", "CSS", "Tailwind", "SCSS", "TypeScript", "JavaScript", "Redux", "Zustand"],
+  Backend: ["Node.js", "Express", "NestJS", "Django", "Flask", "Spring", "Spring Boot", "FastAPI", "Ruby on Rails", "Go", "Rust", "Java", "Python", "PHP", "C#", ".NET"],
+  Database: ["PostgreSQL", "MySQL", "MongoDB", "Redis", "SQLite", "Prisma", "Drizzle", "DynamoDB", "Supabase", "Firebase"],
+  DevOps: ["Docker", "Kubernetes", "AWS", "GCP", "Azure", "CI/CD", "GitHub Actions", "Terraform", "Nginx", "Linux", "Vercel"],
+  Mobile: ["React Native", "Flutter", "Swift", "Kotlin", "iOS", "Android", "Dart"],
+};
 
-  // Generic fallback if skills array is empty
-  const displaySkills = skills.length > 0
-    ? skills
-    : [
-        { name: "TypeScript", level: 90 },
-        { name: "React", level: 85 },
-        { name: "Next.js", level: 80 },
-        { name: "Node.js", level: 75 },
-        { name: "PostgreSQL", level: 60 },
-      ];
+function categorize(skillName: string): string {
+  for (const [cat, keywords] of Object.entries(SKILL_CATEGORIES)) {
+    if (keywords.some((kw) => skillName.toLowerCase().includes(kw.toLowerCase()))) {
+      return cat;
+    }
+  }
+  return "Other";
+}
 
-  const chartConfig = {
-    level: {
-      label: "Skill Level",
-      color: "hsl(var(--primary))",
-    },
-  };
+function AnimatedBar({ level, fill, track, delay }: { level: number; fill: string; track: string; delay: number }) {
+  const barRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setWidth(level), delay);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [level, delay]);
+
+  return (
+    <div
+      ref={barRef}
+      className="w-full h-2 rounded-full overflow-hidden"
+      style={{ backgroundColor: track }}
+    >
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: `${width}%`,
+          background: fill,
+          transition: `width 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
+        }}
+      />
+    </div>
+  );
+}
+
+export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
+  const { skills } = config;
+
+  const displaySkills =
+    skills.length > 0
+      ? skills
+      : [
+          { name: "TypeScript", level: 90 },
+          { name: "React", level: 85 },
+          { name: "Next.js", level: 80 },
+          { name: "Node.js", level: 75 },
+          { name: "PostgreSQL", level: 60 },
+        ];
+
+  const header = useScrollReveal("fadeUp");
+
+  // Group by category
+  const grouped: Record<string, typeof displaySkills> = {};
+  displaySkills.forEach((s) => {
+    const cat = categorize(s.name);
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(s);
+  });
+
+  const categories = Object.entries(grouped);
 
   return (
     <section className="space-y-12">
-      <div className="space-y-2">
-        <h2 className="text-[32px] font-extrabold tracking-[-1.5px] text-current leading-tight">
-          Expertise & Skills
+      {/* Section Header */}
+      <div ref={header.ref} style={header.style} className="space-y-4">
+        <h2
+          className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
+          style={{ color: t.text }}
+        >
+          Skills & Expertise
         </h2>
-        <div className="h-1.5 w-12 bg-current/20 rounded-full" />
+        <div
+          className="h-[3px] w-12 rounded-full"
+          style={{ background: t.decorBar }}
+        />
       </div>
 
-      <div className="w-full max-w-4xl mx-auto min-h-[450px] flex items-center justify-center bg-current/2 border border-current/10 rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.02)]">
-        {chart_type === "radar" && (
-          <ChartContainer config={chartConfig} className="w-full h-full min-h-[300px]">
-            <RadarChart data={displaySkills} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <PolarGrid className="stroke-muted-foreground/30" />
-              <PolarAngleAxis 
-                dataKey="name" 
-                tick={{ fill: "currentColor", fontSize: 13, fontWeight: 500, opacity: 0.8 }} 
-              />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-              <Radar
-                dataKey="level"
-                fill="var(--color-level)"
-                fillOpacity={0.6}
-                stroke="var(--color-level)"
-                strokeWidth={2}
-              />
-            </RadarChart>
-          </ChartContainer>
-        )}
-
-        {chart_type === "bar" && (
-          <ChartContainer config={chartConfig} className="w-full h-full min-h-[300px]">
-            <BarChart data={displaySkills} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted-foreground/20" />
-              <XAxis type="number" domain={[0, 100]} hide />
-              <YAxis 
-                dataKey="name" 
-                type="category" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: "currentColor", fontSize: 14, fontWeight: 500 }}
-              />
-              <ChartTooltip cursor={{fill: 'var(--color-level)', opacity: 0.1}} content={<ChartTooltipContent />} />
-              <Bar dataKey="level" fill="var(--color-level)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ChartContainer>
-        )}
-
-        {chart_type === "tag_cloud" && (
-          <div className="flex flex-wrap items-center justify-center gap-4 py-8">
-            {displaySkills.map((s, idx) => {
-              // Map 0-100 level to 1rem-3rem font size approximately
-              const minFontSize = 0.875;
-              const maxFontSize = 3;
-              const sizeLine = minFontSize + (s.level / 100) * (maxFontSize - minFontSize);
-              
-              // Map opacity from 60% to 100%
-              const opacity = 0.5 + (s.level / 100) * 0.5;
-
-              return (
-                <span
-                  key={idx}
-                  className="font-bold tracking-tight px-3 py-1 bg-current/4 hover:bg-current/15 rounded-full transition-colors cursor-default"
-                  style={{
-                    fontSize: `${sizeLine}rem`,
-                    opacity: opacity,
-                    color: "var(--color-level, currentColor)",
-                  }}
-                >
-                  {s.name}
-                </span>
-              );
-            })}
-          </div>
-        )}
+      {/* Skill Categories */}
+      <div className="space-y-10">
+        {categories.map(([category, catSkills], catIdx) => {
+          const catReveal = useScrollReveal("fadeUp", { delay: catIdx * 100 });
+          return (
+            <div key={category} ref={catReveal.ref} style={catReveal.style} className="space-y-5">
+              <h3
+                className="text-[15px] font-bold uppercase tracking-[2px]"
+                style={{ color: t.accent }}
+              >
+                {category}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {catSkills
+                  .sort((a, b) => b.level - a.level)
+                  .map((skill, idx) => (
+                    <div
+                      key={skill.name}
+                      className="flex flex-col gap-2.5 p-5 backdrop-blur-sm"
+                      style={{
+                        backgroundColor: t.surfaceBg,
+                        borderRadius: "16px",
+                        border: `1px solid ${t.cardBorder}`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-[15px] font-bold tracking-[-0.3px]"
+                          style={{ color: t.text }}
+                        >
+                          {skill.name}
+                        </span>
+                        <span
+                          className="text-[13px] font-bold tabular-nums"
+                          style={{ color: t.accent }}
+                        >
+                          {skill.level}%
+                        </span>
+                      </div>
+                      <AnimatedBar
+                        level={skill.level}
+                        fill={t.accentGradient}
+                        track={t.progressTrack}
+                        delay={idx * 80}
+                      />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

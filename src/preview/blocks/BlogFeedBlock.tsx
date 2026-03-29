@@ -1,13 +1,17 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import type { ThemeTokens } from "../themes";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 interface BlogFeedBlockProps {
   config: {
     integration_provider: "tistory" | "velog" | "medium" | "custom_rss";
     max_items: number;
     show_thumbnail: boolean;
-    // Server component pass feed data or we fetch inside component.
-    // For MVP SSR, we assume `feed_items` array is passed.
     feed_items?: Array<{
       id: string;
       title: string;
@@ -16,21 +20,22 @@ interface BlogFeedBlockProps {
       metadata?: Record<string, unknown>;
     }>;
   };
+  theme: ThemeTokens;
 }
 
-export default function BlogFeedBlock({ config }: BlogFeedBlockProps) {
+export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) {
   const { integration_provider, max_items, show_thumbnail, feed_items = [] } = config;
 
-  // Placeholder items if no real data is passed (e.g. dev mode or empty connection)
-  const displayFeed = feed_items.length > 0 
-    ? feed_items.slice(0, max_items)
-    : [
-        { id: "1", title: "최근 프로젝트 리뷰: Next.js와 SSR", url: "#", published_at: new Date(), metadata: {} },
-        { id: "2", title: "React 상태 관리 패턴 비교", url: "#", published_at: new Date(), metadata: {} },
-        { id: "3", title: "개발자의 성장 일기", url: "#", published_at: new Date(), metadata: {} },
-      ].slice(0, max_items);
+  const displayFeed =
+    feed_items.length > 0
+      ? feed_items.slice(0, max_items)
+      : [
+          { id: "1", title: "최근 프로젝트 리뷰: Next.js와 SSR", url: "#", published_at: new Date(), metadata: {} },
+          { id: "2", title: "React 상태 관리 패턴 비교", url: "#", published_at: new Date(), metadata: {} },
+          { id: "3", title: "개발자의 성장 일기", url: "#", published_at: new Date(), metadata: {} },
+        ].slice(0, max_items);
 
-  const providerLabels = {
+  const providerLabels: Record<string, string> = {
     tistory: "Tistory",
     velog: "Velog",
     medium: "Medium",
@@ -38,52 +43,111 @@ export default function BlogFeedBlock({ config }: BlogFeedBlockProps) {
   };
 
   const providerLabel = providerLabels[integration_provider] || "Blog";
+  const header = useScrollReveal("fadeUp");
 
   return (
     <section className="space-y-12">
-      <div className="space-y-2 text-center md:text-left">
-        <h2 className="text-[32px] font-extrabold tracking-[-1.5px] text-current leading-tight">
-          Recent Articles from <span className="opacity-40">{providerLabel}</span>
-        </h2>
-        <div className="h-1.5 w-12 bg-current/20 rounded-full mx-auto md:mx-0" />
+      {/* Section Header */}
+      <div ref={header.ref} style={header.style} className="space-y-4">
+        <div className="flex items-end gap-4">
+          <h2
+            className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
+            style={{ color: t.text }}
+          >
+            Recent Articles
+          </h2>
+          <span
+            className="text-[14px] font-semibold mb-1"
+            style={{ color: t.textMuted }}
+          >
+            from {providerLabel}
+          </span>
+        </div>
+        <div
+          className="h-[3px] w-12 rounded-full"
+          style={{ background: t.decorBar }}
+        />
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {displayFeed.map((item) => {
-          const thumbnail = item.metadata ? (item.metadata as Record<string, string>).thumbnail : undefined;
+
+      {/* Feed List */}
+      <div className="flex flex-col gap-4">
+        {displayFeed.map((item, idx) => {
+          const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: idx * 80 });
+          const thumbnail = item.metadata
+            ? (item.metadata as Record<string, string>).thumbnail
+            : undefined;
 
           return (
-            <a
+            <Link
               key={item.id}
+              ref={reveal.ref}
               href={item.url}
               target="_blank"
               rel="noreferrer"
-              className="group flex flex-col p-6 rounded-[32px] border border-current/10 bg-current/2 hover:bg-current/4 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] overflow-hidden"
+              className="group flex items-center gap-6 p-5 md:p-6 transition-all duration-500 hover:-translate-y-0.5"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = t.cardHoverBorder;
+                e.currentTarget.style.boxShadow = t.cardHoverShadow;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = t.cardBorder;
+                e.currentTarget.style.boxShadow = t.cardShadow;
+              }}
+              style={{
+                ...reveal.style,
+                backgroundColor: t.cardBg,
+                border: `1px solid ${t.cardBorder}`,
+                borderRadius: t.cardRadius,
+                boxShadow: t.cardShadow,
+              }}
             >
+              {/* Thumbnail */}
               {show_thumbnail && thumbnail && (
-                <div className="shrink-0 relative w-full aspect-video rounded-[20px] overflow-hidden border border-current/5 mb-6 group-hover:border-current/10 transition-colors">
+                <div className="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-2xl overflow-hidden">
                   <Image
                     src={thumbnail}
                     alt={item.title}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                     unoptimized
                   />
                 </div>
               )}
-              <div className="flex-1 space-y-4">
-                <h3 className="font-extrabold text-xl line-clamp-2 leading-tight tracking-[-0.5px] group-hover:text-blue-500 transition-colors">
+
+              {/* Content */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <p
+                  className="text-[12px] font-bold uppercase tracking-[1.5px]"
+                  style={{ color: t.accent }}
+                >
+                  {providerLabel}
+                </p>
+                <h3
+                  className="font-bold text-[17px] md:text-[18px] leading-snug truncate tracking-[-0.3px]"
+                  style={{ color: t.text }}
+                >
                   {item.title}
                 </h3>
-                <div className="text-[13px] opacity-40 font-bold uppercase tracking-wider">
-                  {new Date(item.published_at).toLocaleDateString('ko-KR', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                <p
+                  className="text-[13px] font-medium"
+                  style={{ color: t.textMuted }}
+                >
+                  {new Date(item.published_at).toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
                   })}
-                </div>
+                </p>
               </div>
-            </a>
+
+              {/* Arrow */}
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                style={{ background: t.accentGradient }}
+              >
+                <ArrowUpRight size={16} color="#fff" />
+              </div>
+            </Link>
           );
         })}
       </div>

@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const updatePortfolioSchema = z.object({
   theme: z
-    .enum(["minimalist", "creative", "corporate", "dark", "pastel", "tech"])
+    .enum(["minimal", "midnight", "ocean", "forest", "sunset", "minimalist", "creative", "corporate", "dark", "pastel", "tech"])
     .optional(),
   slug: z.string().optional(),
   title: z.string().optional(),
