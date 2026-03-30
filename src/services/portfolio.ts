@@ -50,13 +50,9 @@ export class PortfolioService {
    * Create a new portfolio record (Pre-generation)
    */
   async createEmpty(userId: string, data: { slug?: string; theme?: string }) {
-    // 1. Plan Limit Check (Free: 1)
+    // 1. Plan Limit Check (Free: 1) - Removed for MVP
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const existingCount = await this.countByUserId(userId);
-
-    if (user?.plan === 'free' && existingCount >= 1) {
-      throw new Error('PLAN_LIMIT_EXCEEDED');
-    }
 
     // 2. Slug logic
     const githubLogin = user?.github_login || 'user';

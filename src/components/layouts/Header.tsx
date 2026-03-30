@@ -8,6 +8,24 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { 
+  ArrowRight, 
+  ChevronRight, 
+  Github, 
+  Menu, 
+  Sparkles, 
+  User, 
+  LayoutDashboard, 
+  Settings, 
+  LogOut 
+} from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import CTAButton from "../common/CTAButton";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +34,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronRight, Github, Menu, Sparkles, User, LayoutDashboard, Settings, LogOut } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import CTAButton from "../common/CTAButton";
 
 const NAV_LINKS = [
   { name: "기능", href: "/features" },
@@ -60,6 +71,15 @@ export default function Header() {
    *    → <header>에 suppressHydrationWarning 적용.
    *      SSR은 항상 non-scrolled HTML을 내보내고,
    *      클라이언트가 마운트 직후 scroll 위치를 읽어 필요하면 업데이트.
+   *      suppressHydrationWarning이 있으면 React가 className 차이를 경고 없이 무시.
+   *
+   * ② setIsMounted를 effect 안에서 동기 호출 → cascading renders 경고
+   *    → isMounted state 제거. 대신 useRef로 마운트 여부 추적.
+   *      Sheet는 항상 렌더하되 open state는 클라이언트에서만 제어됨.
+   *      (Sheet가 SSR에서 portal을 생성하지 않으므로 실제 불일치 없음)
+   *
+   * ③ onScroll 즉시 호출 → effect 내 동기 setState
+   *    → requestAnimationFrame으로 한 프레임 뒤에 실행해 cascading 방지.
    */
   const mountedRef = useRef(false);
 
@@ -70,6 +90,7 @@ export default function Header() {
       if (mountedRef.current) setScrolled(window.scrollY > 20);
     };
 
+    // 진입 시 즉시 체크 — rAF로 감싸 effect body 내 동기 setState 경고 회피
     const raf = requestAnimationFrame(onScroll);
     window.addEventListener("scroll", onScroll, { passive: true });
 
@@ -242,7 +263,7 @@ export default function Header() {
               </nav>
 
               {/* 하단 CTA */}
-              <div className="px-4 pb-8 pt-3 border-t border-ink-100 flex flex-col gap-2.5">
+              <div className="px-5 pb-8 pt-4 border-t border-ink-100 flex flex-col gap-3">
                 {isLoggedIn ? (
                   <>
                     <div className="flex items-center gap-3 p-3 rounded-2xl bg-ink-50 border border-ink-100 mb-2">
