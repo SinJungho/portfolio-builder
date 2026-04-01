@@ -65,6 +65,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableBlockItem } from "./components/SortableBlockItem";
+import DesignEditor from "@/components/features/editor/DesignEditor";
 
 const blockTypeIcons: Record<string, React.ReactNode> = {
   hero: <User className="w-5 h-5 text-current" />,
@@ -82,13 +83,6 @@ const blockTypeLabels: Record<string, string> = {
   blog_feed: "블로그",
 };
 
-const themes = [
-  { id: "minimal", name: "Minimal", desc: "깔끔한 화이트", colors: ["#FFFFFF", "#3182F6", "#191F28"] },
-  { id: "midnight", name: "Midnight", desc: "다크 네온", colors: ["#09090B", "#A78BFA", "#FAFAFA"] },
-  { id: "ocean", name: "Ocean", desc: "시원한 블루", colors: ["#F0FDFF", "#0EA5E9", "#0C4A6E"] },
-  { id: "forest", name: "Forest", desc: "자연 그린", colors: ["#F0FDF4", "#10B981", "#14532D"] },
-  { id: "sunset", name: "Sunset", desc: "따뜻한 오렌지", colors: ["#FFFBF5", "#F97316", "#431407"] },
-];
 
 interface RawProject {
   id: string;
@@ -139,6 +133,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
   const [isEditingProjects, setIsEditingProjects] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
+  const [tempCustomDescriptions, setTempCustomDescriptions] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: rawProjects } = useQuery<RawProject[]>({
@@ -219,6 +214,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
   const openProjectEditor = (block: any) => {
     setEditingBlockId(block.id);
     setTempSelectedIds((block.config.project_ids as string[]) || []);
+    setTempCustomDescriptions((block.config.custom_descriptions as Record<string, string>) || {});
     setIsEditingProjects(true);
   };
 
@@ -228,11 +224,12 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     if (block) {
       updateBlockConfig(editingBlockId, {
         ...block.config,
-        project_ids: tempSelectedIds
+        project_ids: tempSelectedIds,
+        custom_descriptions: tempCustomDescriptions
       }).then(() => {
         setIsEditingProjects(false);
         setEditingBlockId(null);
-        toast.success("대표 리포지토리가 업데이트되었습니다.");
+        toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
       });
     }
   };
@@ -335,34 +332,9 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
   // 설정 패널 (공용 콘텐츠)
   const SettingsPanel = (
     <div className="space-y-6">
-      {/* Theme Selection */}
-      <div className="bg-white border border-black/3 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
-        <h3 className="text-[18px] sm:text-[20px] font-extrabold text-[#191F28] flex items-center gap-2">
-          <Palette className="w-5 h-5 text-blue-500" />
-          테마 스타일
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          {themes.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTheme(t.id)}
-              className={`
-                group flex flex-col gap-3 p-4 border rounded-2xl transition-all text-left
-                ${theme === t.id ? "border-[#3182F6] bg-blue-50/30 ring-1 ring-[#3182F6]" : "hover:border-blue-200 hover:bg-blue-50/10 border-black/5"}
-              `}
-            >
-              <div className="flex items-center justify-between">
-                <span className={`text-[13px] font-bold ${theme === t.id ? "text-[#3182F6]" : "text-gray-500"}`}>{t.name}</span>
-                {theme === t.id && <div className="w-2 h-2 rounded-full bg-[#3182F6] shadow-[0_0_8px_rgba(49,130,246,0.6)]" />}
-              </div>
-              <div className="flex gap-1.5 h-4 w-full">
-                {t.colors.map((c, i) => (
-                  <div key={i} className="flex-1 rounded-[4px] border border-black/3" style={{ backgroundColor: c }} />
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
+      {/* Style & Design Customization (Step 3) */}
+      <div className="bg-white border border-black/3 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+        <DesignEditor />
       </div>
 
       {/* Optional Fields */}
@@ -552,12 +524,28 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
                           <GitFork className="w-3.5 h-3.5" />
                           {project.forks_count}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {project.pushed_at ? formatDistanceToNow(new Date(project.pushed_at), { addSuffix: true, locale: ko }) : "-"}
-                        </div>
                       </div>
                     </div>
+
+                    {/* Step 3.1: Description Editor */}
+                    {tempSelectedIds.includes(project.id) && (
+                      <div className="pt-4 border-t border-black/5 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <Label className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">포트폴리오용 프로젝트 소개</Label>
+                        <textarea
+                          placeholder="프로젝트의 핵심 성과나 기술적인 도전 과제를 적어주세요."
+                          className="w-full min-h-[100px] p-4 text-[14px] bg-white border border-black/5 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none leading-relaxed"
+                          value={tempCustomDescriptions[project.id] || project.description || ""}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            setTempCustomDescriptions(prev => ({
+                              ...prev,
+                              [project.id]: e.target.value
+                            }));
+                          }}
+                        />
+                        <p className="text-[11px] text-gray-400 font-medium">README 요약 대신 이 내용이 우선적으로 노출됩니다.</p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}

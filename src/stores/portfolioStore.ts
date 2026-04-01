@@ -17,6 +17,7 @@ export type PortfolioStore = {
   theme: string;
   isPublished: boolean;
   publishedUrl: string | null;
+  designTokens: any;
   isSaving: boolean; // API 호출 중 여부
 
   // 초기화
@@ -26,7 +27,10 @@ export type PortfolioStore = {
     theme: string;
     isPublished: boolean;
     publishedUrl: string | null;
+    designTokens?: any;
   }) => void;
+
+  setDesignTokens: (tokens: any) => Promise<void>;
 
   // 액션
   toggleBlock: (blockId: string) => Promise<void>;
@@ -51,6 +55,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
     theme: "minimal",
     isPublished: false,
     publishedUrl: null,
+    designTokens: {},
     isSaving: false,
 
     initialize: (data) => {
@@ -60,7 +65,39 @@ export const usePortfolioStore = create<PortfolioStore>()(
         state.theme = data.theme;
         state.isPublished = data.isPublished;
         state.publishedUrl = data.publishedUrl;
+        state.designTokens = data.designTokens || {};
       });
+    },
+
+    setDesignTokens: async (tokens: any) => {
+      const { portfolioId, designTokens: prevTokens } = get();
+      if (!portfolioId) return;
+
+      const newTokens = { ...prevTokens, ...tokens };
+
+      // 낙관적 업데이트
+      set((state) => {
+        state.designTokens = newTokens;
+        state.isSaving = true;
+      });
+
+      try {
+        const res = await fetch(`/api/portfolios/${portfolioId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ design_tokens: newTokens }),
+        });
+        if (!res.ok) throw new Error("Update failed");
+      } catch (e) {
+        // 롤백
+        set((state) => {
+          state.designTokens = prevTokens;
+        });
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
     },
 
     toggleBlock: async (blockId: string) => {

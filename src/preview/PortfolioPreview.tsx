@@ -23,7 +23,43 @@ interface PortfolioPreviewProps {
 }
 
 export default function PortfolioPreview({ blocks, theme, designTokens }: PortfolioPreviewProps) {
-  const t = resolveTheme(theme);
+  const baseTheme = resolveTheme(theme);
+  
+  // 디자인 토큰 병합 로직 (강조색 및 관련 스타일 강제 대체)
+  const primaryColor = designTokens?.primaryColor || baseTheme.accent;
+  const mt = {
+    ...baseTheme,
+    accent: primaryColor,
+    ctaBg: primaryColor,
+    progressFill: primaryColor,
+    decorBar: primaryColor,
+    accentGradient: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`,
+    accentSoft: `${primaryColor}15`, 
+    glowColor: `${primaryColor}20`,
+    heroGlow: `${primaryColor}10`,
+    cardRadius: designTokens?.borderRadius === "none" ? "0px" :
+                designTokens?.borderRadius === "sm" ? "8px" :
+                designTokens?.borderRadius === "md" ? "16px" :
+                designTokens?.borderRadius === "lg" ? "24px" :
+                designTokens?.borderRadius === "full" ? "9999px" : baseTheme.cardRadius
+  };
+
+  // 폰트 매핑
+  const fontMap: Record<string, string> = {
+    inter: "'Inter', sans-serif",
+    pretendard: "'Pretendard', sans-serif",
+    "fira-code": "'Fira Code', monospace",
+    playfair: "'Playfair Display', serif",
+  };
+  const fontFamily = fontMap[designTokens?.fontFamily || "inter"] || fontMap.inter;
+
+  // 간격 매핑 (Spacing Mapping - 정석 수치 반영)
+  const spacingClassMap = {
+    compact: "py-10 md:py-16",
+    normal: "py-16 md:py-24",
+    relaxed: "py-24 md:py-40",
+  };
+  const spacingClass = spacingClassMap[designTokens?.spacing as keyof typeof spacingClassMap] || spacingClassMap.normal;
 
   const visibleBlocks = blocks
     .filter((b) => b.is_visible)
@@ -33,10 +69,10 @@ export default function PortfolioPreview({ blocks, theme, designTokens }: Portfo
     <div
       className="w-full"
       style={{
-        backgroundColor: t.bg,
-        color: t.text,
-        backgroundImage: t.pageBgGradient || "none",
-        fontFamily: "'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
+        backgroundColor: mt.bg,
+        color: mt.text,
+        backgroundImage: mt.pageBgGradient || "none",
+        fontFamily,
         scrollBehavior: "smooth",
       }}
     >
@@ -44,8 +80,8 @@ export default function PortfolioPreview({ blocks, theme, designTokens }: Portfo
         // Hero uses full-bleed (no container)
         if (block.block_type === "hero") {
           return (
-            <div key={block.id} className="max-w-[1100px] mx-auto px-6 md:px-8">
-              <HeroBlock config={block.config} theme={t} />
+            <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 ${spacingClass}`}>
+              <HeroBlock config={block.config} theme={mt} />
             </div>
           );
         }
@@ -53,23 +89,23 @@ export default function PortfolioPreview({ blocks, theme, designTokens }: Portfo
         // Contact is nearly full bleed
         if (block.block_type === "contact") {
           return (
-            <div key={block.id} className="max-w-[1100px] mx-auto px-6 md:px-8 py-12 md:py-16">
-              <ContactBlock config={block.config} theme={t} />
+            <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 ${spacingClass}`}>
+              <ContactBlock config={block.config} theme={mt} />
             </div>
           );
         }
 
         // All other blocks: contained with generous spacing
         return (
-          <div key={block.id} className="max-w-[1100px] mx-auto px-6 md:px-8 py-16 md:py-24">
+          <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 ${spacingClass}`}>
             {block.block_type === "project_grid" && (
-              <ProjectGridBlock config={block.config} theme={t} />
+              <ProjectGridBlock config={block.config} theme={mt} />
             )}
             {block.block_type === "skills" && (
-              <SkillsBlock config={block.config} theme={t} />
+              <SkillsBlock config={block.config} theme={mt} />
             )}
             {block.block_type === "blog_feed" && (
-              <BlogFeedBlock config={block.config} theme={t} />
+              <BlogFeedBlock config={block.config} theme={mt} />
             )}
           </div>
         );

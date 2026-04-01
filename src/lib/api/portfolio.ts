@@ -41,7 +41,7 @@ export async function reorderBlocksApi(
 
 export async function updatePortfolioApi(
   portfolioId: string,
-  data: { theme: string }
+  data: { theme?: string; design_tokens?: any }
 ) {
   const res = await fetch(`/api/portfolios/${portfolioId}`, {
     method: 'PATCH',
@@ -50,4 +50,11 @@ export async function updatePortfolioApi(
   })
   if (!res.ok) throw new Error('Failed to update portfolio')
   return res.json()
+}
+
+export async function updateDesignTokensApi(
+  portfolioId: string,
+  design_tokens: any
+) {
+  return updatePortfolioApi(portfolioId, { design_tokens });
 }
