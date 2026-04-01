@@ -4,12 +4,15 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { DesignTokenSchema } from "@/schemas/portfolio";
+
 const updatePortfolioSchema = z.object({
   theme: z
     .enum(["minimal", "midnight", "ocean", "forest", "sunset", "minimalist", "creative", "corporate", "dark", "pastel", "tech"])
     .optional(),
   slug: z.string().optional(),
   title: z.string().optional(),
+  design_tokens: DesignTokenSchema.optional(),
 });
 
 export async function PATCH(
@@ -40,6 +43,7 @@ export async function PATCH(
     const updateData: any = {};
     if (data.theme !== undefined) updateData.theme = data.theme;
     if (data.title !== undefined) updateData.title = data.title;
+    if (data.design_tokens !== undefined) updateData.design_tokens = data.design_tokens;
 
     if (data.slug && data.slug !== portfolio?.slug) {
       const existing = await prisma.portfolio.findUnique({

@@ -3,6 +3,8 @@
 import React from "react";
 import { ArrowUpRight, Code2 } from "lucide-react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ThemeTokens } from "../themes";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 
@@ -12,6 +14,7 @@ interface ProjectGridBlockProps {
     columns: number;
     project_ids: string[];
     show_tech_stack: boolean;
+    custom_descriptions?: Record<string, string>;
     projectsData?: Array<{
       id: string;
       name: string;
@@ -111,13 +114,27 @@ export default function ProjectGridBlock({ config, theme: t }: ProjectGridBlockP
       </div>
 
       {/* Featured Project — Full Width */}
-      {featured && <FeaturedCard project={featured} theme={t} showTech={show_tech_stack} />}
+      {featured && (
+        <FeaturedCard 
+          project={featured} 
+          theme={t} 
+          showTech={show_tech_stack} 
+          customDescription={config.custom_descriptions?.[featured.id]}
+        />
+      )}
 
       {/* Secondary Grid */}
       {rest.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {rest.map((p, i) => (
-            <SecondaryCard key={p.id} project={p} index={i + 1} theme={t} showTech={show_tech_stack} />
+            <SecondaryCard 
+              key={p.id} 
+              project={p} 
+              index={i + 1} 
+              theme={t} 
+              showTech={show_tech_stack} 
+              customDescription={config.custom_descriptions?.[p.id]}
+            />
           ))}
         </div>
       )}
@@ -130,10 +147,12 @@ function FeaturedCard({
   project: p,
   theme: t,
   showTech,
+  customDescription,
 }: {
   project: any;
   theme: ThemeTokens;
   showTech: boolean;
+  customDescription?: string;
 }) {
   const reveal = useScrollReveal<HTMLDivElement>("fadeUp", { delay: 100 });
   const langColor = LANG_COLORS[p.language || ""] || t.accent;
@@ -191,13 +210,13 @@ function FeaturedCard({
             )}
           </div>
 
-          <div className="space-y-4">
-            <p
-              className="text-[16px] leading-[1.75]"
-              style={{ color: t.textMuted }}
-            >
-              {p.description}
-            </p>
+          <div 
+            className={`space-y-4 prose prose-sm max-w-none md:prose-base ${t.id === "midnight" ? "prose-invert" : "prose-slate"}`} 
+            style={{ color: t.textMuted }}
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {customDescription || p.description || ""}
+            </ReactMarkdown>
 
             {highlights.length > 0 && (
               <ul className="space-y-2">
@@ -261,11 +280,13 @@ function SecondaryCard({
   index,
   theme: t,
   showTech,
+  customDescription,
 }: {
   project: any;
   index: number;
   theme: ThemeTokens;
   showTech: boolean;
+  customDescription?: string;
 }) {
   const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: index * 100 });
   const langColor = LANG_COLORS[p.language || ""] || t.accent;
@@ -334,12 +355,14 @@ function SecondaryCard({
           )}
         </div>
 
-        <p
-          className="text-[14px] leading-relaxed line-clamp-3"
+        <div 
+          className={`text-[14px] leading-relaxed prose prose-sm ${t.id === "midnight" ? "prose-invert" : "prose-slate"}`} 
           style={{ color: t.textMuted }}
         >
-          {p.description}
-        </p>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {customDescription || p.description || ""}
+          </ReactMarkdown>
+        </div>
       </div>
 
       {/* Tags */}
