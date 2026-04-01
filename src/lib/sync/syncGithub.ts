@@ -154,9 +154,15 @@ export async function syncGithubData({
     await updateProgress(100, { status: 'completed' })
   } catch (error: any) {
     console.error('syncGithubData process failed:', error)
+    
+    let friendlyMessage = error.message || String(error);
+    if (friendlyMessage.includes("Bad credentials")) {
+      friendlyMessage = "GitHub 인증 세션이 만료되었습니다. 다시 로그인해 주세요.";
+    }
+
     await updateProgress(0, {
       status: 'failed',
-      error: error.message || String(error),
+      error: friendlyMessage,
     })
   }
 }
