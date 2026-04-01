@@ -3,6 +3,8 @@
 import React from "react";
 import { ArrowUpRight, Code2 } from "lucide-react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ThemeTokens } from "../themes";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 
@@ -208,13 +210,13 @@ function FeaturedCard({
             )}
           </div>
 
-          <div className="space-y-4">
-            <p
-              className="text-[16px] leading-[1.75]"
-              style={{ color: t.textMuted }}
-            >
-              {customDescription || p.description}
-            </p>
+          <div 
+            className={`space-y-4 prose prose-sm max-w-none md:prose-base ${t.id === "midnight" ? "prose-invert" : "prose-slate"}`} 
+            style={{ color: t.textMuted }}
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {customDescription || p.description || ""}
+            </ReactMarkdown>
 
             {highlights.length > 0 && (
               <ul className="space-y-2">
@@ -353,12 +355,14 @@ function SecondaryCard({
           )}
         </div>
 
-        <p
-          className="text-[14px] leading-relaxed line-clamp-3"
+        <div 
+          className={`text-[14px] leading-relaxed prose prose-sm ${t.id === "midnight" ? "prose-invert" : "prose-slate"}`} 
           style={{ color: t.textMuted }}
         >
-          {customDescription || p.description}
-        </p>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {customDescription || p.description || ""}
+          </ReactMarkdown>
+        </div>
       </div>
 
       {/* Tags */}

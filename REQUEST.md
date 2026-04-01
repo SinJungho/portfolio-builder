@@ -56,7 +56,7 @@ Pre-flight 통과 후 아래 규칙 안에서만 코드를 작성한다.
 | 검증      | Zod                                   | Yup, class-validator  |
 | UI        | Tailwind + shadcn/ui                  | Inline style, MUI     |
 | 캐시      | Upstash Redis                         | node-cache, in-memory |
-| 스토리지  | Cloudflare R2                         | AWS S3 직접           |
+| 스토리지  | Supabase Storage (S3 API)           | AWS S3 직접           |
 | 미리보기  | PortfolioPreview 컴포넌트 직접 렌더링 | **iFrame 금지**       |
 
 ### 파일 생성 위치 규칙
@@ -207,12 +207,13 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 
 **현재**: Phase 2 Step 2 (완료) 🎉 → **Phase 2 Step 3 (디자인 토큰 편집기) 진입 단계**
 
-### ✅ Phase 1 MVP 완성도 요약 (완료)
-- GitHub Oauth & Webhook 연동 (Push 시 캐시 무효화 및 재배포)
-- 포트폴리오 자동 배포 엔진 구축 (`gpt-4o-mini` 요약, `ai_score` 배열)
-- Upstash Redis, Sentry 에러 트래킹, Lighthouse CI 인프라 통합
-- 서브도메인 라우팅 미들웨어 적용 (`[slug].portfolioforge.app` 형태 지원)
-- 동적 sitemap.xml 및 사용자별 오픈그래프(OG) 이미지 생성기 탑재
+### ✅ Phase 1 & 2 주요 달성 사항 (최신화)
+- **GitHub Oauth & Webhook**: Push 시 캐시 무효화 및 자동 재배포 완성
+- **AI 분석 엔진**: `gpt-4o-mini` 기반 README 요약 및 `ai_score` 큐레이션
+- **고도화된 마크다운 에디터**: Write/Preview, 마크다운 파일 임포트, 미디어 업로드 기능
+- **Zero-Config 인프라**: Supabase 미설정 시에도 Base64 폴백으로 즉시 테스트 가능
+- **서브도메인 라우팅**: `[slug].portfolioforge.app` 형태의 독립 페이지 지원
+- **멀티 테마 호환성**: 테마별 다이나믹 마크다운 스타일링 (prose-invert 최적화)
 
 ---
 

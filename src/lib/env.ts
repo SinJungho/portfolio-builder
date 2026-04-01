@@ -13,6 +13,11 @@ const envSchema = z.object({
   ENCRYPTION_KEY: z.string().length(64), // hex 인코딩 기준 32바이트 = 64자
   GITHUB_WEBHOOK_SECRET: z.string().min(1),
   SENTRY_DSN: z.string().url().optional(),
+  SUPABASE_STORAGE_ENDPOINT: z.string().url().optional(),
+  SUPABASE_STORAGE_ACCESS_KEY: z.string().min(1).optional(),
+  SUPABASE_STORAGE_SECRET_KEY: z.string().min(1).optional(),
+  SUPABASE_STORAGE_REGION: z.string().min(1).optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().min(1).optional(),
 })
 
 // 최상단에서 바로 parse하지 않고 실제 호출 시점에 검증 (lazy validation)

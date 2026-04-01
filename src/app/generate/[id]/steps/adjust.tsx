@@ -66,6 +66,7 @@ import {
 } from "@dnd-kit/sortable";
 import { SortableBlockItem } from "./components/SortableBlockItem";
 import DesignEditor from "@/components/features/editor/DesignEditor";
+import MarkdownEditor from "@/components/ui/MarkdownEditor";
 
 const blockTypeIcons: Record<string, React.ReactNode> = {
   hero: <User className="w-5 h-5 text-current" />,
@@ -527,23 +528,29 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
                       </div>
                     </div>
 
-                    {/* Step 3.1: Description Editor */}
                     {tempSelectedIds.includes(project.id) && (
-                      <div className="pt-4 border-t border-black/5 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <Label className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">포트폴리오용 프로젝트 소개</Label>
-                        <textarea
-                          placeholder="프로젝트의 핵심 성과나 기술적인 도전 과제를 적어주세요."
-                          className="w-full min-h-[100px] p-4 text-[14px] bg-white border border-black/5 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none leading-relaxed"
+                      <div 
+                        className="pt-4 border-t border-black/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Label className="text-[11px] font-bold text-blue-500 uppercase tracking-wider flex items-center gap-2">
+                          포트폴리오용 프로젝트 소개
+                          <span className="px-1.5 py-0.5 rounded-md bg-blue-50 text-[10px]">Markdown</span>
+                        </Label>
+                        
+                        <MarkdownEditor 
                           value={tempCustomDescriptions[project.id] || project.description || ""}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => {
+                          onChange={(val) => {
                             setTempCustomDescriptions(prev => ({
                               ...prev,
-                              [project.id]: e.target.value
+                              [project.id]: val
                             }));
                           }}
                         />
-                        <p className="text-[11px] text-gray-400 font-medium">README 요약 대신 이 내용이 우선적으로 노출됩니다.</p>
+                        
+                        <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
+                          README 요약 대신 이 내용이 우선적으로 노출됩니다. 직접 작성하거나 기존 마크다운 파일을 불러올 수 있습니다.
+                        </p>
                       </div>
                     )}
                   </div>
