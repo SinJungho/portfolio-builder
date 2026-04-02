@@ -21,6 +21,16 @@ export class PortfolioService {
   }
 
   /**
+   * Find all portfolios for a user
+   */
+  async findAllByUserId(userId: string) {
+    return prisma.portfolio.findMany({
+      where: { user_id: userId },
+      orderBy: { updated_at: 'desc' },
+    });
+  }
+
+  /**
    * Count portfolios for a user
    */
   async countByUserId(userId: string) {
