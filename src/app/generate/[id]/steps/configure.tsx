@@ -91,7 +91,7 @@ export default function ConfigureStep({ portfolioId }: { portfolioId: string }) 
     );
   };
 
-  const filteredProjects = projects?.filter(p => 
+  const filteredProjects = projects?.filter((p: any) => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );

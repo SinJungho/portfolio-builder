@@ -39,7 +39,7 @@ export default function BlockRenderer({ blocks, projectsData, tokens }: BlockRen
             return <HeroBlock key={block.id} config={block.config} />
           case 'project_grid':
             // project_grid 블록에 필요한 프로젝트 데이터 필터링
-            const targetProjects = projectsData?.filter(p => 
+            const targetProjects = projectsData?.filter((p: any) => 
               block.config.project_ids.includes(p.id)
             ) || []
             return <ProjectGridBlock key={block.id} config={block.config} projects={targetProjects} />
