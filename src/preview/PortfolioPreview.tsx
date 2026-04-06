@@ -22,7 +22,36 @@ interface PortfolioPreviewProps {
   designTokens?: any;
 }
 
-export default function PortfolioPreview({ blocks, theme, designTokens }: PortfolioPreviewProps) {
+export default function PortfolioPreview({ 
+  blocks: initialBlocks, 
+  theme, 
+  designTokens: initialTokens 
+}: PortfolioPreviewProps) {
+  const [liveBlocks, setLiveBlocks] = React.useState<Block[]>(initialBlocks);
+  const [liveTokens, setLiveTokens] = React.useState<any>(initialTokens);
+
+  // 에디터에서 보낸 실시간 상태 업데이트 수신
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "PORTFOLIO_STATE_UPDATE") {
+        if (event.data.blocks) setLiveBlocks(event.data.blocks);
+        if (event.data.tokens) setLiveTokens(event.data.tokens);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // 서버 데이터 변경 시 동기화 (초기화용)
+  React.useEffect(() => {
+    setLiveBlocks(initialBlocks);
+    setLiveTokens(initialTokens);
+  }, [initialBlocks, initialTokens]);
+
+  const blocks = liveBlocks;
+  const designTokens = liveTokens;
+  
   const baseTheme = resolveTheme(theme);
   
   // 디자인 토큰 병합 로직 (강조색 및 관련 스타일 강제 대체)

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Rss } from "lucide-react";
 import type { ThemeTokens } from "../themes";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 
@@ -26,14 +26,16 @@ interface BlogFeedBlockProps {
 export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) {
   const { integration_provider, max_items, show_thumbnail, feed_items = [] } = config;
 
-  const displayFeed =
-    feed_items.length > 0
-      ? feed_items.slice(0, max_items)
-      : [
-          { id: "1", title: "최근 프로젝트 리뷰: Next.js와 SSR", url: "#", published_at: new Date(), metadata: {} },
-          { id: "2", title: "React 상태 관리 패턴 비교", url: "#", published_at: new Date(), metadata: {} },
-          { id: "3", title: "개발자의 성장 일기", url: "#", published_at: new Date(), metadata: {} },
-        ].slice(0, max_items);
+  const hasItems = feed_items.length > 0;
+  
+  // 연동 전 가이드용 더미 데이터
+  const dummyFeed = [
+    { id: "1", title: "최근 프로젝트 리뷰: Next.js와 SSR", url: "#", published_at: new Date(), metadata: { snippet: "Next.js의 서버 사이드 렌더링이 비즈니스 성장에 미치는 영향에 대해 심도 있게 다뤄보았습니다..." } },
+    { id: "2", title: "React 상태 관리 패턴 비교", url: "#", published_at: new Date(), metadata: { snippet: "Zustand, Recoil, Redux 중 우리 팀에 맞는 도구는 무엇일까요? 각 라이브러리의 장단점을 분석합니다." } },
+    { id: "3", title: "개발자의 성장 일기: 기록의 힘", url: "#", published_at: new Date(), metadata: { snippet: "매일매일의 배움을 기록하는 습관이 어떻게 저를 성장시켰는지, 그 과정에서 얻은 인사이트를 공유합니다." } },
+  ].slice(0, max_items);
+
+  const displayFeed = hasItems ? feed_items.slice(0, max_items) : dummyFeed;
 
   const providerLabels: Record<string, string> = {
     tistory: "Tistory",
@@ -49,33 +51,48 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
     <section className="space-y-12">
       {/* Section Header */}
       <div ref={header.ref} style={header.style} className="space-y-4">
-        <div className="flex items-end gap-4">
+        <div className="flex flex-col md:flex-row md:items-end gap-x-6 gap-y-3">
           <h2
-            className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
+            className="text-[32px] md:text-[42px] font-extrabold tracking-[-2.5px] leading-none"
             style={{ color: t.text }}
           >
-            Recent Articles
+            Latest Stories
           </h2>
-          <span
-            className="text-[14px] font-semibold mb-1"
-            style={{ color: t.textMuted }}
-          >
-            from {providerLabel}
-          </span>
+          {hasItems && (
+            <div className="flex items-center gap-2 mb-1 px-3 py-1.5 rounded-full border border-black/5 bg-gray-50/50">
+              <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>
+                Synced from {providerLabel}
+              </span>
+            </div>
+          )}
         </div>
         <div
-          className="h-[3px] w-12 rounded-full"
-          style={{ background: t.decorBar }}
+          className="h-[4px] w-14 rounded-full"
+          style={{ background: t.accentGradient }}
         />
       </div>
 
-      {/* Feed List */}
-      <div className="flex flex-col gap-4">
+      {/* Feed List or Empty State */}
+      {!hasItems && (
+        <div className="p-10 border border-dashed border-gray-200 rounded-[32px] flex flex-col items-center text-center gap-4 bg-gray-50/30 opacity-60 grayscale-[0.5]">
+           <Rss className="w-10 h-10 text-gray-300" />
+           <div className="space-y-1">
+             <p className="font-bold text-[16px] text-gray-500">블로그 소식을 연동해 보세요</p>
+             <p className="text-[14px] font-medium text-gray-400">에디터에서 Velog나 Tistory 주소를 입력하면 글 목록이 나타납니다.</p>
+           </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {displayFeed.map((item, idx) => {
-          const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: idx * 80 });
-          const thumbnail = item.metadata
-            ? (item.metadata as Record<string, string>).thumbnail
-            : undefined;
+          const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: idx * 100 });
+          const metadata = item.metadata as any;
+          // 1. 이미지 추출 (content:encoded 또는 description에서 첫 번째 img 태그)
+          const itemAny = item as any;
+          const content = itemAny.contentEncoded || itemAny.content || itemAny.description || "";
+          const thumbnail = metadata?.thumbnail;
+          const snippet = metadata?.snippet;
 
           return (
             <Link
@@ -84,68 +101,83 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
               href={item.url}
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center gap-6 p-5 md:p-6 transition-all duration-500 hover:-translate-y-0.5"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = t.cardHoverBorder;
-                e.currentTarget.style.boxShadow = t.cardHoverShadow;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = t.cardBorder;
-                e.currentTarget.style.boxShadow = t.cardShadow;
-              }}
+              className="group relative flex flex-col p-8 transition-all duration-500 border border-black/[0.04]"
               style={{
                 ...reveal.style,
                 backgroundColor: t.cardBg,
-                border: `1px solid ${t.cardBorder}`,
                 borderRadius: t.cardRadius,
                 boxShadow: t.cardShadow,
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = t.cardHoverBorder;
+                e.currentTarget.style.transform = "translateY(-6px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(0,0,0,0.04)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
-              {/* Thumbnail */}
+              {/* Thumbnail (Optional) */}
               {show_thumbnail && thumbnail && (
-                <div className="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-2xl overflow-hidden">
+                <div className="relative aspect-video w-full mb-6 rounded-2xl overflow-hidden bg-gray-100">
                   <Image
                     src={thumbnail}
                     alt={item.title}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
                     unoptimized
                   />
                 </div>
               )}
 
-              {/* Content */}
-              <div className="flex-1 min-w-0 space-y-2">
-                <p
-                  className="text-[12px] font-bold uppercase tracking-[1.5px]"
-                  style={{ color: t.accent }}
+              {/* Icon & Provider */}
+              <div className="flex items-center justify-between mb-4">
+                <span 
+                  className="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md"
+                  style={{ backgroundColor: t.accentSoft, color: t.accent }}
                 >
                   {providerLabel}
-                </p>
+                </span>
+                <ArrowUpRight className="w-4.5 h-4.5 text-gray-300 group-hover:text-gray-900 transition-colors" />
+              </div>
+
+              {/* Text Content */}
+              <div className="flex-1 space-y-3">
                 <h3
-                  className="font-bold text-[17px] md:text-[18px] leading-snug truncate tracking-[-0.3px]"
+                  className="font-bold text-[20px] leading-[1.4] tracking-tight group-hover:underline decoration-offset-4 decoration-2"
                   style={{ color: t.text }}
                 >
                   {item.title}
                 </h3>
-                <p
-                  className="text-[13px] font-medium"
+                {snippet && (
+                  <p
+                    className="text-[14px] font-medium leading-relaxed line-clamp-3"
+                    style={{ color: t.textMuted }}
+                  >
+                    {snippet}
+                  </p>
+                )}
+              </div>
+
+              {/* Footer Info */}
+              <div className="mt-8 pt-6 border-t border-black/[0.04] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                   <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                     <span className="text-[10px] font-bold text-gray-400">#</span>
+                   </div>
+                   <span className="text-[13px] font-bold" style={{ color: t.textMuted }}>
+                      Reading
+                   </span>
+                </div>
+                <time
+                  className="text-[12px] font-bold"
                   style={{ color: t.textMuted }}
                 >
                   {new Date(item.published_at).toLocaleDateString("ko-KR", {
-                    year: "numeric",
                     month: "long",
                     day: "numeric",
                   })}
-                </p>
-              </div>
-
-              {/* Arrow */}
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300"
-                style={{ background: t.accentGradient }}
-              >
-                <ArrowUpRight size={16} color="#fff" />
+                </time>
               </div>
             </Link>
           );

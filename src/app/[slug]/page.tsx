@@ -5,6 +5,8 @@ import AnalyticsTracker from '@/components/AnalyticsTracker'
 import { resolveTheme } from '@/preview/themes'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import DynamicThemeProvider from '@/components/preview/DynamicThemeProvider'
+import { DesignTokens } from '@/schemas/portfolio'
 
 export const revalidate = 60;
 
@@ -107,44 +109,46 @@ export default async function PortfolioPage({ params }: Props) {
   const t = resolveTheme(portfolio.theme);
 
   return (
-    <div
-      className="flex flex-col min-h-screen"
-      style={{
-        backgroundColor: t.bg,
-        color: t.text,
-        backgroundImage: t.pageBgGradient || "none",
-      }}
-    >
-      <AnalyticsTracker portfolioId={portfolio.id} />
-      
-      <main className="flex-1 w-full">
-        <PortfolioPreview 
-          blocks={populatedBlocks} 
-          theme={portfolio.theme} 
-          designTokens={portfolio.design_tokens}
-        />
-      </main>
-
-      <footer
-        className="py-10 px-6"
-        style={{ backgroundColor: t.footerBg }}
+    <DynamicThemeProvider tokens={portfolio.design_tokens as DesignTokens}>
+      <div
+        className="flex flex-col min-h-screen"
+        style={{
+          backgroundColor: t.bg,
+          color: t.text,
+          backgroundImage: t.pageBgGradient || "none",
+        }}
       >
-        <div className="max-w-[960px] mx-auto flex flex-col items-center gap-3 text-center">
-          <p
-            className="text-[13px] font-medium"
-            style={{ color: t.footerText }}
-          >
-            © {new Date().getFullYear()} {portfolio.title || slug}
-          </p>
-          <Link
-            href="/"
-            className="text-[11px] font-bold uppercase tracking-[2px] transition-colors duration-200 hover:opacity-70"
-            style={{ color: t.textMuted }}
-          >
-            Powered by PortfolioForge
-          </Link>
-        </div>
-      </footer>
-    </div>
+        <AnalyticsTracker portfolioId={portfolio.id} />
+        
+        <main className="flex-1 w-full">
+          <PortfolioPreview 
+            blocks={populatedBlocks} 
+            theme={portfolio.theme} 
+            designTokens={portfolio.design_tokens}
+          />
+        </main>
+  
+        <footer
+          className="py-10 px-6"
+          style={{ backgroundColor: t.footerBg }}
+        >
+          <div className="max-w-[960px] mx-auto flex flex-col items-center gap-3 text-center">
+            <p
+              className="text-[13px] font-medium"
+              style={{ color: t.footerText }}
+            >
+              © {new Date().getFullYear()} {portfolio.title || slug}
+            </p>
+            <Link
+              href="/"
+              className="text-[11px] font-bold uppercase tracking-[2px] transition-colors duration-200 hover:opacity-70"
+              style={{ color: t.textMuted }}
+            >
+              Powered by PortfolioForge
+            </Link>
+          </div>
+        </footer>
+      </div>
+    </DynamicThemeProvider>
   )
 }
