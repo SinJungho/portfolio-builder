@@ -5,7 +5,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
 
-const notoSans = Noto_Sans({ variable: "--font-sans" });
+const notoSans = Noto_Sans({ variable: "--font-sans", subsets: ["latin"] });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={notoSans.variable}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
         <AuthProvider>
           <QueryProvider>
