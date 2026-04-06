@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { Portfolio } from '@prisma/client';
 
+import { isReservedSubdomain } from '@/utils/reserved-keywords';
+
 export class PortfolioService {
   /**
    * Find a portfolio by ID
@@ -49,7 +51,9 @@ export class PortfolioService {
 
     while (true) {
       const existing = await this.findBySlug(finalSlug);
-      if (!existing) return finalSlug;
+      const isReserved = isReservedSubdomain(finalSlug);
+
+      if (!existing && !isReserved) return finalSlug;
       
       counter++;
       finalSlug = `${slug}-${counter}`;

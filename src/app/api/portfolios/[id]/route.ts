@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DesignTokenSchema } from "@/schemas/portfolio";
+import { isReservedSubdomain, isValidSlugFormat } from "@/utils/reserved-keywords";
 
 const updatePortfolioSchema = z.object({
   theme: z
@@ -46,6 +47,17 @@ export async function PATCH(
     if (data.design_tokens !== undefined) updateData.design_tokens = data.design_tokens;
 
     if (data.slug && data.slug !== portfolio?.slug) {
+      // 1. 형식 검증
+      if (!isValidSlugFormat(data.slug)) {
+        return NextResponse.json({ error: "invalid_slug_format" }, { status: 400 });
+      }
+
+      // 2. 예약어 검증
+      if (isReservedSubdomain(data.slug)) {
+        return NextResponse.json({ error: "reserved_slug" }, { status: 400 });
+      }
+
+      // 3. 중복 검증
       const existing = await prisma.portfolio.findUnique({
         where: { slug: data.slug },
       });

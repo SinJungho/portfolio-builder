@@ -23,14 +23,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!portfolio || !portfolio.is_published) return {}
 
+  const host = process.env.NEXT_PUBLIC_APP_URL || 'https://portfolioforge.app'
+  const ogImageUrl = `${host}/api/og?slug=${slug}`
+  const canonicalUrl = host.includes('localhost') 
+    ? `http://${slug}.localhost:3000` 
+    : `https://${slug}.portfolioforge.app`
+
   return {
     title: portfolio.seo_title || portfolio.title || `${portfolio.user.name || slug}'s Portfolio`,
     description: portfolio.seo_description || 'PortfolioForge로 생성된 프리미엄 포트폴리오입니다.',
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
-      images: portfolio.og_image_url ? [portfolio.og_image_url] : [],
+      title: portfolio.seo_title || portfolio.title || `${portfolio.user.name || slug}'s Portfolio`,
+      description: portfolio.seo_description || 'PortfolioForge로 생성된 프리미엄 포트폴리오입니다.',
+      url: `${host}/${slug}`,
+      siteName: 'PortfolioForge',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+        },
+      ],
+      type: 'website',
     },
     twitter: {
       card: "summary_large_image",
+      title: portfolio.seo_title || portfolio.title || `${portfolio.user.name || slug}'s Portfolio`,
+      description: portfolio.seo_description || 'PortfolioForge로 생성된 프리미엄 포트폴리오입니다.',
+      images: [ogImageUrl],
     }
   }
 }

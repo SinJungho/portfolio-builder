@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Plus, Github, ExternalLink, Edit2, Trash2, Clock, AlertTriangle, Sparkles } from "lucide-react";
+import { Plus, Github, ExternalLink, Edit2, Trash2, Clock, AlertTriangle, Sparkles, Share2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
@@ -20,6 +20,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -221,6 +227,53 @@ export default function DashboardPage() {
                       <ExternalLink className="w-4 h-4 opacity-70" />
                       내 사이트
                     </a>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex-1 flex items-center justify-center gap-1.5 text-[14px] font-bold text-[#4E5968] hover:bg-white hover:text-[#3182F6] hover:shadow-sm transition-all rounded-[16px]">
+                          <Share2 className="w-4 h-4 opacity-70" />
+                          공유
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[180px] rounded-[24px] p-2 border-none shadow-2xl">
+                        <DropdownMenuItem 
+                          className="rounded-xl h-11 font-bold cursor-pointer"
+                          onClick={() => {
+                            const url = `${window.location.origin}/${p.slug}`;
+                            const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`;
+                            window.open(kakaoUrl, '_blank', 'width=500,height=600');
+                          }}
+                        >
+                          <img src="/icons/kakao.png" className="w-4 h-4 mr-2" alt="K" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                          카카오톡 공유
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="rounded-xl h-11 font-bold cursor-pointer"
+                          onClick={() => {
+                            const url = `${window.location.origin}/${p.slug}`;
+                            const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+                            window.open(linkedInUrl, '_blank', 'width=500,height=600');
+                          }}
+                        >
+                          <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="#0077B5">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                          </svg>
+                          LinkedIn 공유
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="rounded-xl h-11 font-bold cursor-pointer"
+                          onClick={() => {
+                            const url = `${window.location.origin}/${p.slug}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success("링크가 복사되었습니다!");
+                          }}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          링크 복사
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
                     <Link 
                       href={`/generate/${p.id}?step=adjust`} 
                       className="flex-1 flex items-center justify-center gap-1.5 text-[14px] font-bold text-white bg-[#3182F6] shadow-sm hover:brightness-110 transition-all rounded-[16px]"

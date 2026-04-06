@@ -149,9 +149,11 @@ export async function generatePortfolio(params: {
       .sort((a, b) => b.level - a.level)
       .slice(0, 8);
 
-    // AI subheadline
+    // AI subheadline & SEO Metadata
     const bio = user.github_bio || "";
     let subheadline = bio.substring(0, 50);
+    let seoTitle = `${user.name || user.github_login}'s Portfolio`;
+    let seoDescription = `PortfolioForge로 생성된 ${user.name || user.github_login}의 포트폴리오입니다.`;
 
     try {
       const skillsStr = skills.map(s => s.name).join(", ");
@@ -160,20 +162,33 @@ export async function generatePortfolio(params: {
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "당신은 개발자 포트폴리오 전문가입니다."
+          content: "당신은 개발자 포트폴리오 및 SEO 전문가입니다. 반드시 JSON 형식으로만 응답해야 합니다."
         }, {
           role: "user",
-          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`,
+          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 다음 필드를 포함한 JSON으로 응답해주세요:\n- subheadline: 채용 담당자에게 어필할 수 있는 한 줄 소개 (한국어, 50자 이내)\n- seo_title: 검색 엔진 최적화용 제목 (예: [이름] | [직함] 포트폴리오)\n- seo_description: 검색 엔진 최적화용 설명 (150자 이내, 핵심 강점 포함)`,
         }],
+        response_format: { type: "json_object" }
       });
-      if (completion.choices[0]?.message?.content) {
-        subheadline = completion.choices[0].message.content;
-      }
+      
+      const aiResponse = JSON.parse(completion.choices[0]?.message?.content || "{}");
+      if (aiResponse.subheadline) subheadline = aiResponse.subheadline;
+      if (aiResponse.seo_title) seoTitle = aiResponse.seo_title;
+      if (aiResponse.seo_description) seoDescription = aiResponse.seo_description;
+
     } catch (e) {
-      console.error("OpenAI subheadline error:", e);
+      console.error("OpenAI subheadline/SEO error:", e);
     }
 
     await updateJobProgress(jobId, { progress: 30 });
+
+    // Update Portfolio with SEO data
+    await prisma.portfolio.update({
+      where: { id: portfolioId },
+      data: {
+        seo_title: seoTitle,
+        seo_description: seoDescription,
+      }
+    });
 
     const portfolioBlocksData: any[] = [];
 
