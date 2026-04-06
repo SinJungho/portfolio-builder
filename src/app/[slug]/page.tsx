@@ -14,17 +14,25 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const portfolio = await prisma.portfolio.findUnique({
+  const portfolio = await prisma.portfolio.findFirst({
     where: { slug },
-    include: {
-      user: true,
+    select: {
+      title: true,
+      slug: true,
+      is_published: true,
+      seo_title: true,
+      seo_description: true,
+      og_image_url: true,
+      user: {
+        select: { name: true }
+      }
     }
   })
 
   if (!portfolio || !portfolio.is_published) return {}
 
   return {
-    title: portfolio.seo_title || portfolio.title || `${portfolio.user.name || slug}'s Portfolio`,
+    title: portfolio.seo_title || portfolio.title || `${portfolio.user?.name || slug}'s Portfolio`,
     description: portfolio.seo_description || 'PortfolioForge로 생성된 프리미엄 포트폴리오입니다.',
     openGraph: {
       images: portfolio.og_image_url ? [portfolio.og_image_url] : [],
