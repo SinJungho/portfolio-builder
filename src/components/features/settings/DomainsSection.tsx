@@ -54,7 +54,7 @@ export function DomainsSection() {
     }
   }, [portfolios, selectedPortfolioId]);
 
-  const selectedPortfolio = portfolios.find(p => p.id === selectedPortfolioId);
+  const selectedPortfolio = portfolios?.find((p: any) => p.id === selectedPortfolioId);
   const currentDomain = selectedPortfolio?.custom_domain;
 
   // 2. 도메인 상태 조회
@@ -148,7 +148,7 @@ export function DomainsSection() {
             onChange={(e) => setSelectedPortfolioId(e.target.value)}
             className="w-full h-11 px-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
           >
-            {portfolios.map(p => (
+            {portfolios.map((p: any) => (
               <option key={p.id} value={p.id}>
                 {p.title || p.slug} ({p.slug}.portfolioforge.app)
               </option>

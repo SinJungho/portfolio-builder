@@ -22,7 +22,7 @@ export default function ContactBlock({ config }: ContactBlockProps) {
     { icon: Github, label: 'GitHub', value: github_url, href: github_url },
     { icon: Linkedin, label: 'LinkedIn', value: linkedin_url, href: linkedin_url },
     { icon: Globe, label: 'Website', value: website_url, href: website_url },
-  ].filter(item => item.value)
+  ].filter((item: any) => item.value)
 
   return (
     <section className="w-full py-20 px-6 bg-slate-50 dark:bg-slate-900/50">

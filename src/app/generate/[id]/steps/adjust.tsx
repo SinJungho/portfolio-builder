@@ -235,7 +235,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     }
   };
 
-  const filteredProjects = rawProjects?.filter(p => 
+  const filteredProjects = rawProjects?.filter((p: any) => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );

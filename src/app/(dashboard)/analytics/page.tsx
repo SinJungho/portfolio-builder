@@ -31,12 +31,18 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserPortfolios } from "./actions";
 
+interface Portfolio {
+  id: string;
+  slug: string;
+  title: string | null;
+}
+
 export default function AnalyticsPage() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
 
   // 1. Fetch Portfolios
-  const { data: portfolios, isLoading: isPortfoliosLoading } = useQuery({
+  const { data: portfolios, isLoading: isPortfoliosLoading } = useQuery<Portfolio[]>({
     queryKey: ["portfolios", "analytics"],
     queryFn: () => getUserPortfolios(),
   });
@@ -83,7 +89,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const activePortfolio = portfolios.find(p => p.id === selectedPortfolioId);
+  const activePortfolio = portfolios.find((p: Portfolio) => p.id === selectedPortfolioId);
 
   return (
     <div className="p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -103,7 +109,7 @@ export default function AnalyticsPage() {
               <SelectValue placeholder="포트폴리오 선택" />
             </SelectTrigger>
             <SelectContent className="rounded-2xl border-black/5 shadow-xl">
-              {portfolios.map(p => (
+              {portfolios.map((p: Portfolio) => (
                 <SelectItem key={p.id} value={p.id} className="rounded-xl py-3 cursor-pointer">
                   <div className="flex flex-col">
                     <span className="font-bold">{p.title || p.slug}</span>

@@ -43,9 +43,9 @@ export async function generatePortfolio(params: {
 
     if (projectIds && projectIds.length > 0) {
       // Use manually selected projects
-      const selectedProjects = rawProjects.filter(p => projectIds.includes(p.id));
+      const selectedProjects = rawProjects.filter((p: any) => projectIds.includes(p.id));
       topProjects = selectedProjects
-        .map(p => {
+        .map((p: any) => {
           let score = p.ai_score;
           if (score === null) {
             score = p.stargazers_count;
@@ -55,7 +55,7 @@ export async function generatePortfolio(params: {
         .sort((a, b) => b.calculatedScore - a.calculatedScore);
     } else {
       // AI auto-pick logic
-      const projectsWithScore = rawProjects.map(p => {
+      const projectsWithScore = rawProjects.map((p: any) => {
         let score = p.ai_score;
         if (score === null) {
           let readme_quality = 0.0;
@@ -202,7 +202,7 @@ export async function generatePortfolio(params: {
       config: {
         layout: "grid",
         columns: 2,
-        project_ids: topProjects.map(p => p.id),
+        project_ids: topProjects.map((p: any) => p.id),
         show_tech_stack: true,
       },
       is_visible: true,

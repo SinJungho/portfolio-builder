@@ -68,7 +68,7 @@ export default async function PortfolioPage({ params }: Props) {
       const projectsData = await prisma.rawProject.findMany({
         where: { id: { in: config.project_ids } }
       });
-      config.projectsData = config.project_ids.map((id: string) => projectsData.find(p => p.id === id)).filter(Boolean);
+      config.projectsData = config.project_ids.map((id: string) => projectsData.find((p: any) => p.id === id)).filter(Boolean);
     }
     
     if (block.block_type === 'blog_feed') {
