@@ -62,7 +62,7 @@ export default async function PortfolioPage({ params }: Props) {
     orderBy: { position: 'asc' }
   });
 
-  const populatedBlocks = await Promise.all(blocks.map(async (block) => {
+  const populatedBlocks = await Promise.all(blocks.map(async (block: any) => {
     const config = block.config as any;
     if (block.block_type === 'project_grid' && config.project_ids?.length) {
       const projectsData = await prisma.rawProject.findMany({
