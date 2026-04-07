@@ -53,7 +53,7 @@ export class AnalyticsService {
         dailyViewsMap.set(dateStr, 0);
     }
 
-    events.forEach(event => {
+    events.forEach((event: any) => {
       const dateStr = format(event.created_at, 'yyyy-MM-dd');
       
       if (event.event_type === 'page_view') {

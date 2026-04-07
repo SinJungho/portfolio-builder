@@ -96,7 +96,7 @@ export async function generatePortfolio(params: {
     // Language aggregation
     const languageCounts: Record<string, number> = {};
     let totalProjects = rawProjects.length;
-    rawProjects.forEach(p => {
+    rawProjects.forEach((p: any) => {
       if (p.language) {
         languageCounts[p.language] = (languageCounts[p.language] || 0) + 1;
       }
@@ -154,7 +154,7 @@ export async function generatePortfolio(params: {
     let subheadline = bio.substring(0, 50);
 
     try {
-      const skillsStr = skills.map(s => s.name).join(", ");
+      const skillsStr = skills.map((s: any) => s.name).join(", ");
       const userGoal = goal ? `목표: ${goal}\n` : "";
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",

@@ -151,7 +151,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     if (initialData && !init) {
       initialize({
         ...initialData,
-        blocks: initialData.blocks.map(b => ({
+        blocks: initialData.blocks.map((b: any) => ({
           ...b,
           block_type: b.block_type as any,
         })),
@@ -203,7 +203,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     }
   };
 
-  const contactBlock = blocks.find(b => b.block_type === "contact");
+  const contactBlock = blocks.find((b: any) => b.block_type === "contact");
 
   const handleOptionalChange = (field: string, value: string) => {
     if (!contactBlock) return;
@@ -221,7 +221,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
 
   const saveProjectChanges = () => {
     if (!editingBlockId) return;
-    const block = blocks.find(b => b.id === editingBlockId);
+    const block = blocks.find((b: any) => b.id === editingBlockId);
     if (block) {
       updateBlockConfig(editingBlockId, {
         ...block.config,
@@ -242,7 +242,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
 
   const toggleTempProject = (id: string) => {
     setTempSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i: any) => i !== id) : [...prev, id]
     );
   };
 
@@ -266,7 +266,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={blocks.map(b => b.id)}
+              items={blocks.map((b: any) => b.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-4">
@@ -302,7 +302,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
               <p className="text-[12px] text-gray-400 font-medium">내 포트폴리오를 더 풍성하게 만들어보세요.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {Object.keys(blockTypeLabels).map(type => {
+              {Object.keys(blockTypeLabels).map((type: any) => {
                 const isUnique = type === 'hero' || type === 'contact';
                 const alreadyExists = isUnique && blocks.some(b => b.block_type === type);
                 

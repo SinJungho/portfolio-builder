@@ -87,7 +87,7 @@ export default function ConfigureStep({ portfolioId }: { portfolioId: string }) 
 
   const toggleProject = (id: string) => {
     setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i: any) => i !== id) : [...prev, id]
     );
   };
 
