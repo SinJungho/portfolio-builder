@@ -68,6 +68,66 @@ function AnimatedBar({ level, fill, track, delay }: { level: number; fill: strin
   );
 }
 
+function CategoryBlock({
+  category,
+  catSkills,
+  catIdx,
+  t,
+}: {
+  category: string;
+  catSkills: Array<{ name: string; level: number }>;
+  catIdx: number;
+  t: ThemeTokens;
+}) {
+  const catReveal = useScrollReveal("fadeUp", { delay: catIdx * 100 });
+  return (
+    <div ref={catReveal.ref} style={catReveal.style} className="space-y-5">
+      <h3
+        className="text-[15px] font-bold uppercase tracking-[2px]"
+        style={{ color: t.accent }}
+      >
+        {category}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {catSkills
+          .sort((a, b) => b.level - a.level)
+          .map((skill, idx) => (
+            <div
+              key={skill.name}
+              className="flex flex-col gap-2.5 p-5 backdrop-blur-sm"
+              style={{
+                backgroundColor: t.surfaceBg,
+                borderRadius: "16px",
+                border: `1px solid ${t.cardBorder}`,
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-[15px] font-bold tracking-[-0.3px]"
+                  style={{ color: t.text }}
+                >
+                  {skill.name}
+                </span>
+                <span
+                  className="text-[13px] font-bold tabular-nums"
+                  style={{ color: t.accent }}
+                >
+                  {skill.level}%
+                </span>
+              </div>
+              <AnimatedBar
+                level={skill.level}
+                fill={t.accentGradient}
+                track={t.progressTrack}
+                delay={idx * 80}
+              />
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
   const { skills } = config;
 
@@ -112,55 +172,15 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
 
       {/* Skill Categories */}
       <div className="space-y-10">
-        {categories.map(([category, catSkills], catIdx) => {
-          const catReveal = useScrollReveal("fadeUp", { delay: catIdx * 100 });
-          return (
-            <div key={category} ref={catReveal.ref} style={catReveal.style} className="space-y-5">
-              <h3
-                className="text-[15px] font-bold uppercase tracking-[2px]"
-                style={{ color: t.accent }}
-              >
-                {category}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {catSkills
-                  .sort((a, b) => b.level - a.level)
-                  .map((skill, idx) => (
-                    <div
-                      key={skill.name}
-                      className="flex flex-col gap-2.5 p-5 backdrop-blur-sm"
-                      style={{
-                        backgroundColor: t.surfaceBg,
-                        borderRadius: "16px",
-                        border: `1px solid ${t.cardBorder}`,
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className="text-[15px] font-bold tracking-[-0.3px]"
-                          style={{ color: t.text }}
-                        >
-                          {skill.name}
-                        </span>
-                        <span
-                          className="text-[13px] font-bold tabular-nums"
-                          style={{ color: t.accent }}
-                        >
-                          {skill.level}%
-                        </span>
-                      </div>
-                      <AnimatedBar
-                        level={skill.level}
-                        fill={t.accentGradient}
-                        track={t.progressTrack}
-                        delay={idx * 80}
-                      />
-                    </div>
-                  ))}
-              </div>
-            </div>
-          );
-        })}
+        {categories.map(([category, catSkills], catIdx) => (
+          <CategoryBlock
+            key={category}
+            category={category}
+            catSkills={catSkills}
+            catIdx={catIdx}
+            t={t}
+          />
+        ))}
       </div>
     </section>
   );
