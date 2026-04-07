@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
     "webhook:dev": "npx smee-client -u https://smee.io/3WfzDziiaf5Gl3o -t http://localhost:3000/api/webhooks/github"
   },
   "dependencies": {
