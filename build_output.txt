@@ -1,0 +1,79 @@
+
+> portfolio-builder@0.1.0 build
+> next build
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.6s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 323ms
+  Running TypeScript ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/40) ...
+  Generating static pages using 9 workers (10/40) 
+  Generating static pages using 9 workers (20/40) 
+  Generating static pages using 9 workers (30/40) 
+✓ Generating static pages using 9 workers (40/40) in 784.1ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /[slug]
+├ ƒ /[slug]/opengraph-image
+├ ƒ /analytics
+├ ƒ /api/analytics/[portfolioId]/summary
+├ ƒ /api/analytics/event
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/debug-portfolios
+├ ƒ /api/domains
+├ ƒ /api/domains/resolve
+├ ƒ /api/domains/status
+├ ƒ /api/domains/verify
+├ ƒ /api/integrations/github/bio
+├ ƒ /api/integrations/github/repos
+├ ƒ /api/integrations/github/sync
+├ ƒ /api/integrations/github/sync/[job_id]
+├ ƒ /api/integrations/github/sync/run
+├ ƒ /api/integrations/rss
+├ ƒ /api/portfolios
+├ ƒ /api/portfolios/[id]
+├ ƒ /api/portfolios/[id]/blocks
+├ ƒ /api/portfolios/[id]/blocks/[blockId]
+├ ƒ /api/portfolios/[id]/status
+├ ƒ /api/portfolios/generate
+├ ƒ /api/portfolios/generate/[job_id]
+├ ƒ /api/portfolios/generate/run
+├ ƒ /api/projects/raw
+├ ƒ /api/revalidate
+├ ƒ /api/upload
+├ ƒ /api/webhooks/github
+├ ○ /blog
+├ ƒ /dashboard
+├ ƒ /editor
+├ ○ /features
+├ ○ /generate
+├ ƒ /generate/[id]
+├ ○ /login
+├ ○ /onboarding/bio
+├ ○ /pricing
+├ ƒ /projects
+├ ƒ /setting
+├ ƒ /settings
+├ ƒ /settings/billing
+├ ƒ /settings/domains
+├ ƒ /settings/integrations
+├ ○ /sitemap.xml
+├ ○ /template
+└ ○ /templates
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

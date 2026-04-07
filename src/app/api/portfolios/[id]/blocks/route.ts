@@ -37,7 +37,7 @@ export async function PUT(
       select: { id: true },
     });
 
-    const validBlockIds = new Set(existingBlocks.map(b => b.id));
+    const validBlockIds = new Set(existingBlocks.map((b: any) => b.id));
     for (const b of data.blocks) {
       if (!validBlockIds.has(b.id)) {
         return NextResponse.json({ error: `Block ${b.id} does not belong to this portfolio` }, { status: 400 });
