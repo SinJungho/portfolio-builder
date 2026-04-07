@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true, updated_at: true },
   });
 
-  const portfolioUrls = portfolios.map((portfolio: any) => ({
+  const portfolioUrls = portfolios.map((portfolio) => ({
     url: `${baseUrl}/${portfolio.slug}`,
     lastModified: portfolio.updated_at,
     changeFrequency: 'weekly' as const,

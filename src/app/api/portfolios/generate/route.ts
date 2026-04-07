@@ -3,6 +3,13 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 
+interface GenerateRequest {
+  portfolio_id: string;
+  auto_publish?: boolean;
+  project_ids?: string[];
+  ai_focus?: string;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -12,10 +19,10 @@ export async function POST(req: Request) {
 
     const { user } = session;
 
-    let json: any = {};
+    let json = {} as GenerateRequest;
     try {
       json = await req.json();
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -49,8 +56,8 @@ export async function POST(req: Request) {
 
     try {
       await redis.set(JOB_KEY(job_id), JSON.stringify(initialJobStatus), { ex: JOB_TTL });
-    } catch (e) {
-      throw e;
+    } catch (err) {
+      throw err;
     }
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
     
@@ -71,8 +78,8 @@ export async function POST(req: Request) {
     }).catch(console.error); // Fire and forget
 
     return NextResponse.json({ job_id, estimated_seconds: 30 }, { status: 202 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/portfolios/generate error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ThemeInput } from "react-activity-calendar";
 import { GitHubCalendar } from "react-github-calendar";
 
@@ -46,11 +46,14 @@ export default function MockPortfolio() {
   const [blockSize, setBlockSize] = useState(9);
   // blockSize 변경 시 GitHubCalendar를 재마운트해 새 props 반영
   const [calKey, setCalKey] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const prevSizeRef = useRef(9);
 
   useEffect(() => {
-    setMounted(true);
     const el = wrapperRef.current;
     if (!el) return;
 

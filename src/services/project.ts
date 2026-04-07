@@ -38,12 +38,12 @@ export class ProjectService {
         forks_count: data.forks_count,
         is_fork: data.is_fork,
         pushed_at: data.pushed_at,
-        raw_data: data.raw_data as any,
+        raw_data: data.raw_data,
         updated_at: new Date(),
       },
       create: {
         ...data,
-        raw_data: data.raw_data as any,
+        raw_data: data.raw_data,
       },
     });
   }

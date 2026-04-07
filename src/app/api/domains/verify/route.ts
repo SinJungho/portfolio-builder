@@ -25,10 +25,10 @@ export async function POST(req: Request) {
     const verified = await domainService.verifyDomain(domain);
 
     return NextResponse.json({ success: true, verified });
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/domains/verify error:", error);
     return NextResponse.json(
-      { error: error.message || "도메인 검증 중 오류가 발생했습니다." },
+      { error: error instanceof Error ? error.message : "도메인 검증 중 오류가 발생했습니다." },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, Github, Linkedin, Globe, MessageSquare } from 'lucide-react'
+import { Mail, Github, Linkedin, Globe, MessageSquare, LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -18,11 +18,11 @@ export default function ContactBlock({ config }: ContactBlockProps) {
   const { github_url, email, linkedin_url, website_url } = config
 
   const contactItems = [
-    { icon: Mail, label: 'Email', value: email, href: email ? `mailto:${email}` : null },
-    { icon: Github, label: 'GitHub', value: github_url, href: github_url },
-    { icon: Linkedin, label: 'LinkedIn', value: linkedin_url, href: linkedin_url },
-    { icon: Globe, label: 'Website', value: website_url, href: website_url },
-  ].filter((item: any) => item.value)
+    { icon: Mail as LucideIcon, label: 'Email', value: email, href: email ? `mailto:${email}` : null },
+    { icon: Github as LucideIcon, label: 'GitHub', value: github_url, href: github_url || null },
+    { icon: Linkedin as LucideIcon, label: 'LinkedIn', value: linkedin_url, href: linkedin_url || null },
+    { icon: Globe as LucideIcon, label: 'Website', value: website_url, href: website_url || null },
+  ].filter((item): item is { icon: LucideIcon, label: string, value: string, href: string } => !!item.value)
 
   return (
     <section className="w-full py-20 px-6 bg-slate-50 dark:bg-slate-900/50">

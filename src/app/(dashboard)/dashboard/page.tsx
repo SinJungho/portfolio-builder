@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Plus, Github, ExternalLink, Edit2, Trash2, Clock, AlertTriangle, Sparkles } from "lucide-react";
+import { Plus, Github, ExternalLink, Edit2, Trash2, Clock, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
@@ -20,6 +20,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+interface Portfolio {
+  id: string;
+  title: string | null;
+  slug: string;
+  theme: string;
+  is_published: boolean;
+  created_at: string;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -176,7 +185,7 @@ export default function DashboardPage() {
             </button>
 
             {/* Portfolio Cards */}
-            {portfolios.map((p: any) => (
+            {portfolios.map((p: Portfolio) => (
               <div key={p.id} className="group relative flex flex-col bg-white border border-black/5 rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-black/5 transition-all duration-500 min-h-[280px] hover:-translate-y-1">
                 <div className="p-7 md:p-8 flex-1 flex flex-col items-start gap-4">
                   <div className="flex w-full items-start justify-between gap-4">

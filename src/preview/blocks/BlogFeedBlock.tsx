@@ -43,12 +43,12 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
   };
 
   const providerLabel = providerLabels[integration_provider] || "Blog";
-  const header = useScrollReveal("fadeUp");
+  const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
 
   return (
     <section className="space-y-12">
       {/* Section Header */}
-      <div ref={header.ref} style={header.style} className="space-y-4">
+      <div ref={headerRef} style={headerStyle} className="space-y-4">
         <div className="flex items-end gap-4">
           <h2
             className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
@@ -71,86 +71,111 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
 
       {/* Feed List */}
       <div className="flex flex-col gap-4">
-        {displayFeed.map((item, idx) => {
-          const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: idx * 80 });
-          const thumbnail = item.metadata
-            ? (item.metadata as Record<string, string>).thumbnail
-            : undefined;
-
-          return (
-            <Link
-              key={item.id}
-              ref={reveal.ref}
-              href={item.url}
-              target="_blank"
-              rel="noreferrer"
-              className="group flex items-center gap-6 p-5 md:p-6 transition-all duration-500 hover:-translate-y-0.5"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = t.cardHoverBorder;
-                e.currentTarget.style.boxShadow = t.cardHoverShadow;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = t.cardBorder;
-                e.currentTarget.style.boxShadow = t.cardShadow;
-              }}
-              style={{
-                ...reveal.style,
-                backgroundColor: t.cardBg,
-                border: `1px solid ${t.cardBorder}`,
-                borderRadius: t.cardRadius,
-                boxShadow: t.cardShadow,
-              }}
-            >
-              {/* Thumbnail */}
-              {show_thumbnail && thumbnail && (
-                <div className="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-2xl overflow-hidden">
-                  <Image
-                    src={thumbnail}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    unoptimized
-                  />
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 space-y-2">
-                <p
-                  className="text-[12px] font-bold uppercase tracking-[1.5px]"
-                  style={{ color: t.accent }}
-                >
-                  {providerLabel}
-                </p>
-                <h3
-                  className="font-bold text-[17px] md:text-[18px] leading-snug truncate tracking-[-0.3px]"
-                  style={{ color: t.text }}
-                >
-                  {item.title}
-                </h3>
-                <p
-                  className="text-[13px] font-medium"
-                  style={{ color: t.textMuted }}
-                >
-                  {new Date(item.published_at).toLocaleDateString("ko-KR", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-
-              {/* Arrow */}
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300"
-                style={{ background: t.accentGradient }}
-              >
-                <ArrowUpRight size={16} color="#fff" />
-              </div>
-            </Link>
-          );
-        })}
+        {displayFeed.map((item, idx) => (
+          <FeedItemCard
+            key={item.id}
+            item={item}
+            idx={idx}
+            theme={t}
+            providerLabel={providerLabel}
+            showThumbnail={show_thumbnail}
+          />
+        ))}
       </div>
     </section>
+  );
+}
+
+/* ── Feed Item Card ── */
+function FeedItemCard({
+  item,
+  idx,
+  theme: t,
+  providerLabel,
+  showThumbnail,
+}: {
+  item: {
+    id: string;
+    title: string;
+    url: string;
+    published_at: Date;
+    metadata?: Record<string, unknown>;
+  };
+  idx: number;
+  theme: ThemeTokens;
+  providerLabel: string;
+  showThumbnail: boolean;
+}) {
+  const { ref: revealRef, style: revealStyle } = useScrollReveal<HTMLAnchorElement>("fadeUp", {
+    delay: idx * 80,
+  });
+  const thumbnail = item.metadata
+    ? (item.metadata as Record<string, string>).thumbnail
+    : undefined;
+
+  return (
+    <Link
+      ref={revealRef}
+      href={item.url}
+      target="_blank"
+      rel="noreferrer"
+      className="group flex items-center gap-6 p-5 md:p-6 transition-all duration-500 hover:-translate-y-0.5"
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = t.cardHoverBorder;
+        e.currentTarget.style.boxShadow = t.cardHoverShadow;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = t.cardBorder;
+        e.currentTarget.style.boxShadow = t.cardShadow;
+      }}
+      style={{
+        ...revealStyle,
+        backgroundColor: t.cardBg,
+        border: `1px solid ${t.cardBorder}`,
+        borderRadius: t.cardRadius,
+        boxShadow: t.cardShadow,
+      }}
+    >
+      {/* Thumbnail */}
+      {showThumbnail && thumbnail && (
+        <div className="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-2xl overflow-hidden">
+          <Image
+            src={thumbnail}
+            alt={item.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            unoptimized
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 space-y-2">
+        <p className="text-[12px] font-bold uppercase tracking-[1.5px]" style={{ color: t.accent }}>
+          {providerLabel}
+        </p>
+        <h3
+          className="font-bold text-[17px] md:text-[18px] leading-snug truncate tracking-[-0.3px]"
+          style={{ color: t.text }}
+        >
+          {item.title}
+        </h3>
+        <p className="text-[13px] font-medium" style={{ color: t.textMuted }}>
+          {new Date(item.published_at).toLocaleDateString("ko-KR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+      </div>
+
+      {/* Arrow */}
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300"
+        style={{ background: t.accentGradient }}
+      >
+        <ArrowUpRight size={16} color="#fff" />
+      </div>
+    </Link>
   );
 }

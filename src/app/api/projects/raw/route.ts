@@ -20,8 +20,8 @@ export async function GET() {
     });
 
     return NextResponse.json(projects);
-  } catch (error: any) {
+  } catch (error) {
     console.error("GET /api/projects/raw error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }

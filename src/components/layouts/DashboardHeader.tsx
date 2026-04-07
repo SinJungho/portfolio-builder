@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus, Menu } from "lucide-react";
+import { Bell, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,14 @@ export function DashboardHeader() {
               <DropdownMenuTrigger asChild>
                 <button className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink-50 hover:bg-ink-100 transition-all border border-ink-100 overflow-hidden outline-none focus:ring-2 focus:ring-blue-500/20">
                    {user?.image ? (
-                    <img src={user.image} alt={user.name || ""} className="w-full h-full object-cover" />
+                    <Image 
+                      src={user.image} 
+                      alt={user.name || ""} 
+                      width={36}
+                      height={36}
+                      className="w-full h-full object-cover" 
+                      unoptimized
+                    />
                   ) : (
                     <User className="h-5 w-5 text-ink-400" />
                   )}

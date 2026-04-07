@@ -1,18 +1,38 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 async function updateJobProgress(jobId: string, updates: Partial<JobStatus>) {
   const key = JOB_KEY(jobId);
   const existingJobStr = await redis.get(key);
   if (existingJobStr) {
-    let existingJob = typeof existingJobStr === 'string' ? JSON.parse(existingJobStr) : existingJobStr;
+    const existingJob = typeof existingJobStr === 'string' ? JSON.parse(existingJobStr) : existingJobStr;
     const newJob = { ...existingJob, ...updates };
     await redis.set(key, JSON.stringify(newJob), { ex: JOB_TTL });
   }
 }
+
+type Project = {
+  id: string;
+  name: string;
+  description: string | null;
+  ai_summary: string | null;
+  ai_score: number | null;
+  stargazers_count: number;
+  pushed_at: Date | null;
+  language: string | null;
+  topics: string[];
+  raw_data: Prisma.JsonValue;
+};
 
 export async function generatePortfolio(params: {
   jobId: string;
@@ -39,13 +59,13 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 10 });
 
-    let topProjects: any[] = [];
+    let topProjects: Array<Project & { calculatedScore: number }> = [];
 
     if (projectIds && projectIds.length > 0) {
       // Use manually selected projects
-      const selectedProjects = rawProjects.filter((p: any) => projectIds.includes(p.id));
+      const selectedProjects = rawProjects.filter((p) => projectIds.includes(p.id));
       topProjects = selectedProjects
-        .map((p: any) => {
+        .map((p) => {
           let score = p.ai_score;
           if (score === null) {
             score = p.stargazers_count;
@@ -55,13 +75,13 @@ export async function generatePortfolio(params: {
         .sort((a, b) => b.calculatedScore - a.calculatedScore);
     } else {
       // AI auto-pick logic
-      const projectsWithScore = rawProjects.map((p: any) => {
+      const projectsWithScore = rawProjects.map((p) => {
         let score = p.ai_score;
         if (score === null) {
           let readme_quality = 0.0;
           if (p.raw_data) {
-            const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
-            const readme = rawData?.readme || "";
+            const rawData = (typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data) as Record<string, unknown>;
+            const readme = (rawData?.readme as string) || "";
             if (!readme) {
               readme_quality = 0.0;
             } else if (readme.length < 300) {
@@ -95,8 +115,8 @@ export async function generatePortfolio(params: {
 
     // Language aggregation
     const languageCounts: Record<string, number> = {};
-    let totalProjects = rawProjects.length;
-    rawProjects.forEach((p: any) => {
+    const totalProjects = rawProjects.length;
+    rawProjects.forEach((p) => {
       if (p.language) {
         languageCounts[p.language] = (languageCounts[p.language] || 0) + 1;
       }
@@ -108,11 +128,11 @@ export async function generatePortfolio(params: {
         try {
           let readme = "";
           if (p.raw_data) {
-             const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
-             readme = rawData?.readme || "";
+             const rawData = (typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data) as Record<string, unknown>;
+             readme = (rawData?.readme as string) || "";
           }
           if (readme && readme.length > 50) {
-            const completion = await openai.chat.completions.create({
+            const completion = await getOpenAI().chat.completions.create({
               model: "gpt-4o-mini",
               messages: [
                 { 
@@ -129,10 +149,10 @@ export async function generatePortfolio(params: {
             const summaryData = completion.choices[0]?.message?.content || "{}";
             p.ai_summary = summaryData;
             
-            // Cache the result to DB
+             // Cache the result to DB
             await prisma.rawProject.update({
               where: { id: p.id },
-              data: { ai_summary: summaryData }
+              data: { ai_summary: summaryData as string }
             });
           }
         } catch (e) {
@@ -154,9 +174,9 @@ export async function generatePortfolio(params: {
     let subheadline = bio.substring(0, 50);
 
     try {
-      const skillsStr = skills.map((s: any) => s.name).join(", ");
+      const skillsStr = skills.map((s) => s.name).join(", ");
       const userGoal = goal ? `목표: ${goal}\n` : "";
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
@@ -175,7 +195,14 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 30 });
 
-    const portfolioBlocksData: any[] = [];
+    const portfolioBlocksData: Array<{
+      portfolio_id: string;
+      block_type: string;
+      position: number;
+      config: Prisma.InputJsonValue;
+      is_visible: boolean;
+      is_ai_generated: boolean;
+    }> = [];
 
     // Hero Block
     portfolioBlocksData.push({
@@ -202,7 +229,7 @@ export async function generatePortfolio(params: {
       config: {
         layout: "grid",
         columns: 2,
-        project_ids: topProjects.map((p: any) => p.id),
+        project_ids: topProjects.map((p) => p.id),
         show_tech_stack: true,
       },
       is_visible: true,
@@ -225,7 +252,7 @@ export async function generatePortfolio(params: {
     await updateJobProgress(jobId, { progress: 70 });
 
     // Contact Block
-    const contactConfig: any = {
+    const contactConfig: Record<string, unknown> = {
       github_url: `https://github.com/${user.github_login}`,
     };
     if (user.email) {
@@ -236,7 +263,7 @@ export async function generatePortfolio(params: {
       portfolio_id: portfolioId,
       block_type: "contact",
       position: 3,
-      config: contactConfig,
+      config: contactConfig as Prisma.InputJsonValue,
       is_visible: true,
       is_ai_generated: true,
     });
@@ -318,8 +345,9 @@ export async function generatePortfolio(params: {
       missing_optional_fields,
     });
 
-  } catch (error: any) {
-    console.error("generatePortfolio error:", error);
-    await updateJobProgress(jobId, { status: "failed", error: error.message });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("generatePortfolio error:", err);
+    await updateJobProgress(jobId, { status: "failed", error: err.message });
   }
 }

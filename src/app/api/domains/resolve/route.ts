@@ -41,10 +41,11 @@ export async function GET(req: Request) {
     await redis.set(DOMAIN_CACHE_KEY(domain), portfolio.slug, { ex: CACHE_TTL });
 
     return NextResponse.json({ slug: portfolio.slug, source: "database" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("GET /api/domains/resolve error:", error);
+    const message = error instanceof Error ? error.message : "internal server error";
     return NextResponse.json(
-      { error: "internal server error" },
+      { error: message },
       { status: 500 }
     );
   }

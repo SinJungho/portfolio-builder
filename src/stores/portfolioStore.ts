@@ -10,6 +10,14 @@ export type Block = {
   is_ai_generated: boolean;
 };
 
+export type DesignTokens = {
+  primaryColor?: string;
+  fontFamily?: "inter" | "pretendard" | "fira-code" | "playfair";
+  borderRadius?: "none" | "sm" | "md" | "lg" | "full";
+  spacing?: "compact" | "normal" | "relaxed";
+  [key: string]: unknown; // Allow for extensibility
+};
+
 export type PortfolioStore = {
   // 상태
   portfolioId: string | null;
@@ -17,7 +25,7 @@ export type PortfolioStore = {
   theme: string;
   isPublished: boolean;
   publishedUrl: string | null;
-  designTokens: any;
+  designTokens: DesignTokens;
   isSaving: boolean; // API 호출 중 여부
 
   // 초기화
@@ -27,10 +35,10 @@ export type PortfolioStore = {
     theme: string;
     isPublished: boolean;
     publishedUrl: string | null;
-    designTokens?: any;
+    designTokens?: DesignTokens;
   }) => void;
 
-  setDesignTokens: (tokens: any) => Promise<void>;
+  setDesignTokens: (tokens: DesignTokens) => Promise<void>;
 
   // 액션
   toggleBlock: (blockId: string) => Promise<void>;
@@ -69,7 +77,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
       });
     },
 
-    setDesignTokens: async (tokens: any) => {
+    setDesignTokens: async (tokens: DesignTokens) => {
       const { portfolioId, designTokens: prevTokens } = get();
       if (!portfolioId) return;
 
@@ -88,7 +96,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify({ design_tokens: newTokens }),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         // 롤백
         set((state) => {
           state.designTokens = prevTokens;
@@ -128,7 +136,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         // 롤백
         set((state) => {
           state.blocks = previousBlocks;
@@ -159,7 +167,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });
@@ -186,7 +194,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify({ theme }),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.theme = prevTheme;
         });
@@ -224,7 +232,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });
@@ -256,7 +264,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Delete failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });
@@ -289,7 +297,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });

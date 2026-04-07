@@ -79,7 +79,7 @@ export function PortfolioGrid() {
       toast.success("포트폴리오가 생성되었습니다. AI 분석을 시작합니다.");
       router.push(`/generate/${data.portfolio_id}`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
       setIsCreating(false);
     },
@@ -99,7 +99,7 @@ export function PortfolioGrid() {
       toast.success("포트폴리오가 삭제되었습니다");
       setDeleteId(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -150,8 +150,8 @@ export function PortfolioGrid() {
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className="group relative bg-white border border-gray-100 rounded-[32px] overflow-hidden hover:shadow-2xl hover:shadow-gray-200 transition-all duration-500 hover:-translate-y-2 cursor-pointer"
           >
-            <div className="aspect-[16/10] bg-gray-50 relative flex items-center justify-center overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 group-hover:scale-110 transition-transform duration-700" />
+            <div className="aspect-16/10 bg-gray-50 relative flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-purple-500/10 group-hover:scale-110 transition-transform duration-700" />
               
               <motion.div 
                 whileHover={{ rotate: 12, scale: 1.1 }}

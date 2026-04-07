@@ -27,6 +27,12 @@ let _env: z.infer<typeof envSchema> | null = null
 
 export function getEnv(): z.infer<typeof envSchema> {
   if (!_env) {
+    if (process.env.SKIP_ENV_VALIDATION === "1" || process.env.SKIP_ENV_VALIDATION === "true") {
+      console.warn("⚠️ Skipping environment variable validation (SKIP_ENV_VALIDATION)");
+      _env = process.env as unknown as z.infer<typeof envSchema>;
+      return _env;
+    }
+
     const result = envSchema.safeParse(process.env)
     if (!result.success) {
       console.error('❌ Invalid environment variables:', result.error.format())

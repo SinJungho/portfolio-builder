@@ -30,9 +30,9 @@ export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
     }
   };
 
-  const heading = useScrollReveal("fadeUp");
-  const cta = useScrollReveal("fadeUp", { delay: 200 });
-  const links = useScrollReveal("fadeUp", { delay: 350 });
+  const { ref: headingRef, style: headingStyle } = useScrollReveal("fadeUp");
+  const { ref: ctaRef, style: ctaStyle } = useScrollReveal("fadeUp", { delay: 200 });
+  const { ref: linksRef, style: linksStyle } = useScrollReveal("fadeUp", { delay: 350 });
 
   const socialLinks = [
     github_url && { href: github_url, icon: Github, label: "GitHub", type: "github" },
@@ -71,7 +71,7 @@ export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
         {/* ── Content ── */}
         <div className="relative z-10 max-w-xl space-y-8">
           {/* Heading */}
-          <div ref={heading.ref} style={heading.style} className="space-y-5">
+          <div ref={headingRef} style={headingStyle} className="space-y-5">
             <h2
               className="text-[36px] md:text-[48px] font-extrabold tracking-[-2.5px] leading-[1.05]"
               style={{ color: t.text }}
@@ -101,7 +101,7 @@ export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
 
           {/* Email CTA */}
           {email && (
-            <div ref={cta.ref} style={cta.style}>
+            <div ref={ctaRef} style={ctaStyle}>
               <a
                 href={`mailto:${email}`}
                 onClick={() => handleContactClick("email")}
@@ -129,7 +129,7 @@ export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
 
           {/* Social Links */}
           {socialLinks.length > 0 && (
-            <div ref={links.ref} style={links.style} className="flex flex-wrap justify-center gap-3">
+            <div ref={linksRef} style={linksStyle} className="flex flex-wrap justify-center gap-3">
               {socialLinks.map((link) => (
                 <a
                   key={link.type}

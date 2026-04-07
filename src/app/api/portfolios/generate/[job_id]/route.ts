@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { redis, JOB_KEY } from "@/lib/redis";
+import { redis, JOB_KEY, type JobStatus } from "@/lib/redis";
 import type { GenerateJobResponse } from "@/types/generate";
+import type { Block } from "@/stores/portfolioStore";
 
 export async function GET(
   req: Request,
@@ -20,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "job_not_found" }, { status: 404 });
     }
 
-    const job: any = typeof jobStr === "string" ? JSON.parse(jobStr) : jobStr;
+    const job = (typeof jobStr === "string" ? JSON.parse(jobStr) : jobStr) as JobStatus;
 
     if (job.user_id !== session.user.id) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -29,16 +30,16 @@ export async function GET(
     const response: GenerateJobResponse = {
       status: job.status,
       progress: job.progress,
-      blocks: job.blocks,
+      blocks: job.blocks as Block[],
       published_url: job.published_url,
       missing_optional_fields: job.missing_optional_fields,
       error: job.error,
     };
 
     return NextResponse.json(response, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("GET /api/portfolios/generate/[job_id] error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 

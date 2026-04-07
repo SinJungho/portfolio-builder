@@ -23,7 +23,7 @@ export async function PUT(
     let json = {};
     try {
       json = await req.json();
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -37,7 +37,7 @@ export async function PUT(
       select: { id: true },
     });
 
-    const validBlockIds = new Set(existingBlocks.map((b: any) => b.id));
+    const validBlockIds = new Set(existingBlocks.map((b: { id: string }) => b.id));
     for (const b of data.blocks) {
       if (!validBlockIds.has(b.id)) {
         return NextResponse.json({ error: `Block ${b.id} does not belong to this portfolio` }, { status: 400 });
@@ -58,9 +58,9 @@ export async function PUT(
     }
 
     return NextResponse.json({ ok: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("PUT /api/portfolios/[id]/blocks error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -111,9 +111,9 @@ export async function POST(
     }
 
     return NextResponse.json(newBlock, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/portfolios/[id]/blocks error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 

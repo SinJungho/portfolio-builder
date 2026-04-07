@@ -54,25 +54,13 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   }, [threshold, once]);
 
   const { from, to } = PRESETS[preset];
+  const transition = `opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`;
 
   const style: React.CSSProperties = {
     ...(isVisible ? to : from),
-    transition: `opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
+    transition,
     willChange: "opacity, transform",
   };
 
   return { ref, style };
-}
-
-/** Stagger helper — returns an array of { ref, style } for N items */
-export function useStaggerReveal<T extends HTMLElement = HTMLDivElement>(
-  count: number,
-  preset: RevealPreset = "fadeUp",
-  options: UseScrollRevealOptions & { staggerDelay?: number } = {}
-) {
-  const { staggerDelay = 100, ...restOptions } = options;
-  return Array.from({ length: count }, (_, i) =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useScrollReveal<T>(preset, { ...restOptions, delay: (restOptions.delay || 0) + i * staggerDelay })
-  );
 }

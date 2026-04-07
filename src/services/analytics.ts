@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { subDays, startOfDay, format } from 'date-fns';
+import { subDays, format } from 'date-fns';
+import { AnalyticsEvent } from '@prisma/client';
 
 export interface AnalyticsSummary {
   totalViews: number;
@@ -53,7 +54,7 @@ export class AnalyticsService {
         dailyViewsMap.set(dateStr, 0);
     }
 
-    events.forEach((event: any) => {
+    events.forEach((event: AnalyticsEvent) => {
       const dateStr = format(event.created_at, 'yyyy-MM-dd');
       
       if (event.event_type === 'page_view') {
@@ -71,7 +72,9 @@ export class AnalyticsService {
         let domain = event.referrer;
         try {
           domain = new URL(event.referrer).hostname;
-        } catch (e) {}
+        } catch {
+          // Ignore invalid URLs
+        }
         referrerMap.set(domain, (referrerMap.get(domain) || 0) + 1);
       }
     });

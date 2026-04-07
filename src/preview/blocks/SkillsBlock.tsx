@@ -79,9 +79,9 @@ function CategoryBlock({
   catIdx: number;
   t: ThemeTokens;
 }) {
-  const catReveal = useScrollReveal("fadeUp", { delay: catIdx * 100 });
+  const { ref: catRevealRef, style: catRevealStyle } = useScrollReveal("fadeUp", { delay: catIdx * 100 });
   return (
-    <div ref={catReveal.ref} style={catReveal.style} className="space-y-5">
+    <div ref={catRevealRef} style={catRevealStyle} className="space-y-5">
       <h3
         className="text-[15px] font-bold uppercase tracking-[2px]"
         style={{ color: t.accent }}
@@ -142,7 +142,7 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
           { name: "PostgreSQL", level: 60 },
         ];
 
-  const header = useScrollReveal("fadeUp");
+  const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
 
   // Group by category
   const grouped: Record<string, typeof displaySkills> = {};
@@ -157,7 +157,7 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
   return (
     <section className="space-y-12">
       {/* Section Header */}
-      <div ref={header.ref} style={header.style} className="space-y-4">
+      <div ref={headerRef} style={headerStyle} className="space-y-4">
         <h2
           className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
           style={{ color: t.text }}

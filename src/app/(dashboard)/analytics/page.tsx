@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   AreaChart,
-  Area,
-  Cell
+  Area
 } from "recharts";
 import { 
   BarChart3, 
@@ -20,7 +17,6 @@ import {
   Users, 
   MousePointer2, 
   ExternalLink,
-  ChevronDown,
   Layout,
   Clock
 } from "lucide-react";
@@ -37,6 +33,15 @@ interface Portfolio {
   title: string | null;
 }
 
+interface AnalyticsSummary {
+  totalViews: number;
+  uniqueVisitors: number;
+  totalClicks: number;
+  dailyStats: { date: string; views: number }[];
+  topBlocks: { block_id: string; type: string; count: number }[];
+  topReferrers: { referrer: string; count: number }[];
+}
+
 export default function AnalyticsPage() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
@@ -47,22 +52,18 @@ export default function AnalyticsPage() {
     queryFn: () => getUserPortfolios(),
   });
 
-  // Set default selection
-  useMemo(() => {
-    if (portfolios && portfolios.length > 0 && !selectedPortfolioId) {
-      setSelectedPortfolioId(portfolios[0].id);
-    }
-  }, [portfolios, selectedPortfolioId]);
+  const activePortfolioId = selectedPortfolioId || (portfolios?.[0]?.id ?? "");
 
   // 2. Fetch Summary
-  const { data: summary, isLoading: isSummaryLoading, isFetching: isSummaryFetching } = useQuery({
-    queryKey: ["analytics", selectedPortfolioId, period],
+  const { data: summary, isLoading: isSummaryLoading, isFetching: isSummaryFetching } = useQuery<AnalyticsSummary>({
+    queryKey: ["analytics", activePortfolioId, period],
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/${selectedPortfolioId}/summary?period=${period}`);
+      if (!activePortfolioId) throw new Error("No portfolio ID");
+      const res = await fetch(`/api/analytics/${activePortfolioId}/summary?period=${period}`);
       if (!res.ok) throw new Error("Failed to fetch analytics");
       return res.json();
     },
-    enabled: !!selectedPortfolioId,
+    enabled: !!activePortfolioId,
   });
 
   if (isPortfoliosLoading) {
@@ -89,7 +90,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const activePortfolio = portfolios.find((p: Portfolio) => p.id === selectedPortfolioId);
+  // const activePortfolio = portfolios.find((p: Portfolio) => p.id === selectedPortfolioId);
 
   return (
     <div className="p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -104,7 +105,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Select value={selectedPortfolioId} onValueChange={setSelectedPortfolioId}>
+          <Select value={activePortfolioId} onValueChange={setSelectedPortfolioId}>
             <SelectTrigger className="w-[200px] h-12 rounded-2xl bg-white border-black/5 shadow-sm font-bold text-[#191F28]">
               <SelectValue placeholder="포트폴리오 선택" />
             </SelectTrigger>
@@ -265,7 +266,7 @@ export default function AnalyticsPage() {
                <CardContent className="p-8 pt-0">
                   <div className="space-y-4">
                     {summary.topBlocks.length > 0 ? (
-                      summary.topBlocks.map((block: any, idx: number) => (
+                      summary.topBlocks.map((block, idx) => (
                         <div key={block.block_id} className="flex items-center justify-between group">
                           <div className="flex items-center gap-4">
                             <div className={`
@@ -306,7 +307,7 @@ export default function AnalyticsPage() {
                <CardContent className="p-8 pt-0">
                   <div className="space-y-2">
                     {summary.topReferrers.length > 0 ? (
-                      summary.topReferrers.map((ref: any, idx: number) => (
+                      summary.topReferrers.map((ref) => (
                         <div key={ref.referrer} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50/50 hover:bg-blue-50 transition-colors group">
                           <div className="flex items-center gap-3">
                             <div className="bg-white p-2 rounded-lg shadow-sm">

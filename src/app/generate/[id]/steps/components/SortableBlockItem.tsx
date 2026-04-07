@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Grid, Settings, ArrowUp, ArrowDown, Trash2, GripVertical, User, Mail, BarChart3, Radio } from 'lucide-react';
+import { Settings, ArrowUp, ArrowDown, Trash2, GripVertical } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
@@ -15,14 +15,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-const blockTypeIcons: Record<string, React.ReactNode> = {
-  hero: <User className="w-5 h-5 text-current" />,
-  project_grid: <Grid className="w-5 h-5 text-current" />,
-  skills: <BarChart3 className="w-5 h-5 text-current" />,
-  contact: <Mail className="w-5 h-5 text-current" />,
-  blog_feed: <Radio className="w-5 h-5 text-current" />,
-};
-
 const blockTypeLabels: Record<string, string> = {
   hero: "소개",
   project_grid: "프로젝트",
@@ -31,8 +23,17 @@ const blockTypeLabels: Record<string, string> = {
   blog_feed: "블로그",
 };
 
+export interface Block {
+  id: string;
+  block_type: string;
+  position: number;
+  is_visible: boolean;
+  is_ai_generated: boolean;
+  config: Record<string, unknown>;
+}
+
 interface SortableBlockItemProps {
-  block: any;
+  block: Block;
   index: number;
   totalBlocks: number;
   icon: React.ReactNode;
@@ -40,7 +41,7 @@ interface SortableBlockItemProps {
   onDelete: (id: string) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
-  onOpenProjectEditor: (block: any) => void;
+  onOpenProjectEditor: (block: Block) => void;
 }
 
 export function SortableBlockItem({ 

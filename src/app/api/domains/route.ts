@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const { portfolio_id, domain } = data;
 
     // 1. 소유권 확인
-    const { error, portfolio } = await validatePortfolioOwnership(portfolio_id);
+    const { error } = await validatePortfolioOwnership(portfolio_id);
     if (error) return error;
 
     // 2. Vercel API를 통해 도메인 추가
@@ -37,10 +37,10 @@ export async function POST(req: Request) {
       verified: vercelData.verified,
       verification: vercelData.verification,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/domains error:", error);
     return NextResponse.json(
-      { error: error.message || "도메인 추가 중 오류가 발생했습니다." },
+      { error: error instanceof Error ? error.message : "도메인 추가 중 오류가 발생했습니다." },
       { status: 500 }
     );
   }
@@ -76,10 +76,10 @@ export async function DELETE(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("DELETE /api/domains error:", error);
     return NextResponse.json(
-      { error: error.message || "도메인 삭제 중 오류가 발생했습니다." },
+      { error: error instanceof Error ? error.message : "도메인 삭제 중 오류가 발생했습니다." },
       { status: 500 }
     );
   }

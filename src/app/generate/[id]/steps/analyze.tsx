@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, AlertCircle, LogIn } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,10 +20,9 @@ export default function AnalyzeStep({
   syncJobId?: string;
 }) {
   const router = useRouter();
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const timeoutsCount = useRef(0);
+  const [timeoutsCount, setTimeoutsCount] = useState(0);
 
-  const { data, error, isError, refetch } = useQuery<SyncStatusResponse>({
+  const { data, error, refetch } = useQuery<SyncStatusResponse>({
     queryKey: ["sync-job", syncJobId],
     queryFn: async () => {
       if (!syncJobId) throw new Error("job_id_missing");
@@ -35,28 +34,31 @@ export default function AnalyzeStep({
       if (
         query.state.data?.status === "completed" ||
         query.state.data?.status === "failed" ||
-        timeoutsCount.current >= 40
+        timeoutsCount >= 40
       ) {
         return false;
       }
-      timeoutsCount.current += 1;
+      setTimeoutsCount(prev => prev + 1);
       return 3000;
     },
     enabled: !!syncJobId,
   });
 
+  const isJobFailed = data?.status === "failed";
+  const errorMessage = data?.error || (error instanceof Error ? error.message : null);
+  const isTimeout = timeoutsCount >= 40;
+  const isAnyError = !!(error || isJobFailed || isTimeout);
+
   useEffect(() => {
     if (data?.status === "completed") {
       router.push(`/generate/${portfolioId}?step=configure`);
-    } else if (data?.status === "failed") {
-      setErrorMsg(data.error || "분석에 실패했습니다.");
     }
-  }, [data?.status, portfolioId, router, data?.error]);
+  }, [data?.status, portfolioId, router]);
 
   // Step 2: Handle GitHub Session Expired (Auth Error)
-  const isAuthError = errorMsg?.includes("인증 세션") || error?.message.includes("Bad credentials");
+  const isAuthError = errorMessage?.includes("인증 세션") || errorMessage?.includes("Bad credentials");
 
-  if (error || errorMsg || timeoutsCount.current >= 40) {
+  if (isAnyError) {
     return (
       <div className="flex flex-col items-center gap-8 text-center max-w-sm animate-in fade-in zoom-in-95 duration-500">
         <div className="relative">
@@ -78,7 +80,7 @@ export default function AnalyzeStep({
             {isAuthError ? "GitHub 연동 정보가 만료되었어요" : "오류가 발생했습니다"}
           </h3>
           <p className="text-[15px] font-medium text-[#4E5968] leading-relaxed">
-            {errorMsg || (timeoutsCount.current >= 40 ? "분석 시간이 너무 오래 걸리고 있습니다. 잠시 후 서버가 안정되면 다시 시도해 주세요." : "일시적인 오류입니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.")}
+            {isJobFailed ? (data?.error || "분석에 실패했습니다.") : (isTimeout ? "분석 시간이 너무 오래 걸리고 있습니다. 잠시 후 서버가 안정되면 다시 시도해 주세요." : (errorMessage || "일시적인 오류입니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요."))}
           </p>
         </div>
 
@@ -92,7 +94,7 @@ export default function AnalyzeStep({
              </button>
           ) : (
              <button
-               onClick={() => { timeoutsCount.current = 0; refetch(); }}
+               onClick={() => { setTimeoutsCount(0); refetch(); }}
                className="w-full h-14 bg-[#3182F6] text-white rounded-2xl font-bold hover:bg-[#1b64da] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
              >
                다시 시도하기

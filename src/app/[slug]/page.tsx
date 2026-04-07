@@ -62,13 +62,34 @@ export default async function PortfolioPage({ params }: Props) {
     orderBy: { position: 'asc' }
   });
 
-  const populatedBlocks = await Promise.all(blocks.map(async (block: any) => {
-    const config = block.config as any;
+  interface BlockConfig {
+    project_ids?: string[];
+    projectsData?: unknown[];
+    integration_provider?: string;
+    feed_items?: unknown[];
+    max_items?: number;
+    [key: string]: unknown;
+  }
+
+  interface PortfolioBlock {
+    id: string;
+    portfolio_id: string;
+    block_type: string;
+    position: number;
+    config: BlockConfig;
+    is_visible: boolean;
+    is_ai_generated: boolean;
+    created_at: Date;
+    updated_at: Date;
+  }
+
+  const populatedBlocks = await Promise.all(blocks.map(async (block) => {
+    const config = (block.config as BlockConfig || {}) as BlockConfig;
     if (block.block_type === 'project_grid' && config.project_ids?.length) {
       const projectsData = await prisma.rawProject.findMany({
         where: { id: { in: config.project_ids } }
       });
-      config.projectsData = config.project_ids.map((id: string) => projectsData.find((p: any) => p.id === id)).filter(Boolean);
+      config.projectsData = config.project_ids.map((id: string) => projectsData.find((p: { id: string }) => p.id === id)).filter(Boolean);
     }
     
     if (block.block_type === 'blog_feed') {
@@ -106,7 +127,7 @@ export default async function PortfolioPage({ params }: Props) {
         <PortfolioPreview 
           blocks={populatedBlocks} 
           theme={portfolio.theme} 
-          designTokens={portfolio.design_tokens}
+          designTokens={portfolio.design_tokens as Record<string, unknown>}
         />
       </main>
 

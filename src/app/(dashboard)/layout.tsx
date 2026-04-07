@@ -14,7 +14,7 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  if (!(session.user as any).github_bio_verified) {
+  if (!(session.user as { github_bio_verified: boolean }).github_bio_verified) {
     redirect("/onboarding/bio");
   }
 

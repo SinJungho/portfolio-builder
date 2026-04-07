@@ -9,9 +9,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.github_login = (user as any).github_login
-        token.github_bio_verified = (user as any).github_bio_verified ?? false
+        const u = user as { id: string; github_login?: string; github_bio_verified?: boolean };
+        token.id = u.id;
+        token.github_login = u.github_login;
+        token.github_bio_verified = u.github_bio_verified ?? false;
       } else if (token.id && !token.github_bio_verified) {
         // 세션 쿠키에는 false라고 되어있지만, 실제 DB에서 업데이트되었는지 실시간 확인
         const dbUser = await prisma.user.findUnique({
@@ -24,15 +25,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token
     },
-    async session({ session, token }: any) {
+    async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id
-        session.user.github_login = token.github_login
-        session.user.github_bio_verified = token.github_bio_verified
+        const t = token as { id: string; github_login?: string; github_bio_verified?: boolean };
+        const s = session as { user: { id: string; github_login?: string; github_bio_verified?: boolean } };
+        s.user.id = t.id;
+        s.user.github_login = t.github_login;
+        s.user.github_bio_verified = t.github_bio_verified;
       }
-      return session
+      return session;
     },
-    async signIn({ user, profile, account }) {
+    async signIn() {
       return true
     },
   },

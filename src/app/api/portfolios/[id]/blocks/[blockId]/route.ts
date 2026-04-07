@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const updateBlockSchema = z.object({
@@ -21,7 +20,7 @@ export async function PATCH(
     let json = {};
     try {
       json = await req.json();
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -41,7 +40,7 @@ export async function PATCH(
       return new NextResponse(null, { status: 404 });
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (data.is_visible !== undefined) updateData.is_visible = data.is_visible;
     if (data.config !== undefined) updateData.config = data.config;
 
@@ -66,9 +65,9 @@ export async function PATCH(
     }
 
     return NextResponse.json({ block: updatedBlock }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("PATCH /api/portfolios/[id]/blocks/[blockId] error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -125,8 +124,8 @@ export async function DELETE(
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("DELETE /api/portfolios/[id]/blocks/[blockId] error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }

@@ -12,7 +12,6 @@ import {
   GitFork, 
   Clock, 
   Search,
-  Filter,
   CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,11 +47,11 @@ export default function ConfigureStep({ portfolioId }: { portfolioId: string }) 
       const data = await res.json();
       // Initialize selectedIds with featured projects or top 4
       if (selectedIds.length === 0) {
-        const featured = data.filter((p: any) => p.is_featured).map((p: any) => p.id);
+        const featured = (data as RawProject[]).filter((p) => p.is_featured).map((p) => p.id);
         if (featured.length > 0) {
           setSelectedIds(featured);
         } else {
-          setSelectedIds(data.slice(0, 4).map((p: any) => p.id));
+          setSelectedIds((data as RawProject[]).slice(0, 4).map((p) => p.id));
         }
       }
       return data;
@@ -87,11 +86,11 @@ export default function ConfigureStep({ portfolioId }: { portfolioId: string }) 
 
   const toggleProject = (id: string) => {
     setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter((i: any) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  const filteredProjects = projects?.filter((p: any) => 
+  const filteredProjects = projects?.filter((p) => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );

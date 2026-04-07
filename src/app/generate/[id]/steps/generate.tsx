@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Copy, ExternalLink, Settings2, Share2, Check, Sparkles, AlertCircle, RotateCcw, ArrowRight } from "lucide-react";
+import { Loader2, Copy, ExternalLink, Settings2, Check, Sparkles, AlertCircle, RotateCcw, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { GenerateJobResponse } from "@/types/generate";
@@ -34,7 +34,7 @@ export default function GenerateStep({
   generateJobId?: string;
 }) {
   const router = useRouter();
-  const timeoutsCount = useRef(0);
+  const [timeoutsCount, setTimeoutsCount] = useState(0);
   const [copied, setCopied] = useState(false);
 
   const { data, error, refetch } = useQuery<GenerateJobResponse>({
@@ -49,11 +49,11 @@ export default function GenerateStep({
       if (
         query.state.data?.status === "completed" ||
         query.state.data?.status === "failed" ||
-        timeoutsCount.current >= 60 // 3s * 60 = 180s (3 minutes)
+        timeoutsCount >= 60 // 3s * 60 = 180s (3 minutes)
       ) {
         return false;
       }
-      timeoutsCount.current += 1;
+      setTimeoutsCount(prev => prev + 1);
       return 3000;
     },
     enabled: !!generateJobId,
@@ -67,7 +67,7 @@ export default function GenerateStep({
       if (!res.ok) return null;
       return res.json();
     },
-    enabled: !!(error || data?.status === "failed" || timeoutsCount.current >= 60),
+    enabled: !!(error || data?.status === "failed" || timeoutsCount >= 60),
     refetchInterval: (query) => (query.state.data?.is_published ? false : 5000),
   });
 
@@ -75,7 +75,7 @@ export default function GenerateStep({
 
   // --- Content Rendering ---
   const renderContent = () => {
-    if (!isActuallyFinished && (error || data?.status === "failed" || timeoutsCount.current >= 60)) {
+    if (!isActuallyFinished && (error || data?.status === "failed" || timeoutsCount >= 60)) {
       return (
         <div
           className="
@@ -92,10 +92,10 @@ export default function GenerateStep({
             생성에 실패했습니다
           </h2>
           <p className="text-[15px] text-gray-500 leading-[1.7] mb-8">
-            {data?.error || (timeoutsCount.current >= 60 ? "시간이 오래 걸리고 있어요. 다시 시도해주세요." : "예기치 않은 오류가 발생했습니다.")}
+            {data?.error || (timeoutsCount >= 60 ? "시간이 오래 걸리고 있어요. 다시 시도해주세요." : "예기치 않은 오류가 발생했습니다.")}
           </p>
           <button
-            onClick={() => { timeoutsCount.current = 0; refetch(); }}
+            onClick={() => { setTimeoutsCount(0); refetch(); }}
             className="
               inline-flex items-center gap-2
               rounded-full border border-black/10

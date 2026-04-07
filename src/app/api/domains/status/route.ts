@@ -29,10 +29,10 @@ export async function GET(req: Request) {
       success: true,
       ...status,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("GET /api/domains/status error:", error);
     return NextResponse.json(
-      { error: error.message || "도메인 상태조회 중 오류가 발생했습니다." },
+      { error: error instanceof Error ? error.message : "도메인 상태조회 중 오류가 발생했습니다." },
       { status: 500 }
     );
   }

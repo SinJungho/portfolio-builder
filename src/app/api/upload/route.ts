@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
       );
       
       return NextResponse.json({ url });
-    } catch (err: any) {
-      if (err.message === "STORAGE_NOT_CONFIGURED") {
+    } catch (err) {
+      if (err instanceof Error && err.message === "STORAGE_NOT_CONFIGURED") {
         // [Zero-Config Fallback] Supabase 설정이 없는 경우 Base64 데이터 스트림으로 반환
         // 이를 통해 로컬 환경에서 설정 없이도 UI 및 미리보기 기능을 즉시 테스트할 수 있습니다.
         const base64 = buffer.toString("base64");
@@ -50,10 +50,10 @@ export async function POST(req: NextRequest) {
       }
       throw err;
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("[UPLOAD_ERROR]", error);
     return NextResponse.json(
-      { error: "파일 업로드 중 오류가 발생했습니다." },
+      { error: error instanceof Error ? error.message : "파일 업로드 중 오류가 발생했습니다." },
       { status: 500 }
     );
   }

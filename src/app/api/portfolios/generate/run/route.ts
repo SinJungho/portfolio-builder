@@ -28,8 +28,8 @@ export async function POST(req: Request) {
     }).catch(console.error);
 
     return NextResponse.json({ ok: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/portfolios/generate/run error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }

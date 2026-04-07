@@ -9,44 +9,19 @@ import {
   BarChart, 
   Mail, 
   Rss, 
-  ArrowUp, 
-  ArrowDown, 
-  Copy, 
-  ExternalLink, 
-  ArrowLeft, 
   Check, 
-  ArrowRight, 
   Sparkles, 
-  Palette,
-  Trash2,
-  Settings,
-  Search,
-  Star,
-  GitFork,
-  Clock,
-  X,
-  Plus
+  Search, 
+  Star, 
+  GitFork, 
+  X, 
+  Plus 
 } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 
 import {
@@ -98,7 +73,7 @@ interface RawProject {
 // 모바일 탭 타입
 type MobileTab = "blocks" | "settings";
 
-export default function AdjustStep({ portfolioId, initialData }: { portfolioId: string; initialData?: {
+interface InitialData {
   portfolioId: string;
   blocks: Array<{
     id: string;
@@ -111,23 +86,21 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
   theme: string;
   isPublished: boolean;
   publishedUrl: string | null;
-} }) {
+}
+
+export default function AdjustStep({ portfolioId, initialData }: { portfolioId: string; initialData?: InitialData }) {
   const { 
     blocks, 
-    theme, 
     isSaving, 
     initialize, 
     toggleBlock, 
     reorderBlocks, 
-    setTheme, 
     updateOptionalField,
     deleteBlock,
     updateBlockConfig,
     addBlock,
   } = usePortfolioStore();
   
-  const [copied, setCopied] = useState(false);
-  const [init, setInit] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("blocks");
   
   // Project selection state
@@ -144,30 +117,22 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
       if (!res.ok) throw new Error("Failed to fetch projects");
       return res.json();
     },
-    enabled: init,
+    enabled: blocks.length > 0,
   });
 
   useEffect(() => {
-    if (initialData && !init) {
+    if (initialData && blocks.length === 0) {
       initialize({
         ...initialData,
-        blocks: initialData.blocks.map((b: any) => ({
+        blocks: initialData.blocks.map((b) => ({
           ...b,
-          block_type: b.block_type as any,
+          block_type: b.block_type as "hero" | "project_grid" | "skills" | "contact" | "blog_feed",
         })),
       });
-      setInit(true);
     }
-  }, [initialData, init, initialize]);
+  }, [initialData, initialize, blocks.length]);
 
-  const pubUrl = initialData?.publishedUrl || `${typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/${portfolioId}`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(pubUrl);
-    setCopied(true);
-    toast.success("배포 URL이 복사되었습니다.");
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -203,7 +168,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     }
   };
 
-  const contactBlock = blocks.find((b: any) => b.block_type === "contact");
+  const contactBlock = blocks.find((b) => b.block_type === "contact");
 
   const handleOptionalChange = (field: string, value: string) => {
     if (!contactBlock) return;
@@ -212,7 +177,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     });
   };
 
-  const openProjectEditor = (block: any) => {
+  const openProjectEditor = (block: { id: string; config: Record<string, unknown> }) => {
     setEditingBlockId(block.id);
     setTempSelectedIds((block.config.project_ids as string[]) || []);
     setTempCustomDescriptions((block.config.custom_descriptions as Record<string, string>) || {});
@@ -221,7 +186,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
 
   const saveProjectChanges = () => {
     if (!editingBlockId) return;
-    const block = blocks.find((b: any) => b.id === editingBlockId);
+    const block = blocks.find((b) => b.id === editingBlockId);
     if (block) {
       updateBlockConfig(editingBlockId, {
         ...block.config,
@@ -235,18 +200,18 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     }
   };
 
-  const filteredProjects = rawProjects?.filter((p: any) => 
+  const filteredProjects = rawProjects?.filter((p) => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleTempProject = (id: string) => {
     setTempSelectedIds(prev => 
-      prev.includes(id) ? prev.filter((i: any) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  if (!init) {
+  if (blocks.length === 0) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin w-8 h-8" /></div>;
   }
 
@@ -266,7 +231,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={blocks.map((b: any) => b.id)}
+              items={blocks.map((b) => b.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-4">
@@ -302,7 +267,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
               <p className="text-[12px] text-gray-400 font-medium">내 포트폴리오를 더 풍성하게 만들어보세요.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {Object.keys(blockTypeLabels).map((type: any) => {
+              {(Object.keys(blockTypeLabels) as Array<keyof typeof blockTypeLabels>).map((type) => {
                 const isUnique = type === 'hero' || type === 'contact';
                 const alreadyExists = isUnique && blocks.some(b => b.block_type === type);
                 

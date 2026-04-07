@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Globe, 
   CheckCircle2, 
   Clock, 
-  AlertTriangle, 
   Trash2, 
   RefreshCcw, 
   ExternalLink, 
@@ -45,28 +44,22 @@ export function DomainsSection() {
     }
   });
 
-  const portfolios: Portfolio[] = portfoliosData?.portfolios || [];
+  const portfolios: Portfolio[] = useMemo(() => portfoliosData?.portfolios || [], [portfoliosData]);
+  const effectiveSelectedId = selectedPortfolioId || (portfolios.length > 0 ? portfolios[0].id : "");
 
-  // 초기 포트폴리오 선택
-  useEffect(() => {
-    if (portfolios.length > 0 && !selectedPortfolioId) {
-      setSelectedPortfolioId(portfolios[0].id);
-    }
-  }, [portfolios, selectedPortfolioId]);
-
-  const selectedPortfolio = portfolios?.find((p: any) => p.id === selectedPortfolioId);
+  const selectedPortfolio = useMemo(() => portfolios?.find((p) => p.id === effectiveSelectedId), [portfolios, effectiveSelectedId]);
   const currentDomain = selectedPortfolio?.custom_domain;
 
   // 2. 도메인 상태 조회
-  const { data: domainStatus, isLoading: statusLoading, refetch: refetchStatus } = useQuery({
+  const { data: domainStatus, refetch: refetchStatus } = useQuery({
     queryKey: ["domainStatus", currentDomain],
     queryFn: async () => {
       if (!currentDomain) return null;
-      const res = await fetch(`/api/domains/status?portfolio_id=${selectedPortfolioId}&domain=${currentDomain}`);
+      const res = await fetch(`/api/domains/status?portfolio_id=${effectiveSelectedId}&domain=${currentDomain}`);
       if (!res.ok) throw new Error("도메인 상태를 확인할 수 없습니다.");
       return res.json();
     },
-    enabled: !!currentDomain && !!selectedPortfolioId,
+    enabled: !!currentDomain && !!effectiveSelectedId,
     refetchInterval: (query) => (query.state.data?.verified ? false : 10000), // 미연결 시 10초마다 갱신
   });
 
@@ -76,7 +69,7 @@ export function DomainsSection() {
       const res = await fetch("/api/domains", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio_id: selectedPortfolioId, domain }),
+        body: JSON.stringify({ portfolio_id: effectiveSelectedId, domain }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "도메인 추가에 실패했습니다.");
@@ -87,14 +80,17 @@ export function DomainsSection() {
       setNewDomain("");
       toast.success("도메인이 등록되었습니다. DNS 설정을 진행해주세요.");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: unknown) => {
+      const error = err as Error;
+      toast.error(error.message);
+    },
   });
 
   // 4. 도메인 삭제 Mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!currentDomain) return;
-      const res = await fetch(`/api/domains?portfolio_id=${selectedPortfolioId}&domain=${currentDomain}`, {
+      const res = await fetch(`/api/domains?portfolio_id=${effectiveSelectedId}&domain=${currentDomain}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("도메인 삭제에 실패했습니다.");
@@ -103,7 +99,10 @@ export function DomainsSection() {
       queryClient.invalidateQueries({ queryKey: ["portfoliosForDomains"] });
       toast.success("도메인 연결이 해제되었습니다.");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: unknown) => {
+      const error = err as Error;
+      toast.error(error.message);
+    },
   });
 
   // 5. 도메인 검증 Mutation
@@ -113,7 +112,7 @@ export function DomainsSection() {
       const res = await fetch("/api/domains/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio_id: selectedPortfolioId, domain: currentDomain }),
+        body: JSON.stringify({ portfolio_id: effectiveSelectedId, domain: currentDomain }),
       });
       return res.json();
     },
@@ -125,7 +124,10 @@ export function DomainsSection() {
         toast.info("아직 DNS 설정이 전파되지 않았습니다. 잠시 후 상단 새로고침을 눌러보세요.");
       }
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: unknown) => {
+      const error = err as Error;
+      toast.error(error.message);
+    },
   });
 
   if (portfoliosLoading) return <div className="animate-pulse py-10 text-gray-400">Loading domains...</div>;
@@ -144,11 +146,11 @@ export function DomainsSection() {
             Target Portfolio
           </label>
           <select 
-            value={selectedPortfolioId}
+            value={effectiveSelectedId}
             onChange={(e) => setSelectedPortfolioId(e.target.value)}
             className="w-full h-11 px-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
           >
-            {portfolios.map((p: any) => (
+            {portfolios.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.title || p.slug} ({p.slug}.portfolioforge.app)
               </option>
