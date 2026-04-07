@@ -1,37 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePortfolioStore } from "@/stores/portfolioStore";
-import { 
-  Loader2, 
-  User, 
-  Grid, 
-  BarChart, 
-  Mail, 
-  Rss, 
-  Check, 
-  Sparkles, 
-  Search, 
-  Star, 
-  GitFork, 
-  X, 
-  Plus 
-} from "lucide-react";
-import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { usePortfolioStore } from "@/stores/portfolioStore";
+import { useQuery } from "@tanstack/react-query";
 import {
-  DndContext,
+  BarChart,
+  Check,
+  GitFork,
+  Grid,
+  Loader2,
+  Mail,
+  Plus,
+  Rss,
+  Search,
+  Sparkles,
+  Star,
+  User,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import DesignEditor from "@/components/features/editor/DesignEditor";
+import MarkdownEditor from "@/components/ui/MarkdownEditor";
+import {
   closestCenter,
+  DndContext,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -40,8 +42,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableBlockItem } from "./components/SortableBlockItem";
-import DesignEditor from "@/components/features/editor/DesignEditor";
-import MarkdownEditor from "@/components/ui/MarkdownEditor";
 
 const blockTypeIcons: Record<string, React.ReactNode> = {
   hero: <User className="w-5 h-5 text-current" />,
@@ -58,7 +58,6 @@ const blockTypeLabels: Record<string, string> = {
   contact: "연락처",
   blog_feed: "블로그",
 };
-
 
 interface RawProject {
   id: string;
@@ -88,26 +87,32 @@ interface InitialData {
   publishedUrl: string | null;
 }
 
-export default function AdjustStep({ portfolioId, initialData }: { portfolioId: string; initialData?: InitialData }) {
-  const { 
-    blocks, 
-    isSaving, 
-    initialize, 
-    toggleBlock, 
-    reorderBlocks, 
+export default function AdjustStep({
+  initialData,
+}: {
+  initialData?: InitialData;
+}) {
+  const {
+    blocks,
+    isSaving,
+    initialize,
+    toggleBlock,
+    reorderBlocks,
     updateOptionalField,
     deleteBlock,
     updateBlockConfig,
     addBlock,
   } = usePortfolioStore();
-  
+
   const [mobileTab, setMobileTab] = useState<MobileTab>("blocks");
-  
+
   // Project selection state
   const [isEditingProjects, setIsEditingProjects] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
-  const [tempCustomDescriptions, setTempCustomDescriptions] = useState<Record<string, string>>({});
+  const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
+    Record<string, string>
+  >({});
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: rawProjects } = useQuery<RawProject[]>({
@@ -126,18 +131,24 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
         ...initialData,
         blocks: initialData.blocks.map((b) => ({
           ...b,
-          block_type: b.block_type as "hero" | "project_grid" | "skills" | "contact" | "blog_feed",
+          block_type: b.block_type as
+            | "hero"
+            | "project_grid"
+            | "skills"
+            | "contact"
+            | "blog_feed",
         })),
       });
     }
   }, [initialData, initialize, blocks.length]);
 
-
-
   const moveUp = (index: number) => {
     if (index === 0) return;
     const newBlocks = [...blocks];
-    [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
+    [newBlocks[index - 1], newBlocks[index]] = [
+      newBlocks[index],
+      newBlocks[index - 1],
+    ];
     newBlocks.forEach((b, i) => (b.position = i));
     reorderBlocks(newBlocks);
   };
@@ -145,7 +156,10 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
   const moveDown = (index: number) => {
     if (index === blocks.length - 1) return;
     const newBlocks = [...blocks];
-    [newBlocks[index + 1], newBlocks[index]] = [newBlocks[index], newBlocks[index + 1]];
+    [newBlocks[index + 1], newBlocks[index]] = [
+      newBlocks[index],
+      newBlocks[index + 1],
+    ];
     newBlocks.forEach((b, i) => (b.position = i));
     reorderBlocks(newBlocks);
   };
@@ -154,14 +168,14 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = blocks.findIndex(b => b.id === active.id);
-      const newIndex = blocks.findIndex(b => b.id === over.id);
+      const oldIndex = blocks.findIndex((b) => b.id === active.id);
+      const newIndex = blocks.findIndex((b) => b.id === over.id);
       const newBlocks = arrayMove(blocks, oldIndex, newIndex);
       newBlocks.forEach((b, i) => (b.position = i));
       reorderBlocks(newBlocks);
@@ -177,10 +191,15 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     });
   };
 
-  const openProjectEditor = (block: { id: string; config: Record<string, unknown> }) => {
+  const openProjectEditor = (block: {
+    id: string;
+    config: Record<string, unknown>;
+  }) => {
     setEditingBlockId(block.id);
     setTempSelectedIds((block.config.project_ids as string[]) || []);
-    setTempCustomDescriptions((block.config.custom_descriptions as Record<string, string>) || {});
+    setTempCustomDescriptions(
+      (block.config.custom_descriptions as Record<string, string>) || {},
+    );
     setIsEditingProjects(true);
   };
 
@@ -191,7 +210,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
       updateBlockConfig(editingBlockId, {
         ...block.config,
         project_ids: tempSelectedIds,
-        custom_descriptions: tempCustomDescriptions
+        custom_descriptions: tempCustomDescriptions,
       }).then(() => {
         setIsEditingProjects(false);
         setEditingBlockId(null);
@@ -200,19 +219,24 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     }
   };
 
-  const filteredProjects = rawProjects?.filter((p) => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProjects = rawProjects?.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const toggleTempProject = (id: string) => {
-    setTempSelectedIds(prev => 
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    setTempSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
   if (blocks.length === 0) {
-    return <div className="flex justify-center p-12"><Loader2 className="animate-spin w-8 h-8" /></div>;
+    return (
+      <div className="flex justify-center p-12">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
   }
 
   // 블록 목록 패널 (공용 콘텐츠)
@@ -222,75 +246,95 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#191F28] flex items-center gap-3">
             블록 구성
-            {isSaving && <Loader2 className="inline w-5 h-5 animate-spin text-blue-500" />}
+            {isSaving && (
+              <Loader2 className="inline w-5 h-5 animate-spin text-blue-500" />
+            )}
           </h2>
         </div>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={blocks.map((b) => b.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={blocks.map((b) => b.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-4">
-                {blocks.map((block, index) => (
-                  <SortableBlockItem
-                    key={block.id}
-                    block={block}
-                    index={index}
-                    totalBlocks={blocks.length}
-                    icon={blockTypeIcons[block.block_type] || <Grid className="w-6 h-6" />}
-                    onToggle={toggleBlock}
-                    onDelete={deleteBlock}
-                    onMoveUp={moveUp}
-                    onMoveDown={moveDown}
-                    onOpenProjectEditor={openProjectEditor}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-          {blocks.length === 0 && (
-            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-100 rounded-[32px] gap-4">
-               <div className="p-4 bg-gray-50 rounded-full text-gray-300">
-                 <Grid className="w-8 h-8" />
-               </div>
-               <p className="text-gray-400 font-bold">추가된 블록이 없습니다.</p>
+            <div className="space-y-4">
+              {blocks.map((block, index) => (
+                <SortableBlockItem
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  totalBlocks={blocks.length}
+                  icon={
+                    blockTypeIcons[block.block_type] || (
+                      <Grid className="w-6 h-6" />
+                    )
+                  }
+                  onToggle={toggleBlock}
+                  onDelete={deleteBlock}
+                  onMoveUp={moveUp}
+                  onMoveDown={moveDown}
+                  onOpenProjectEditor={openProjectEditor}
+                />
+              ))}
             </div>
-          )}
-          
-          <div className="pt-6 border-t border-black/5 mt-6">
-            <div className="flex flex-col gap-1 mb-4">
-              <h4 className="text-[15px] font-bold text-[#191F28]">새로운 블록 추가</h4>
-              <p className="text-[12px] text-gray-400 font-medium">내 포트폴리오를 더 풍성하게 만들어보세요.</p>
+          </SortableContext>
+        </DndContext>
+        {blocks.length === 0 && (
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-100 rounded-[32px] gap-4">
+            <div className="p-4 bg-gray-50 rounded-full text-gray-300">
+              <Grid className="w-8 h-8" />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {(Object.keys(blockTypeLabels) as Array<keyof typeof blockTypeLabels>).map((type) => {
-                const isUnique = type === 'hero' || type === 'contact';
-                const alreadyExists = isUnique && blocks.some(b => b.block_type === type);
-                
-                return (
-                  <button
-                    key={type}
-                    onClick={() => addBlock(type)}
-                    disabled={isSaving || alreadyExists}
-                    className={`
+            <p className="text-gray-400 font-bold">추가된 블록이 없습니다.</p>
+          </div>
+        )}
+
+        <div className="pt-6 border-t border-black/5 mt-6">
+          <div className="flex flex-col gap-1 mb-4">
+            <h4 className="text-[15px] font-bold text-[#191F28]">
+              새로운 블록 추가
+            </h4>
+            <p className="text-[12px] text-gray-400 font-medium">
+              내 포트폴리오를 더 풍성하게 만들어보세요.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {(
+              Object.keys(blockTypeLabels) as Array<
+                keyof typeof blockTypeLabels
+              >
+            ).map((type) => {
+              const isUnique = type === "hero" || type === "contact";
+              const alreadyExists =
+                isUnique && blocks.some((b) => b.block_type === type);
+
+              return (
+                <button
+                  key={type}
+                  onClick={() => addBlock(type)}
+                  disabled={isSaving || alreadyExists}
+                  className={`
                       flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all border
-                      ${alreadyExists 
-                        ? "bg-gray-50 border-black/3 text-gray-300 cursor-not-allowed" 
-                        : "bg-white border-black/5 text-[#4E5968] hover:border-[#3182F6] hover:text-[#3182F6] hover:shadow-sm active:scale-95"
+                      ${
+                        alreadyExists
+                          ? "bg-gray-50 border-black/3 text-gray-300 cursor-not-allowed"
+                          : "bg-white border-black/5 text-[#4E5968] hover:border-[#3182F6] hover:text-[#3182F6] hover:shadow-sm active:scale-95"
                       }
                     `}
-                  >
-                    {alreadyExists ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                    {blockTypeLabels[type]}
-                  </button>
-                );
-              })}
-            </div>
+                >
+                  {alreadyExists ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5" />
+                  )}
+                  {blockTypeLabels[type]}
+                </button>
+              );
+            })}
           </div>
+        </div>
       </div>
     </div>
   );
@@ -310,12 +354,16 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
             <Sparkles className="w-5 h-5 text-amber-400" />
             연락처 보완
           </h3>
-          <p className="text-[13px] sm:text-[14px] text-gray-400 font-medium">소셜 링크를 추가해 신뢰도를 높여보세요.</p>
+          <p className="text-[13px] sm:text-[14px] text-gray-400 font-medium">
+            소셜 링크를 추가해 신뢰도를 높여보세요.
+          </p>
         </div>
         {contactBlock ? (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium">이메일</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                이메일
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -326,25 +374,37 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="linkedin" className="text-sm font-medium">LinkedIn URL</Label>
+              <Label htmlFor="linkedin" className="text-sm font-medium">
+                LinkedIn URL
+              </Label>
               <Input
                 id="linkedin"
                 type="url"
                 placeholder="https://linkedin.com/in/..."
                 className="rounded-xl border-black/5 bg-gray-50/30 focus:bg-white transition-all h-11"
-                defaultValue={(contactBlock.config?.linkedin_url as string) || ""}
-                onBlur={(e) => handleOptionalChange("linkedin_url", e.target.value)}
+                defaultValue={
+                  (contactBlock.config?.linkedin_url as string) || ""
+                }
+                onBlur={(e) =>
+                  handleOptionalChange("linkedin_url", e.target.value)
+                }
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="website" className="text-sm font-medium">개인 웹사이트</Label>
+              <Label htmlFor="website" className="text-sm font-medium">
+                개인 웹사이트
+              </Label>
               <Input
                 id="website"
                 type="url"
                 placeholder="https://..."
                 className="rounded-xl border-black/5 bg-gray-50/30 focus:bg-white transition-all h-11"
-                defaultValue={(contactBlock.config?.website_url as string) || ""}
-                onBlur={(e) => handleOptionalChange("website_url", e.target.value)}
+                defaultValue={
+                  (contactBlock.config?.website_url as string) || ""
+                }
+                onBlur={(e) =>
+                  handleOptionalChange("website_url", e.target.value)
+                }
               />
             </div>
           </div>
@@ -397,13 +457,9 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
         {/* Desktop: 2-column grid layout (Balanced width) */}
         <div className="hidden lg:grid lg:grid-cols-2 gap-10">
           {/* Left Panel: Block List */}
-          <div className="space-y-6">
-            {BlocksPanel}
-          </div>
+          <div className="space-y-6">{BlocksPanel}</div>
           {/* Right Panel */}
-          <div className="space-y-6">
-            {SettingsPanel}
-          </div>
+          <div className="space-y-6">{SettingsPanel}</div>
         </div>
 
         {/* Mobile: Tab-based layout */}
@@ -417,15 +473,17 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
         <div className="fixed inset-0 z-100 bg-white animate-in slide-in-from-bottom duration-300 flex flex-col">
           <div className="flex items-center justify-between px-6 h-16 border-b border-black/5 sticky top-0 bg-white/80 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsEditingProjects(false)}
                 className="p-2 hover:bg-gray-50 rounded-xl transition-colors"
               >
                 <X className="w-6 h-6 text-[#191F28]" />
               </button>
-              <h3 className="text-[18px] font-bold text-[#191F28]">대표 리포지토리 선택 ({tempSelectedIds.length})</h3>
+              <h3 className="text-[18px] font-bold text-[#191F28]">
+                대표 리포지토리 선택 ({tempSelectedIds.length})
+              </h3>
             </div>
-            <Button 
+            <Button
               className="bg-[#3182F6] hover:brightness-110 rounded-xl px-6 font-bold"
               onClick={saveProjectChanges}
               disabled={isSaving}
@@ -433,13 +491,13 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
               적용하기
             </Button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
             <div className="mb-8 space-y-4">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-                <Input 
-                  placeholder="리포지토리 검색..." 
+                <Input
+                  placeholder="리포지토리 검색..."
                   className="pl-12 h-14 bg-gray-50 border-none rounded-[20px] text-[16px] focus:ring-2 focus:ring-blue-100 transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -449,14 +507,16 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredProjects?.map((project) => (
-                <Card 
+                <Card
                   key={project.id}
                   onClick={() => toggleTempProject(project.id)}
                   className={`
                     relative p-6 cursor-pointer rounded-[28px] border transition-all duration-300
-                    ${tempSelectedIds.includes(project.id) 
-                      ? "border-[#3182F6] bg-blue-50/20 ring-1 ring-[#3182F6]/30" 
-                      : "border-black/5 bg-white hover:border-gray-200 hover:shadow-xl hover:shadow-black/5"}
+                    ${
+                      tempSelectedIds.includes(project.id)
+                        ? "border-[#3182F6] bg-blue-50/20 ring-1 ring-[#3182F6]/30"
+                        : "border-black/5 bg-white hover:border-gray-200 hover:shadow-xl hover:shadow-black/5"
+                    }
                   `}
                 >
                   <div className="absolute top-5 right-5 h-6 w-6 rounded-full border border-black/5 bg-gray-50 flex items-center justify-center transition-colors">
@@ -469,7 +529,9 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
 
                   <div className="space-y-4">
                     <div className="pr-10">
-                      <h4 className="font-extrabold text-[17px] text-[#191F28] line-clamp-1">{project.name}</h4>
+                      <h4 className="font-extrabold text-[17px] text-[#191F28] line-clamp-1">
+                        {project.name}
+                      </h4>
                       <p className="text-[14px] text-[#4E5968] line-clamp-2 mt-2 leading-relaxed min-h-[40px]">
                         {project.description || "설명이 없는 프로젝트입니다."}
                       </p>
@@ -494,27 +556,34 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
                     </div>
 
                     {tempSelectedIds.includes(project.id) && (
-                      <div 
+                      <div
                         className="pt-4 border-t border-black/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Label className="text-[11px] font-bold text-blue-500 uppercase tracking-wider flex items-center gap-2">
                           포트폴리오용 프로젝트 소개
-                          <span className="px-1.5 py-0.5 rounded-md bg-blue-50 text-[10px]">Markdown</span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-blue-50 text-[10px]">
+                            Markdown
+                          </span>
                         </Label>
-                        
-                        <MarkdownEditor 
-                          value={tempCustomDescriptions[project.id] || project.description || ""}
+
+                        <MarkdownEditor
+                          value={
+                            tempCustomDescriptions[project.id] ||
+                            project.description ||
+                            ""
+                          }
                           onChange={(val) => {
-                            setTempCustomDescriptions(prev => ({
+                            setTempCustomDescriptions((prev) => ({
                               ...prev,
-                              [project.id]: val
+                              [project.id]: val,
                             }));
                           }}
                         />
-                        
+
                         <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
-                          README 요약 대신 이 내용이 우선적으로 노출됩니다. 직접 작성하거나 기존 마크다운 파일을 불러올 수 있습니다.
+                          README 요약 대신 이 내용이 우선적으로 노출됩니다. 직접
+                          작성하거나 기존 마크다운 파일을 불러올 수 있습니다.
                         </p>
                       </div>
                     )}
@@ -523,7 +592,9 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
               ))}
               {filteredProjects?.length === 0 && (
                 <div className="col-span-full py-20 text-center">
-                  <p className="text-gray-400 font-bold text-lg">검색 결과가 없습니다.</p>
+                  <p className="text-gray-400 font-bold text-lg">
+                    검색 결과가 없습니다.
+                  </p>
                 </div>
               )}
             </div>
