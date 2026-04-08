@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = env.NEXT_PUBLIC_APP_URL || 'https://portfolioforge.app';
 
