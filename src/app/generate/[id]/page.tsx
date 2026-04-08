@@ -44,11 +44,9 @@ export default async function GeneratePage(props: {
         })),
         theme: portfolio.theme,
         isPublished: portfolio.is_published,
-        publishedUrl: portfolio.slug
-          ? `/${portfolio.slug}`
-          : null,
+        publishedUrl: portfolio.slug ? `/${portfolio.slug}` : null,
       };
-      return <AdjustStep portfolioId={id} initialData={initialData} />;
+      return <AdjustStep initialData={initialData} />;
     }
     case "analyze":
       return <AnalyzeStep portfolioId={id} syncJobId={sync_job_id} />;
