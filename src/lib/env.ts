@@ -18,8 +18,6 @@ const envSchema = z.object({
   SUPABASE_STORAGE_SECRET_KEY: z.string().min(1).optional(),
   SUPABASE_STORAGE_REGION: z.string().min(1).optional(),
   SUPABASE_STORAGE_BUCKET: z.string().min(1).optional(),
-  VERCEL_ACCESS_TOKEN: z.string().min(1).optional(),
-  VERCEL_PROJECT_ID: z.string().min(1).optional(),
 })
 
 // 최상단에서 바로 parse하지 않고 실제 호출 시점에 검증 (lazy validation)
