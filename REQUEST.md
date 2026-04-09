@@ -205,14 +205,15 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 
 ## 🗺️ 현재 단계 및 다음 작업 우선순위
 
-**현재**: Phase 2 Step 3 (완료) 🎉 → **Phase 2 Step 4 (QA/접근성) & Step 5 (분석) 진입 단계**
+**현재**: Phase 2 Step 2 (완료) 🎉 → **Phase 2 Step 3 (디자인 토큰 편집기) 진입 단계**
 
 ### ✅ Phase 1 & 2 주요 달성 사항 (최신화)
-- **GitHub Oauth & Webhook**: [완료] Push 시 캐시 무효화 및 자동 재배포 완성
-- **AI 분석 엔진**: [완료] `gpt-4o-mini` 기반 README 요약 및 `ai_score` 큐레이션
-- **디자인 토큰 커스텀**: [완료] 테마를 넘어 색상, 폰트, 여백, 라운드처리 세부 제어 엔진 구축
-- **서브도메인 라우팅**: [완료] `[slug].portfolioforge.app` 형태의 독립 페이지 지원
-- **멀티 테마 호환성**: [완료] 테마별 다이나믹 마크다운 스타일링 (prose-invert 최적화)
+- **GitHub Oauth & Webhook**: Push 시 캐시 무효화 및 자동 재배포 완성
+- **AI 분석 엔진**: `gpt-4o-mini` 기반 README 요약 및 `ai_score` 큐레이션
+- **고도화된 마크다운 에디터**: Write/Preview, 마크다운 파일 임포트, 미디어 업로드 기능
+- **Zero-Config 인프라**: Supabase 미설정 시에도 Base64 폴백으로 즉시 테스트 가능
+- **서브도메인 라우팅**: `[slug].portfolioforge.app` 형태의 독립 페이지 지원
+- **멀티 테마 호환성**: 테마별 다이나믹 마크다운 스타일링 (prose-invert 최적화)
 
 ---
 
@@ -224,9 +225,9 @@ Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, P
 | :---: | :--- | :--- | :--- |
 | **Step 1** | **외부 데이터 확장** | [완료] 블로그 RSS 피드 연동 (Tistory, Velog, Medium 지원) 및 `feed_items` DB 수집 파이프라인 | `api/integrations/rss/route.ts` |
 | **Step 2** | **에디터 고도화 1** | [완료] `dnd-kit` 기반 WYSIWYG 블록 에디터 도입 및 생성 타임아웃/상태 동기화 이슈 해결 | `generate/[id]/steps/adjust.tsx` |
-| **Step 3** | **에디터 고도화 2** | [완료] 디자인 토큰 편집기 구현 (색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
-| **Step 4** | **품질 보증 (QA)** | [완료] [x] 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
-| **Step 5** | **분석 대시보드** | [완료] [x] `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
+| **Step 3** | **에디터 고도화 2** | 디자인 토큰 편집기 구현 (테마 프리셋 선택을 넘어 색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
+| **Step 4** | **품질 보증 (QA)** | 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
+| **Step 5** | **분석 대시보드** | `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
 | **Step 6** | **인프라 고도화** | Vercel Domains API 연동으로 유저 대상 커스텀 도메인(Custom Domain) 발급 및 매핑 지원 | `api/domains/route.ts` |
 
 > 앞으로의 요청은 위 **Step 1 ~ Step 7**의 순서에 입각하여 하나씩 전개합니다.

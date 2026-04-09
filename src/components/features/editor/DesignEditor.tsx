@@ -12,9 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Palette, Type, Square, ArrowUpDown, Check, Sparkles, AlertTriangle } from "lucide-react";
-import { getContrastRatio } from "@/utils/accessibility";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Palette, Type, Square, ArrowUpDown, Check, Sparkles } from "lucide-react";
 
 const fontOptions = [
   { id: "inter", name: "Inter", desc: "현대적이고 기하학적인 산세리프" },
@@ -44,46 +42,10 @@ export default function DesignEditor() {
     setDesignTokens({ [key]: value });
   };
 
-  const currentTheme = THEMES[theme] || THEMES.minimal;
-  const primaryColor = designTokens?.primaryColor || currentTheme?.accent || "#3182F6";
-
-  // 대비도 체크 (배경색, 텍스트색, 보조 텍스트색 기준)
-  const contrastBg = getContrastRatio(primaryColor, currentTheme.bg);
-  const contrastText = getContrastRatio(primaryColor, currentTheme.text);
-  const contrastMuted = getContrastRatio(primaryColor, currentTheme.textMuted);
-
-  const hasA11yIssue = contrastBg < 4.5 || contrastText < 4.5 || contrastMuted < 4.5;
+  const primaryColor = designTokens?.primaryColor || THEMES[theme]?.accent || "#3182F6";
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-700">
-      {/* Accessibility Alert */}
-      {hasA11yIssue && (
-        <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-800 rounded-[28px] py-6 px-7 shadow-sm animate-in zoom-in-95 duration-500">
-          <div className="flex items-start gap-4">
-            <div className="p-2.5 bg-white rounded-2xl shadow-sm border border-amber-100 mt-0.5">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div className="space-y-2">
-              <AlertTitle className="text-[16px] font-extrabold tracking-tight">가독성이 낮을 수 있습니다</AlertTitle>
-              <AlertDescription className="text-[13px] font-medium leading-relaxed opacity-90">
-                현재 선택한 컬러는 테마 색상과 대비가 낮아 텍스트를 읽기 어려울 수 있습니다. 
-                <span className="block mt-1 sm:inline sm:ml-1 underline underline-offset-4 decoration-amber-300 font-bold">
-                  최소 4.5:1 이상의 대비도를 권장합니다.
-                </span>
-                <div className="flex gap-4 mt-3 pt-3 border-t border-amber-100/50">
-                  <div className="text-[11px] font-bold uppercase tracking-widest text-amber-500/80">Ratios:</div>
-                  <div className="flex gap-3 text-[12px] font-mono font-bold">
-                    <span className={contrastBg < 4.5 ? "text-red-500" : "text-emerald-600"}>BG: {contrastBg.toFixed(1)}</span>
-                    <span className={contrastText < 4.5 ? "text-red-500" : "text-emerald-600"}>Text: {contrastText.toFixed(1)}</span>
-                    <span className={contrastMuted < 4.5 ? "text-red-500" : "text-emerald-600"}>Muted: {contrastMuted.toFixed(1)}</span>
-                  </div>
-                </div>
-              </AlertDescription>
-            </div>
-          </div>
-        </Alert>
-      )}
-
       {/* 1. Theme Selection */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
