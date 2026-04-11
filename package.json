@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env.local -- next dev",
     "build": "next build",
     "start": "next start",
+    "prod": "dotenv -e .env -- npm run build && dotenv -e .env -- npm run start",
     "lint": "eslint",
     "webhook:dev": "npx smee-client -u https://smee.io/3WfzDziiaf5Gl3o -t http://localhost:3000/api/webhooks/github"
   },
@@ -71,6 +72,7 @@
     "@types/ws": "^8.18.1",
     "autoprefixer": "^10.4.27",
     "dotenv": "^17.3.1",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "postcss": "^8.5.6",
