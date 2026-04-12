@@ -66,33 +66,19 @@
 | **스마트 큐레이션**  | AI(GPT-4o-mini)가 README·package.json 분석 후 채용 담당자 선호도 기반 최적 프로젝트 선별·배열 |
 | **선택적 미세 조정** | 배포 후 원하는 경우에만 블록 ON/OFF·순서·테마를 조정. 조정 내용은 즉시 배포 페이지에 반영     |
 
-> 💡 **왜 에디터가 없어도 되는가?**  
-> GitHub bio → hero 소개 문구, README → 프로젝트 요약, package.json → 기술 스택,  
-> ai_score → 프로젝트 우선순위, GitHub 이메일 → 연락처가 모두 자동으로 결정됩니다.  
-> 에디터를 추가하면 "내가 직접 고쳐야 한다"는 인식이 생겨 오히려 마찰이 증가합니다.  
-> **AI가 결정하고, 사용자는 결과를 확인하거나 무시해도 됩니다.**
-
 ### 3.2 사용 가능 조건 (진입 요건)
 
-PortfolioForge는 **개발자 전용** 플랫폼입니다. 다음 두 가지를 충족해야 포트폴리오를 생성할 수 있습니다.
-
-| 조건           | 내용                                                                         | 미충족 시 처리                                 |
-| -------------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
-| GitHub 계정    | GitHub OAuth 로그인 필수                                                     | 로그인 페이지로 리다이렉트                     |
-| **GitHub bio** | GitHub 프로필 bio 등록 필수 (`github.com/{username}` 프로필 페이지에서 설정) | `/onboarding/bio` 안내 페이지 → 등록 후 재확인 |
-
-> 💡 **왜 bio를 필수로 하나?**  
-> AI가 hero 블록 subheadline과 포트폴리오 전반의 소개 문구를 bio 기반으로 생성합니다.  
-> bio가 없으면 빈 placeholder가 생성되어 포트폴리오 품질이 저하됩니다.  
-> 또한 GitHub bio를 작성하는 행위 자체가 해당 개발자가 "자신을 공개적으로 소개할 의사가 있다"는 신호이므로  
-> PortfolioForge의 타겟 사용자와 자연스럽게 일치합니다.
+| 조건           | 내용                        | 미충족 시 처리                                 |
+| -------------- | --------------------------- | ---------------------------------------------- |
+| GitHub 계정    | GitHub OAuth 로그인 필수    | 로그인 페이지로 리다이렉트                     |
+| **GitHub bio** | GitHub 프로필 bio 등록 필수 | `/onboarding/bio` 안내 페이지 → 등록 후 재확인 |
 
 ### 3.3 운영 모델
 
-| 항목 | 내용 |
-| --- | --- |
-| **가격 정책** | **완전 무료** — 누구나 제한 없이 포트폴리오를 생성하고 배포할 수 있습니다. |
-| **운영 목적** | 개발자 커뮤니티 기여 및 개인 프로젝트 쇼케이스 활성화 |
+| 항목            | 내용                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------ |
+| **가격 정책**   | **완전 무료** — 누구나 제한 없이 포트폴리오를 생성하고 배포할 수 있습니다.           |
+| **운영 목적**   | 개발자 커뮤니티 기여 및 개인 프로젝트 쇼케이스 활성화                                |
 | **크레딧 정책** | AI 생성 기능은 무제한 이용 가능 (안정적 운영을 위해 시간당 생성 횟수 제한 적용 예정) |
 
 ---
@@ -101,85 +87,30 @@ PortfolioForge는 **개발자 전용** 플랫폼입니다. 다음 두 가지를 
 
 ### 4.1 사용자 분류
 
-| **대상**      | 모든 개발자                     | 부트캠프 수료생·취준생 | 퍼스널 브랜딩 시니어 개발자 |
-| **연차**      | 제한 없음                       | 0~1년                  | 8년 이상                    |
-| **핵심 니즈** | 시간 절약 + 자동화             | 스토리텔링 차별화      | 전문성 + 방문자 분석        |
-| **진입 요건** | GitHub 계정 + bio 등록         | GitHub 계정 + bio 등록 | GitHub 계정 + bio 등록      |
-| **운용 전략** | 서비스 확산 및 피드백 수집      | 무료 바이럴 확산       | 전문적 기능 지원            |
-
----
+| **대상** | 모든 개발자 | 부트캠프 수료생·취준생 | 퍼스널 브랜딩 시니어 개발자 |
+| **연차** | 제한 없음 | 0~1년 | 8년 이상 |
+| **핵심 니즈** | 시간 절약 + 자동화 | 스토리텔링 차별화 | 전문성 + 방문자 분석 |
+| **진입 요건** | GitHub 계정 + bio 등록 | GitHub 계정 + bio 등록 | GitHub 계정 + bio 등록 |
 
 ### 4.2 상세 페르소나
 
-#### 👤 페르소나 A — "실력은 확실하지만 정리가 고통스러운" 이직 희망자
+#### 👤 페르소나 A — 이직 희망자 강민준 (31세, 4년차 백엔드)
 
-| 항목           | 내용                                                                                                                         |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **이름**       | 강민준 (31세)                                                                                                                |
-| **직무**       | 4년차 백엔드 엔지니어                                                                                                        |
-| **상황**       | 현재 재직 중. 더 큰 트래픽을 경험할 수 있는 기업으로 이직 준비 중. 퇴근 후 포트폴리오 정리를 시도하나 시간 부족이 최대 장벽. |
-| **GitHub bio** | "Backend Engineer. Java/Spring Boot/PostgreSQL. Interested in distributed systems."                                          |
+- GitHub bio: `"Backend Engineer. Java/Spring Boot/PostgreSQL. Interested in distributed systems."`
+- 핵심 니즈: 퇴근 후 정리 시간 없음 → **연결하면 바로 나오면 좋겠다**
+- 시나리오: GitHub 연동 → AI 자동 분석 → 즉시 배포 URL → 이력서 첨부 → (선택) 테마 변경
 
-**핵심 니즈**
+#### 👤 페르소나 B — 취준생 이지수 (26세, 부트캠프 수료)
 
-- "내가 참여한 수십 개 레포 중 핵심 기여도가 높은 프로젝트만 자동으로 골라내고 싶다."
-- "백엔드 개발자라 디자인 감각이 없어도 깔끔하고 전문적인 결과물이 나왔으면 좋겠다."
-- **"설정하고 수정할 시간이 없다. 연결하면 바로 나오면 좋겠다."**
+- GitHub bio: `"Frontend Developer. React/TypeScript. UX-focused. Open to work."`
+- 핵심 니즈: **일단 빠르게 하나 완성하고 싶다**
+- 시나리오: bio 기반 hero 자동 생성 → 3개 레포 요약 → 즉시 배포 → (선택) LinkedIn URL 추가
 
-**PortfolioForge 활용 시나리오**
+#### 👤 페르소나 C — 프리랜서 박성진 (38세, 12년차 풀스택)
 
-1. GitHub 계정 연동 → bio 자동 확인 ("Backend Engineer. Java/Spring Boot...")
-2. AI가 기여도·기술 스택 분석 → 상위 4개 프로젝트 자동 선택
-3. 분석 완료 즉시 포트폴리오 자동 생성 + 즉시 배포
-4. 완료 화면에서 URL 확인 → 이력서에 바로 첨부
-5. (선택) 이후 `미세 조정`에서 테마를 `Minimalist`로 변경
-
----
-
-#### 👤 페르소나 B — "스토리텔링이 간절한" 신입 개발자 지망생
-
-| 항목           | 내용                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------ |
-| **이름**       | 이지수 (26세)                                                                              |
-| **직무**       | 비전공자 출신 프론트엔드 취준생 (부트캠프 수료)                                            |
-| **상황**       | 프로젝트 3개 보유 중이나, 기능 나열 수준이라 채용 담당자에게 강한 인상을 주기 어려운 상황. |
-| **GitHub bio** | "Frontend Developer. React/TypeScript. UX-focused. Open to work."                          |
-
-**핵심 니즈**
-
-- "내 프로젝트의 핵심 로직과 고민한 흔적을 효과적으로 보여주고 싶다."
-- **"포트폴리오를 어디서 시작해야 할지 모르겠다 — 일단 빠르게 하나 완성하고 싶다."**
-
-**PortfolioForge 활용 시나리오**
-
-1. GitHub bio 기반으로 AI가 hero 블록 자동 작성: "UX에 진심인 프론트엔드 개발자"
-2. AI가 3개 레포 README 분석 → 프로젝트 요약 자동 생성
-3. skills 블록 Radar 차트로 기술 스택 숙련도 시각화
-4. 아무것도 하지 않아도 즉시 배포 완료 → URL 발급
-5. (선택) 나중에 LinkedIn URL을 미세 조정에서 추가
-
----
-
-#### 👤 페르소나 C — "퍼스널 브랜딩이 필요한" 프리랜서/시니어 엔지니어
-
-| 항목           | 내용                                                                                                                      |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **이름**       | 박성진 (38세)                                                                                                             |
-| **직무**       | 12년차 풀스택 프리랜서·기술 컨설턴트                                                                                      |
-| **상황**       | 여러 업체와 미팅 시 이력과 오픈소스 활동을 빠르게 공유해야 함. 기존 Notion 포트폴리오는 전문성이 떨어져 보여 교체를 원함. |
-| **GitHub bio** | "Fullstack Engineer & Consultant. 12yr exp. Node/React/AWS. Open-source contributor."                                     |
-
-**핵심 니즈**
-
-- "커스텀 도메인을 연결하고, 검색 엔진에 내 이름이 잘 노출되어야 한다."
-- "누가 내 포트폴리오를 보는지, 어떤 프로젝트에 관심을 갖는지 통계를 알고 싶다."
-
-**PortfolioForge 활용 시나리오**
-
-1. GitHub bio 기반으로 hero 블록 자동 생성 → 오픈소스 컨트리뷰션 그래프 포함
-2. 연동 후 즉시 배포 → 미팅 전날 URL 전달 가능
-3. 커스텀 도메인 연결 (Phase 2)
-4. 분석 대시보드로 기업 인사 담당자가 오래 머무는 섹션 확인 후 미세 조정
+- GitHub bio: `"Fullstack Engineer & Consultant. 12yr exp. Node/React/AWS. Open-source contributor."`
+- 핵심 니즈: 미팅 전 URL 즉시 전달, 방문자 통계 확인
+- 시나리오: 즉시 배포 → 미팅 전날 URL 전달 → 커스텀 도메인 연결 (Phase 2)
 
 ---
 
@@ -187,183 +118,145 @@ PortfolioForge는 **개발자 전용** 플랫폼입니다. 다음 두 가지를 
 
 ### 5.1 GitHub bio 기반 진입 검증
 
-GitHub bio는 PortfolioForge 사용의 **필수 조건**입니다.
-
-```typescript
-interface GitHubUserData {
-  login: string;
-  name: string;
-  bio: string | null; // null이면 /onboarding/bio 안내
-  email: string | null; // 있으면 contact 블록에 자동 삽입
-  avatar_url: string;
-  public_repos: number;
-  followers: number;
-}
-```
-
-**bio 미등록 처리 플로우**
-
-1. GitHub OAuth 완료 후 `GET /api/integrations/github/bio` 자동 호출
-2. bio가 `null`이면 `/onboarding/bio`로 리다이렉트
-3. 안내 페이지에서 GitHub 프로필 설정 페이지 링크 제공 (`https://github.com/settings/profile`)
-4. bio 작성 예시 제공: `"Backend Engineer. Java/Spring/PostgreSQL. Open to new opportunities."`
-5. "등록 완료했어요" 버튼 → bio 재확인 → 확인되면 `/dashboard`로 이동
-
-**재방문 사용자 처리 플로우**
-
-- bio 확인 완료 + 포트폴리오 있음 → `/dashboard` (기존 포트폴리오 목록 표시)
-- bio 확인 완료 + 포트폴리오 없음 → `/dashboard` (신규 생성 CTA 강조 표시)
-- bio 미확인 → `/onboarding/bio` (매번 안내)
-
-> ⚠️ **이탈률 대응**: 안내 페이지는 부정적인 오류 페이지가 아닌, "포트폴리오를 더 잘 만들기 위한 준비 단계"로 프레이밍
-
----
+- bio `null` → `/onboarding/bio` 리다이렉트
+- GitHub 설정 링크 제공 + bio 작성 예시 제공
+- "등록 완료했어요" 버튼 → bio 재확인 → 확인되면 `/dashboard`
 
 ### 5.2 데이터 자동 수집 모듈
 
-GitHub OAuth 토큰을 활용해 레포지토리, 기여도 그래프, 사용 언어를 수집합니다.  
-RSS 피드를 통해 블로그 포스팅, 알고리즘 플랫폼 연동도 지원합니다.
-
-```typescript
-interface DataSources {
-  github: {
-    user: GitHubUserData; // bio 포함 (항상 존재)
-    repositories: Repository[]; // 레포지토리 목록 (fork 제외)
-    contributions: ContributionGraph; // 기여도 히트맵
-    skills: string[]; // AI 추출 기술 스택
-  };
-  blog?: { posts: BlogPost[]; rssFeed: string };
-  algorithm?: { solvedProblems: number; platforms: string[] };
-}
-```
-
-> ⚠️ **Rate Limit 주의**: GitHub API는 OAuth 인증 시 시간당 5,000회 제한.  
-> Redis TTL 1시간 캐싱 + Webhook 증분 업데이트 필수.
-
----
+- GitHub OAuth 토큰으로 레포지토리, 기여도, 언어 분포 수집
+- RSS 피드로 블로그 포스팅 연동
+- Rate Limit 대응: Redis TTL 1h 캐싱 + Webhook 증분 업데이트
 
 ### 5.3 AI 기반 포트폴리오 즉시 자동 생성 및 배포
 
-GPT-4o-mini가 GitHub bio + README + package.json을 분석해 포트폴리오 블록 전체를 자동 구성하고,  
-사용자 확인 없이 **즉시 배포**까지 완료합니다.
+자동 생성 블록:
 
-> ✅ **왜 즉시 배포인가?**  
-> GitHub 데이터는 이미 구조화되어 있고 public하게 공개된 정보입니다.  
-> bio → 소개, README → 설명, package.json → 기술 스택, stars → 중요도가 자동으로 매핑됩니다.  
-> "검토 후 배포"라는 단계를 강제하면 "내가 직접 고쳐야 한다"는 부담이 생겨 완료율이 낮아집니다.  
-> AI가 합리적인 기본값을 결정하고, 배포 후 선택적으로 미세 조정하는 것이 최적 UX입니다.
+| 블록           | 생성 기반                          | 필수 여부 |
+| -------------- | ---------------------------------- | --------- |
+| `hero`         | GitHub bio + name + AI 요약        | 필수      |
+| `project_grid` | ai_score 상위 4개 레포 (fork 제외) | 필수      |
+| `skills`       | 언어 분포 + package.json 분석      | 필수      |
+| `contact`      | GitHub 이메일 + github_url         | 필수      |
+| `blog_feed`    | RSS 연동 시 자동 추가              | 선택      |
 
-**자동 생성 블록 목록**
+### 5.4 배포 후 선택적 미세 조정
 
-| 블록           | 생성 기반                                    | 필수 여부 |
-| -------------- | -------------------------------------------- | --------- |
-| `hero`         | GitHub bio + name + AI 요약                  | 필수      |
-| `project_grid` | ai_score 상위 4개 레포 자동 선택 (fork 제외) | 필수      |
-| `skills`       | 레포 언어 분포 + package.json 분석           | 필수      |
-| `contact`      | GitHub 프로필 이메일 + github_url            | 필수      |
-| `blog_feed`    | RSS 연동 시 자동 추가                        | 선택      |
+MVP에서 가능한 것: 블록 ON/OFF 토글, 블록 순서 조정, 테마 선택 6종, 선택적 정보 보완  
+Phase 2에서 가능: 블록 내부 직접 편집, 새 블록 추가·삭제, 디자인 토큰 세부 편집
 
-**AI 분석 항목**
-
-- **기술 스택 분석**: package.json·README 기반 기술 태깅 및 가중치 계산 (결과 DB 캐싱)
-- **프로젝트 요약**: README → 2~3문장 요약 생성 (결과 DB 캐싱, 동일 레포 재분석 시 API 호출 없음)
-- **hero 소개 문구**: bio 원문 → 채용 담당자 친화적 subheadline 자동 생성
-- **최적 배열**: ai_score 기반 프로젝트 순위 자동 결정
-
-**즉시 배포 플로우**
-
-```
-생성 완료 (portfolio_blocks 저장)
-    │
-    ▼
-auto_publish: true → is_published: true 자동 저장
-    │
-    ▼
-on-demand revalidation 자동 트리거
-    │
-    ▼
-{slug}.portfolioforge.app 즉시 접근 가능
-    │
-    ▼
-완료 화면: URL 발급 + "미세 조정하기" 버튼 (선택)
-```
-
-**크레딧 정책**
-
-- `ai_credits`는 **포트폴리오 자동 생성 1회 단위** 차감
-- Free Tier: 월 3회, 월초 자동 리셋 / Pro: 무제한
-- 레포 단위 개별 분석은 크레딧 미차감. 결과는 DB 캐싱하여 재사용
-- 배포 후 미세 조정은 크레딧 미차감
-
----
-
-### 5.4 배포 후 선택적 미세 조정 (`?step=adjust`)
-
-자동 생성 + 즉시 배포 이후, 원하는 경우에만 진입하는 **선택적 조정** 화면입니다.  
-"검토 필수" 단계가 아닌 "배포 후 개선" 화면으로 포지셔닝합니다.
-
-> ✅ **핵심 원칙**: 사용자는 이 단계를 건너뛰어도 됩니다.  
-> 모든 조정은 즉시 배포 페이지에 반영되며, 별도 "재배포" 버튼은 없습니다.
-
-**사용자가 할 수 있는 것 (MVP)**
-
-| 기능           | 설명                                                     |
-| -------------- | -------------------------------------------------------- |
-| 블록 ON/OFF    | 각 블록 옆 토글로 표시 여부 결정 → 변경 즉시 배포에 반영 |
-| 블록 순서 조정 | ↑↓ 버튼으로 블록 위치 이동 → 변경 즉시 배포에 반영       |
-| 테마 선택      | 6개 프리셋 중 하나 선택 → 변경 즉시 배포에 반영          |
-| 선택적 보완    | email, linkedin_url 등 미등록 정보를 인라인 카드로 입력  |
-
-**사용자가 할 수 없는 것 (MVP → Phase 2에서 가능)**
-
-- 블록 내부 콘텐츠 직접 편집
-- 새 블록 직접 추가·삭제
-- 블록 레이아웃 세부 설정 변경 (columns, chart_type 등)
-- 디자인 토큰 세부 편집 (색상·폰트·spacing)
-
-**선택적 보완 항목** (입력 시 포트폴리오 완성도 향상, 강제하지 않음)
-
-- 연락처 이메일 (GitHub public email이 없는 경우)
-- LinkedIn 프로필 URL
-- 개인 웹사이트 URL
-
----
-
-### 5.5 디자인 시스템 (테마 선택기)
-
-MVP에서는 테마 선택만 제공합니다. 상세 토큰 편집은 Phase 2에서 도입합니다.
+### 5.5 디자인 시스템
 
 | 레벨    | 명칭                | 기능                                                             | 적용 단계 |
 | ------- | ------------------- | ---------------------------------------------------------------- | --------- |
 | Level 1 | 테마 선택기         | 6개 프리셋 (Minimalist, Creative, Corporate, Dark, Pastel, Tech) | MVP       |
-| Level 2 | 디자인 토큰 편집기  | 색상 팔레트, 타이포그래피, Spacing 스케일, Border Radius         | Phase 2   |
+| Level 2 | 디자인 토큰 편집기  | 색상 팔레트, 타이포그래피, Spacing, Border Radius                | Phase 2   |
 | Level 3 | 고급 CSS 편집 (Pro) | CSS-in-JS 지원, 컴포넌트별 스타일 오버라이드                     | Phase 3   |
 
 ---
 
-### 5.6 접근성 및 SEO 자동화
-
-| 항목                          | 설명                                         | 적용 단계 |
-| ----------------------------- | -------------------------------------------- | --------- |
-| 메타 태그·OG 이미지 자동 생성 | GitHub bio + 프로젝트명 기반 자동 생성       | MVP       |
-| 사이트맵 자동 생성            | 배포된 포트폴리오 슬러그 기반                | MVP       |
-| Lighthouse 성능 90+ 목표      | CI/CD 파이프라인에서 자동 측정               | MVP       |
-| WCAG 2.1 색상 대비도 검증     | 테마 프리셋 자체가 기준 충족하도록 사전 설계 | MVP       |
-| 키보드 네비게이션 경고        | 사용자에게 런타임 접근성 경고 제공           | Phase 2   |
-
----
-
-### 5.7 배포 및 분석
-
-- **즉시 자동 배포**: 생성 완료 즉시 서브도메인 URL 발급 (MVP). 커스텀 도메인 (Pro·Phase 2)
-- **ISR 적용**: 생성 완료 시 on-demand revalidation으로 즉시 반영. GitHub Webhook 업데이트는 최대 60초 지연 (사용자에게 명시적 고지)
-- **조정 즉시 반영**: 미세 조정 화면에서 변경할 때마다 revalidation 자동 실행. "재배포" 버튼 없음
-- **경량 애널리틱스**: `page_view` / `block_click` / `contact_click` 이벤트 자체 수집
-- **분석 대시보드**: 일별 방문자, 블록 인게이지먼트, 전환율, 레퍼러 분석 _(Pro·Phase 2)_
-
----
-
 ## 6. 개발 로드맵
+
+### ⚙️ 개발 공통 원칙 (모든 Phase에 적용)
+
+> 아래 원칙은 Phase 1부터 Phase 3까지 **모든 개발 단계에서 예외 없이 적용**합니다.
+
+#### Next.js 16 문법 필수 준수
+
+Next.js 16에서 `params`, `searchParams`, `cookies()`, `headers()`가 모두 **비동기(Promise)** 로 변경되었습니다.  
+구버전 문법 사용 시 빌드가 실패하므로 반드시 아래 패턴을 사용합니다.
+
+```typescript
+// ✅ Page / Layout — params, searchParams 반드시 await
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ step?: string }>;
+}) {
+  const { slug } = await params;
+  const { step } = await searchParams;
+}
+
+// ✅ Route Handler — params 반드시 await
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+}
+
+// ✅ next/headers — 반드시 await
+import { cookies, headers } from "next/headers";
+const cookieStore = await cookies();
+const headersList = await headers();
+
+// ✅ 라우터 / 리다이렉트 / 404 — next/navigation에서만 import
+import { useRouter, redirect, notFound } from "next/navigation";
+```
+
+#### Task 완료 시 빌드·린트 검사 필수
+
+모든 Task 단위 구현이 완료될 때마다 아래 두 명령을 순서대로 실행합니다.  
+**두 명령 모두 성공한 후에만 커밋을 작성합니다.**
+
+```bash
+npm run lint   # ESLint: 문법 오류, 미사용 변수, Next.js 16 호환성 등 검출
+npm run build  # TypeScript 컴파일 + Next.js 전체 빌드 검사
+```
+
+| 에러 유형                    | 처리 방법                                            |
+| ---------------------------- | ---------------------------------------------------- |
+| ESLint warning               | 즉시 수정. `eslint-disable` 주석으로 억제 금지       |
+| ESLint error                 | 반드시 수정. `// eslint-disable-next-line` 사용 금지 |
+| TypeScript 타입 에러         | `any` 캐스팅 우회 금지. 올바른 타입으로 해결         |
+| Next.js 16 params await 누락 | 즉시 `await params` 패턴으로 수정                    |
+| 빌드 에러                    | 수정 완료 후 재빌드로 반드시 확인                    |
+
+#### Task 완료 시 Git 커밋 필수
+
+`npm run lint && npm run build` 성공 직후, **Task 단위마다** 커밋을 작성합니다.
+
+```bash
+# 커밋 순서
+npm run lint && npm run build  # 반드시 먼저 성공 확인
+git add .
+git commit -m "<type>(<scope>): <설명>"
+```
+
+**커밋 메시지 형식 (Conventional Commits)**
+
+```
+<type>(<scope>): <설명>
+```
+
+| type       | 사용 시점        | scope 예시                                   |
+| ---------- | ---------------- | -------------------------------------------- |
+| `feat`     | 새 기능          | `github`, `portfolio`, `block`, `ai`, `auth` |
+| `fix`      | 버그 수정        | `analytics`, `theme`, `db`, `api`, `ui`      |
+| `refactor` | 구조 개선        | `infra`, `auth`, `portfolio`                 |
+| `chore`    | 빌드·패키지·환경 | `infra`, `db`                                |
+| `docs`     | 문서·주석        | —                                            |
+| `perf`     | 성능 개선        | `ai`, `github`                               |
+
+```bash
+# 커밋 예시
+git commit -m "feat(github): GitHub bio 검증 API 및 미등록 차단 플로우 구현"
+git commit -m "fix(portfolio): 포트폴리오 생성 완료 후 revalidation 누락 수정"
+git commit -m "refactor(infra): Next.js 16 params await 패턴으로 전체 마이그레이션"
+git commit -m "chore(db): analytics_events 테이블 월별 파티셔닝 인덱스 추가"
+git commit -m "fix(infra): next/headers cookies() await 누락 빌드 에러 수정"
+```
+
+> ⚠️ **금지 사항**
+>
+> - lint / build 실패 상태로 커밋 — 절대 금지
+> - 여러 Task를 하나로 묶어서 커밋 — 금지. Task별로 분리
+> - `any` 타입 캐스팅으로 타입 에러 우회 — 금지
+> - `eslint-disable` 주석으로 경고 억제 — 금지
+
+---
 
 ### Phase 1 — MVP (6주): "GitHub 연동 후 즉시 포트폴리오 자동 생성·배포"
 
@@ -375,17 +268,17 @@ MVP에서는 테마 선택만 제공합니다. 상세 토큰 편집은 Phase 2�
 
 > ⚠️ **MVP 범위 제외**
 >
-> - WYSIWYG 에디터 (dnd-kit 블록 편집) → Phase 2로 이관
-> - 방문자 분석 대시보드 → Phase 2로 이관
-> - 커스텀 도메인 → Phase 2로 이관
-> - 디자인 토큰 세부 편집 → Phase 2로 이관
-> - 런타임 접근성 경고 → Phase 2로 이관
+> - WYSIWYG 에디터 (dnd-kit 블록 편집) → Phase 2
+> - 방문자 분석 대시보드 → Phase 2
+> - 커스텀 도메인 → Phase 2
+> - 디자인 토큰 세부 편집 → Phase 2
+> - 런타임 접근성 경고 → Phase 2
 
 ---
 
 ### Phase 2 — 에디터 도입 및 고도화 (4주)
 
-- WYSIWYG 에디터 (dnd-kit 기반 블록 편집, 자동 생성 이후 심화 편집)
+- WYSIWYG 에디터 (dnd-kit 기반 블록 편집)
 - 방문자 분석 대시보드 (블록 인게이지먼트, 레퍼러, 전환율)
 - 블로그 RSS 피드 연동 (Tistory, Velog, Medium, custom RSS)
 - 커스텀 도메인 연동 (Vercel Domains API)
@@ -421,21 +314,9 @@ MVP에서는 테마 선택만 제공합니다. 상세 토큰 편집은 Phase 2�
 
 ### 7.2 고유 가치 제안
 
-**에디터 없는 즉시 배포 (MVP 핵심 차별점)**
-
-- GitHub 데이터가 이미 풍부하게 구조화되어 있어 에디터가 필요 없음
-- bio + README + package.json → 5분 내 포트폴리오 완성 및 즉시 배포
-- 검토 강제 없이 배포 완료 → 완료율 극대화
-
-**Context-Aware 큐레이션**
-
-- 프로젝트를 단순 나열이 아닌 스토리로 연결
-- bio 기반 직군 맥락을 반영한 프로젝트 배열
-
-**지속적 업데이트 시스템**
-
-- GitHub Webhook 기반 자동 싱크
-- 새 레포 push 시 포트폴리오 자동 업데이트
+- **에디터 없는 즉시 배포**: bio + README + package.json → 5분 내 완성 및 즉시 배포
+- **Context-Aware 큐레이션**: bio 기반 직군 맥락 반영 프로젝트 배열
+- **지속적 업데이트**: GitHub Webhook 기반 자동 동기화
 
 ---
 
@@ -447,45 +328,26 @@ MVP에서는 테마 선택만 제공합니다. 상세 토큰 편집은 Phase 2�
 | ----------------- | ------------------------------------------------------------------------------------------------------ |
 | **기술적 깊이**   | GitHub OAuth + 외부 API 통합, AI 파이프라인 설계 (프롬프트 → 캐싱 → 비용 최적화), TypeScript 고급 활용 |
 | **문제 해결**     | GitHub API Rate Limit 핸들링, 비동기 Job 폴링 UX, ISR 캐시 전략, 즉시 배포 자동화                      |
-| **프로덕트 센스** | 에디터 제거로 마찰 최소화, 즉시 배포 기본값 설계, 배포 후 선택적 조정 UX, 개발자 타겟 WOW 모멘트 설계  |
+| **프로덕트 센스** | 에디터 제거로 마찰 최소화, 즉시 배포 기본값 설계, 배포 후 선택적 조정 UX                               |
 
-### 8.2 포트폴리오 효과적 소개법
-
-**1. 라이브 데모 링크 포함**
-
-- 직접 만든 자신의 포트폴리오: `portfolioforge.vercel.app`
-- 관리자 데모 계정 제공
-
-**2. 기술 블로그 시리즈**
-
-- "에디터 없는 포트폴리오 빌더: GitHub 데이터로 즉시 배포하는 AI 파이프라인"
-- "GitHub 데이터 캐싱 전략: Rate Limit 없이 90% 성능 향상"
-- "왜 에디터를 제거했나: 즉시 배포 UX가 완료율에 미치는 영향"
-
-**3. 데이터 기반 인사이트**
-
-- "즉시 배포 vs 검토 후 배포: 사용자 완료율 비교"
-- "bio 안내 페이지 이탈률 분석 + 개선 과정"
-
-### 8.3 GitHub 저장소 구성
+### 8.2 GitHub 저장소 구성
 
 ```
 portfolio-forge/
-├── README.md           # 프로젝트 개요, 실행 방법
-├── CHANGELOG.md        # 개발 기록
-├── PLANNING.md         # 기획서 (이 문서)
-├── GEMINI.md           # 기술 스택 및 아키텍처
-├── REQUEST.md          # 메뉴 구조·개발 플로우·워킹 플로우
+├── README.md
+├── CHANGELOG.md
+├── PLANNING.md       ← 이 문서
+├── GEMINI.md         ← 기술 스택 및 아키텍처
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── API.md
 │   └── DEPLOYMENT.md
 └── src/
-    ├── core/           # 핵심 로직
-    ├── generate/       # 자동 생성 + 즉시 배포 플로우 컴포넌트
-    ├── integrations/   # 외부 연동 (GitHub, RSS)
-    ├── preview/        # PortfolioPreview 공유 컴포넌트
-    └── utils/          # 유틸리티 함수
+    ├── core/
+    ├── generate/
+    ├── integrations/
+    ├── preview/
+    └── utils/
 ```
 
 ---
@@ -507,12 +369,11 @@ portfolio-forge/
 |                 | 자동 생성 + 배포 소요시간 | < 30초        | Job 완료 시간 측정          |
 |                 | 에러 발생률               | < 0.1%        | Sentry (무료 티어)          |
 
-> ✅ **핵심 지표 변경**: 기존 "자동 생성 완료율 > 80%"에서 **"즉시 배포율 > 90%"** 로 상향 조정.  
-> 생성과 배포가 분리되지 않으므로, 생성 완료 = 배포 완료가 기본값입니다.
-
 ### 9.2 비즈니스 메트릭 (3개월 목표)
 
+| 지표                   | 목표      | 전략                                        |
+| ---------------------- | --------- | ------------------------------------------- |
 | MAU (월간 활성 사용자) | 1,000명   | 개발자 커뮤니티(오픈카톡, Reddit, X) 바이럴 |
-| 무료 추천율           | 10%       | 포트폴리오 하단 "Made with PortfolioForge" 배너를 통한 유입 |
+| 무료 추천율            | 10%       | 포트폴리오 하단 "Made with PortfolioForge"  |
 | NPS (순추천지수)       | > 40      | 연동 후 즉시 배포 WOW 모멘트                |
 | 채용 성공 사례 수집    | 50건 이상 | 사용자 인터뷰 + 소셜 인증 배지 기능         |

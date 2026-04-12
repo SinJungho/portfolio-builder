@@ -67,6 +67,7 @@ Server Action       → app/(dashboard)/{페이지}/actions.ts
 서비스 레이어       → src/services/{도메인}.ts  (prisma 직접 호출 래핑)
 Zod 스키마          → src/schemas/{도메인}.ts
 공유 컴포넌트       → src/components/{컴포넌트명}.tsx
+보안 및 유틸리티    → src/lib/utils/security.ts (encrypt, decrypt, verifyGitHubWebhook)
 포트폴리오 미리보기 → src/components/PortfolioPreview.tsx (Output Layer와 반드시 공유)
 생성 플로우 스텝    → app/generate/[id]/steps/{step명}.tsx
 ```
@@ -165,7 +166,7 @@ if (!verifyGitHubWebhook(sig, body, process.env.GITHUB_WEBHOOK_SECRET)) {
 
 - [ ] `any` 타입이 없는가?
 - [ ] API 응답 타입이 Zod로 검증되는가?
-- [ ] 환경변수 접근이 `src/env.ts` 검증 스키마를 통하는가?
+- [ ] 환경변수 접근이 `src/lib/env.ts` 검증 스키마를 통하는가?
 
 ---
 
@@ -205,7 +206,7 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 
 ## 🗺️ 현재 단계 및 다음 작업 우선순위
 
-**현재**: Phase 2 Step 3 (완료) 🎉 → **Phase 2 Step 4 (QA/접근성) & Step 5 (분석) 진입 단계**
+**현재**: Phase 2 Step 5 (완료) 🎉 → **Phase 2 Step 6 (인프라 고도화) 진입 단계**
 
 ### ✅ Phase 1 & 2 주요 달성 사항 (최신화)
 - **GitHub Oauth & Webhook**: [완료] Push 시 캐시 무효화 및 자동 재배포 완성
@@ -227,7 +228,7 @@ Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, P
 | **Step 3** | **에디터 고도화 2** | [완료] 디자인 토큰 편집기 구현 (색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
 | **Step 4** | **품질 보증 (QA)** | [완료] [x] 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
 | **Step 5** | **분석 대시보드** | [완료] [x] `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
-| **Step 6** | **인프라 고도화** | Vercel Domains API 연동으로 유저 대상 커스텀 도메인(Custom Domain) 발급 및 매핑 지원 | `api/domains/route.ts` |
+| **Step 6** | **커스텀 도메인 및 인프라** | [완료] Hobby 와일드카드 지원 및 Next.js 16 proxy.ts 전환 | `api/domains/route.ts` |
 
 > 앞으로의 요청은 위 **Step 1 ~ Step 7**의 순서에 입각하여 하나씩 전개합니다.
 > 각 Step을 시작할 때는 반드시 기존과 동일하게 **Pre-flight 검증**을 먼저 거치고 구현을 시작합니다.

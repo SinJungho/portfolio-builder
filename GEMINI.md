@@ -24,7 +24,7 @@
 
 | 영역                 | 기술                         | 버전   | 선택 이유                                                   |
 | -------------------- | ---------------------------- | ------ | ----------------------------------------------------------- |
-| **Core**             | Next.js (App Router)         | 14+    | 프론트/백 단일 코드베이스, RSC·SSR·ISR 모두 활용            |
+| **Core**             | Next.js (App Router)         | **16** | 프론트/백 단일 코드베이스, RSC·SSR·ISR 모두 활용            |
 |                      | TypeScript                   | 5+     | 데이터 모델·API 응답 타입 안정성 확보                       |
 |                      | Node.js                      | 18+    | Runtime                                                     |
 | **UI**               | Tailwind CSS                 | 3+     | 유틸리티 퍼스트, 디자인 토큰 시스템과 자연스러운 통합       |
@@ -116,7 +116,7 @@ TypeScript 에코시스템 성숙도와 팀 협업 시 스키마 가독성을 �
 │              VERCEL EDGE NETWORK                    │
 │                                                     │
 │  ┌──────────────────────────────────────────────┐  │
-│  │          Next.js 14 (App Router)             │  │
+│  │          Next.js 16 (App Router)             │  │
 │  │                                              │  │
 │  │  Server Components  │  Route Handlers        │  │
 │  │  (RSC / ISR / SSR)  │  (REST API)            │  │
@@ -162,7 +162,7 @@ TypeScript 에코시스템 성숙도와 팀 협업 시 스키마 가독성을 �
 
 | 테이블             | 핵심 컬럼                                                    | 설명                                                                                  |
 | ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `users`            | `github_bio_verified`, `github_login`                        | NextAuth 연동. `github_bio_verified`로 bio 확인 상태 관리.                             |
+| `users`            | `github_bio_verified`, `github_login`                        | NextAuth 연동. `github_bio_verified`로 bio 확인 상태 관리.                            |
 | `raw_projects`     | `ai_score`, `ai_summary`                                     | GitHub 레포 원본 + AI 분석 결과. `UNIQUE(user_id, source, external_id)`               |
 | `portfolios`       | `slug`, `design_tokens`, `generation_mode`, `auto_published` | 사용자당 복수 생성. `auto_published`: 즉시 배포 여부 추적                             |
 | `portfolio_blocks` | `block_type`, `config`, `is_visible`                         | 자동 생성 블록. `is_visible`로 ON/OFF 토글 관리. `is_ai_generated`으로 생성 출처 추적 |
@@ -179,7 +179,6 @@ CREATE TABLE users (
   name                 VARCHAR(100),
   avatar_url           TEXT,
   github_login         VARCHAR(100) UNIQUE,
-  github_id            BIGINT UNIQUE,
   github_id            BIGINT UNIQUE,
   github_bio           TEXT,                        -- GitHub bio 캐싱 (필수 항목)
   github_bio_verified  BOOLEAN DEFAULT FALSE,       -- bio 확인 완료 여부
@@ -260,33 +259,6 @@ CREATE TABLE portfolio_blocks (
   updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
-/*
-  config 예시 — hero (bio 기반 자동 생성):
-  {
-    "headline": "김개발",
-    "subheadline": "Backend Engineer · TypeScript · Spring Boot",
-    "bio": "5년차 풀스택 개발자, TypeScript와 Next.js 전문",  ← GitHub bio 원본 (항상 존재)
-    "show_github_stats": true
-  }
-
-  config 예시 — project_grid:
-  {
-    "layout": "grid",
-    "columns": 2,
-    "project_ids": ["uuid1", "uuid2"],
-    "show_tech_stack": true
-  }
-
-  config 예시 — skills:
-  {
-    "chart_type": "radar",
-    "skills": [
-      { "name": "TypeScript", "level": 90 },
-      { "name": "Spring Boot", "level": 85 }
-    ]
-  }
-*/
-
 -- 6. 방문자 분석 이벤트 (경량 자체 애널리틱스)
 CREATE TABLE analytics_events (
   id           BIGSERIAL PRIMARY KEY,
@@ -334,8 +306,8 @@ export const BlockConfigSchema = z.discriminatedUnion("block_type", [
     block_type: z.literal("hero"),
     config: z.object({
       headline: z.string().max(100),
-      subheadline: z.string().max(200), // AI 생성. GitHub bio 기반이므로 항상 존재
-      bio: z.string().max(500), // GitHub bio 원문 (항상 존재 — bio 검증 통과 후 진입)
+      subheadline: z.string().max(200),
+      bio: z.string().max(500),
       show_github_stats: z.boolean().default(true),
     }),
   }),
@@ -379,7 +351,7 @@ export const BlockConfigSchema = z.discriminatedUnion("block_type", [
     block_type: z.literal("contact"),
     config: z.object({
       github_url: z.string().url(),
-      email: z.string().email().optional(), // GitHub public email에서 자동 추출 시도. 없으면 optional
+      email: z.string().email().optional(),
       linkedin_url: z.string().url().optional(),
       website_url: z.string().url().optional(),
     }),
@@ -401,8 +373,6 @@ export type BlockConfig = z.infer<typeof BlockConfigSchema>;
 ```
 GET /api/integrations/github/bio
 ```
-
-GitHub API에서 bio를 조회해 존재 여부를 반환합니다. 로그인 직후 Edge Middleware에서 자동 호출.
 
 | Response 200 | `{ bio: string, exists: true }`                                                            |
 | ------------ | ------------------------------------------------------------------------------------------ |
@@ -435,43 +405,25 @@ GET /api/integrations/github/sync/:job_id
 
 ### 5.3 포트폴리오 자동 생성 + 즉시 배포
 
-#### 포트폴리오 레코드 사전 생성
-
 ```
 POST /api/portfolios
 ```
 
-| 항목         | 내용                                                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Auth         | Required                                                                                                                 |
-| Request      | `{ slug?: string, theme?: string }` — slug 생략 시 `github_login` 기반 자동 생성                                         |
-| Response 201 | `{ portfolio_id: string, slug: string }` → 클라이언트가 `/generate/{portfolio_id}`로 이동                                |
-| Response 201 | `{ portfolio_id: string, slug: string }` → 클라이언트가 `/generate/{portfolio_id}`로 이동                                |
-
-**slug 자동 생성 규칙**
-
-- 기본값: `github_login` (예: `kimdev`)
-- 동일 slug 존재 시 숫자 suffix 자동 부여: `kimdev-2`, `kimdev-3`, ...
-- 사용자가 직접 지정할 경우: 영문 소문자·숫자·하이픈만 허용, 3~50자
-- slug는 전체 사용자 기준 전역 유일 (`portfolios` 테이블 전체에서 UNIQUE)
-
-// POST /api/portfolios 내부 검증 로직은 이제 슬러그 중복 여부만 체크합니다.
-
-#### AI 자동 생성 + 즉시 배포 실행
+| 항목         | 내용                                     |
+| ------------ | ---------------------------------------- |
+| Auth         | Required                                 |
+| Request      | `{ slug?: string, theme?: string }`      |
+| Response 201 | `{ portfolio_id: string, slug: string }` |
 
 ```
 POST /api/portfolios/generate
 ```
 
-포트폴리오 ID에 해당하는 레코드에 GitHub 데이터 + bio 기반으로 블록 전체를 AI가 자동 구성하고,  
-생성 완료 즉시 **is_published: true**로 자동 저장 후 on-demand revalidation을 트리거합니다.
-
-| 항목         | 내용                                                                    |
-| ------------ | ----------------------------------------------------------------------- |
-| Auth         | Required                                                                |
-| Request      | `{ portfolio_id: string, auto_publish?: boolean }` — 기본값: `true`     |
-| Response 202 | `{ job_id: string, estimated_seconds: number }` — 비동기 처리           |
-| Response 202 | `{ job_id: string, estimated_seconds: number }` — 비동기 처리           |
+| 항목         | 내용                                                                |
+| ------------ | ------------------------------------------------------------------- |
+| Auth         | Required                                                            |
+| Request      | `{ portfolio_id: string, auto_publish?: boolean }` — 기본값: `true` |
+| Response 202 | `{ job_id: string, estimated_seconds: number }`                     |
 
 ```
 GET /api/portfolios/generate/:job_id
@@ -482,31 +434,14 @@ GET /api/portfolios/generate/:job_id
 | Response 200 | `{ status, progress, blocks?, published_url?, missing_optional_fields?, error? }` |
 | ------------ | --------------------------------------------------------------------------------- |
 
-- `published_url`: 즉시 배포된 경우 `{slug}.portfolioforge.app` 포함
-- `missing_optional_fields`: 미등록 선택 정보 목록 (예: `['email', 'linkedin_url']`) — 배포 후 미세 조정 화면에서 안내용으로 활용
-
-> ✅ **즉시 배포 동작**: `auto_publish: true`(기본값)이면 `completed` 상태와 함께 `published_url`이 반환됩니다.  
-> 사용자는 별도 배포 버튼 없이 URL을 즉시 확인할 수 있습니다.
-
 ---
 
 ### 5.4 프로젝트 관리
 
 ```
-GET /api/projects
-```
-
-| Query           | 설명                             |
-| --------------- | -------------------------------- |
-| `page`, `limit` | 페이지네이션 (default: 20)       |
-| `sort`          | `ai_score \| pushed_at \| stars` |
-| `filter`        | `featured \| all`                |
-
-```
+GET  /api/projects
 POST /api/projects/:id/analyze
 ```
-
-특정 프로젝트에 대해 AI 요약 및 태깅 개별 실행. `ai_summary`가 이미 캐싱된 경우 DB에서 반환하며 크레딧 미차감.
 
 ---
 
@@ -521,124 +456,50 @@ POST /api/projects/:id/analyze
 
 ---
 
-### 5.6 블록 관리 (미세 조정 — 변경 즉시 배포 반영)
+### 5.6 블록 관리
 
-| Method  | Path                                  | 설명                                                    |
-| ------- | ------------------------------------- | ------------------------------------------------------- |
-| `GET`   | `/api/portfolios/:id/blocks`          | 블록 목록                                               |
-| `PATCH` | `/api/portfolios/:id/blocks/:blockId` | 블록 설정 수정 → **변경 즉시 revalidation 자동 트리거** |
-| `PUT`   | `/api/portfolios/:id/blocks`          | 전체 순서 교체 → **변경 즉시 revalidation 자동 트리거** |
-
-```typescript
-// PATCH /api/portfolios/:id/blocks/:blockId
-// 변경 즉시 배포 페이지에 반영됨. 별도 "재배포" 버튼 없음.
-Request: {
-  is_visible?: boolean;
-  position?: number;
-  config?: Partial<BlockConfig>;
-}
-
-// PUT /api/portfolios/:id/blocks
-Request: {
-  blocks: Array<{ id: string; position: number }>;
-}
-```
-
-> ℹ️ **MVP에서 블록 직접 추가(`POST`)·삭제(`DELETE`)는 없음**  
-> AI가 자동 생성한 블록의 표시 여부(`is_visible`)와 순서(`position`)만 조정 가능.  
-> 블록 추가·삭제는 Phase 2 WYSIWYG 에디터 도입 시 함께 구현.
-
-> 🔒 **`?step=adjust` 및 블록 API 소유권 검증**  
-> `/generate/[id]?step=adjust` 페이지 진입 시: 서버 컴포넌트에서 `portfolio.user_id === session.user.id` 검증. 불일치 시 404 처리.  
-> `PATCH /api/portfolios/:id/blocks/:blockId`, `PUT /api/portfolios/:id/blocks`, `PATCH /api/portfolios/:id` 호출 시: API Route Handler에서 동일 검증. 불일치 시 `403 { error: 'forbidden' }` 반환.
+| Method  | Path                                  | 설명                               |
+| ------- | ------------------------------------- | ---------------------------------- |
+| `GET`   | `/api/portfolios/:id/blocks`          | 블록 목록                          |
+| `PATCH` | `/api/portfolios/:id/blocks/:blockId` | 블록 설정 수정 → 즉시 revalidation |
+| `PUT`   | `/api/portfolios/:id/blocks`          | 전체 순서 교체 → 즉시 revalidation |
 
 ---
 
 ### 5.7 분석 API
 
 ```
-POST /api/analytics/event
+POST /api/analytics/event          ← Auth 불필요 (공개 엔드포인트)
+GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d
 ```
-
-포트폴리오 방문자 이벤트 수집. **Auth 불필요** (공개 엔드포인트).
-
-```typescript
-Request: {
-  portfolio_id: string;
-  event_type:   'page_view' | 'block_click' | 'contact_click';
-  block_id?:    string;
-  session_id:   string;
-}
-```
-
-```
-GET /api/analytics/:portfolioId/summary?period=30d
-```
-
-본인 포트폴리오만 조회 가능. `period`: `7d | 30d | 90d`
 
 ---
 
 ## 6. 에디터 없는 즉시 자동 생성·배포 플로우
 
-> MVP의 핵심 UX. GitHub 데이터 기반 자동 생성 → 즉시 배포의 4단계 선형 플로우.
-> 검토는 필수 단계가 아닌 배포 후 선택적 조정입니다.
-
 ### 6.1 전체 플로우
 
 ```
-[진입 — 대시보드에서 "새 포트폴리오 만들기" 클릭]
-  └─ POST /api/portfolios → portfolio_id 발급
-  └─ /generate/{portfolio_id} 로 이동
-
 [Phase 01 — GitHub 연동 확인]
-  └─ GitHub OAuth 완료 여부 확인
   └─ GET /api/integrations/github/bio
        ├─ bio 있음 → Phase 02 진행
        └─ bio 없음 → /onboarding/bio 리다이렉트
-  └─ 레포 수집 트리거: POST /api/integrations/github/sync
 
 [Phase 02 — AI 분석]
-  └─ GET /api/integrations/github/sync/:job_id 폴링 (3초 간격, 최대 120초)
-  └─ 레포별 README + package.json → GPT-4o-mini 분석 (ai_summary DB 캐싱)
-  └─ ai_score 계산 → 상위 4개 자동 선택
-  └─ 언어 분포 → skills 블록 데이터 생성
-  └─ GitHub bio → hero 블록 subheadline 삽입
+  └─ POST /api/integrations/github/sync → 폴링 (3초, 최대 120초)
+  └─ GPT-4o-mini: ai_summary 생성 + ai_score 계산
 
 [Phase 03 — 포트폴리오 자동 생성 + 즉시 배포]
-  └─ POST /api/portfolios/generate 호출 (ai_credits 1회 차감)
-  └─ GET /api/portfolios/generate/:job_id 폴링 (3초 간격, 최대 60초)
-  └─ 블록 자동 구성: hero → project_grid → skills → contact
-  └─ blog_feed: RSS 연동 여부에 따라 선택적 추가
-  └─ auto_publish: true → is_published: true 자동 저장
-  └─ on-demand revalidation 자동 트리거
+  └─ POST /api/portfolios/generate → 폴링 (3초, 최대 60초)
+  └─ auto_publish: true → is_published: true + revalidation
   └─ 완료 화면: {slug}.portfolioforge.app URL 발급
-               + "미세 조정하기" 버튼 (선택)
 
 [Phase 04 — 미세 조정: 선택 사항]
-  └─ 진입 조건: 완료 화면에서 "미세 조정하기" 클릭 or /dashboard의 "미세 조정" 버튼
-  └─ 크레딧 재차감 없음
-  └─ 블록 ON/OFF 토글 (변경 즉시 배포 반영)
-  └─ 블록 순서 조정 (변경 즉시 배포 반영)
-  └─ 테마 선택 6종 (변경 즉시 배포 반영)
-  └─ 선택적 보완: missing_optional_fields 인라인 카드 안내
-  └─ "재배포" 버튼 없음 — 모든 변경이 자동 반영됨
+  └─ 블록 ON/OFF·순서·테마 조정 → 즉시 배포 반영
+  └─ "재배포" 버튼 없음
 ```
 
-### 6.2 즉시 배포가 가능한 기술적 근거
-
-GitHub 데이터 품질 보장 조건:
-
-| 조건                 | 보장 방법                                                                   |
-| -------------------- | --------------------------------------------------------------------------- |
-| bio 품질             | bio 미등록 시 온보딩에서 차단. 진입 시 bio 항상 존재                        |
-| 프로젝트 품질        | fork 제외 + ai_score 기반 상위 4개 자동 선택                                |
-| 요약 품질            | readme_quality 점수로 사전 필터링. README 없는 레포는 OpenAI 호출 없이 스킵 |
-| 기술 스택 정확도     | package.json 파싱 + 언어 분포 집계 → 검증된 데이터                          |
-| 연락처 정보          | GitHub public email 자동 삽입 (없으면 github_url만)                         |
-| 레이아웃·디자인 품질 | 6개 프리셋 테마 중 기본값(`minimalist`) 자동 적용. 모두 WCAG 2.1 기준 충족  |
-
-**readme_quality 점수 산정 기준** (ai_score 계산 전 사전 산출, OpenAI 호출 불필요)
+### 6.2 readme_quality 점수 산정
 
 | 조건                                | 점수 |
 | ----------------------------------- | ---- |
@@ -649,191 +510,17 @@ GitHub 데이터 품질 보장 조건:
 | 300자 이상 + 코드블록(` ``` `) 포함 | +0.1 |
 | 최댓값 cap                          | 1.0  |
 
-> ℹ️ `readme_quality = 0.0`인 레포는 ai_summary 생성을 건너뛰고 빈 문자열로 저장합니다.  
-> 이로써 README 없는 레포에 대한 불필요한 OpenAI 호출을 원천 차단합니다.
+### 6.3 미리보기 렌더링 방식
 
-→ 위 조건이 모두 충족되므로, 생성 완료 = 즉시 배포가 안전합니다.
-
-### 6.3 GitHub bio 차단 및 재진입 플로우
-
-```
-로그인 완료
-    │
-    ▼
-GET /api/integrations/github/bio
-    │
-    ├─ bio 있음 → 포트폴리오 생성 플로우 진행
-    │
-    └─ bio 없음 → /onboarding/bio
-                      │
-                      ├─ GitHub 설정 링크 안내
-                      └─ "등록 완료했어요" 클릭
-                              └─ bio 재확인
-                                      ├─ 확인됨 → /dashboard
-                                      └─ 미확인 → 안내 유지
-```
-
-### 6.4 폴링 UX 처리 상세
-
-| 상태         | 화면 처리                                                     | 타임아웃     |
-| ------------ | ------------------------------------------------------------- | ------------ |
-| `pending`    | 스피너 + "분석 준비 중..."                                    | -            |
-| `processing` | 진행률 바 + 단계별 메시지 (예: "레포지토리 분석 중... 23/57") | 120초 (sync) |
-| `completed`  | 즉시 배포 완료 화면 — URL + "배포 URL 열기" + "미세 조정하기" | -            |
-| `failed`     | 에러 메시지 + 재시도 버튼                                     | -            |
-| 타임아웃     | "시간이 오래 걸리고 있어요" 안내 + 재시도 버튼                | 120초 / 60초 |
-
-### 6.5 미리보기 렌더링 방식
-
-iFrame 방식은 Next.js RSC와 충돌하므로 사용하지 않습니다.  
-JSON state → 클라이언트 컴포넌트 직접 렌더링 방식으로 구현합니다.
+iFrame 방식은 Next.js RSC와 충돌하므로 사용하지 않습니다.
 
 ```typescript
-// 상태 흐름
-portfolioStore (Zustand)
-  ├── blocks: Block[]          // 현재 블록 목록 + is_visible 상태
-  ├── theme: string            // 선택된 테마
-  ├── designTokens: object     // 색상·폰트 설정
-  ├── isPublished: boolean     // 배포 상태
-  └── publishedUrl: string     // 배포된 URL
-
-// 미세 조정 미리보기 컴포넌트
+// Output Layer(/[slug])와 동일한 컴포넌트 재사용
 <PortfolioPreview
   blocks={blocks.filter(b => b.is_visible)}
   theme={theme}
   designTokens={designTokens}
 />
-// ↑ Output Layer(/[slug])와 동일한 컴포넌트를 재사용 → 미리보기 = 실제 결과물 보장
-// ↑ 변경 즉시 on-demand revalidation → 배포 페이지에도 자동 반영
-```
-
-### 6.6 자동 생성 + 즉시 배포 로직
-
-```typescript
-// POST /api/portfolios/generate 내부 로직 (의사 코드)
-
-async function generatePortfolio(
-  portfolioId: string,
-  userId: string,
-  autoPublish = true,
-) {
-  const user = await prisma.users.findUnique({ where: { id: userId } });
-  // bio는 반드시 존재 (bio 검증 통과 후 진입 보장)
-
-  const projects = await prisma.raw_projects.findMany({
-    where: { user_id: userId, is_fork: false },
-    orderBy: { ai_score: "desc" },
-    take: 4,
-  });
-  const skills = extractSkillsFromProjects(projects);
-
-  const blocks: Block[] = [
-    {
-      block_type: "hero",
-      position: 0,
-      config: {
-        headline: user.name,
-        subheadline: await generateSubheadline(user.github_bio, skills), // GPT-4o-mini
-        bio: user.github_bio, // 항상 존재
-        show_github_stats: true,
-      },
-      is_visible: true,
-      is_ai_generated: true,
-    },
-    {
-      block_type: "project_grid",
-      position: 1,
-      config: {
-        layout: "grid",
-        columns: 2,
-        project_ids: projects.map((p) => p.id),
-        show_tech_stack: true,
-      },
-      is_visible: true,
-      is_ai_generated: true,
-    },
-    {
-      block_type: "skills",
-      position: 2,
-      config: {
-        chart_type: "radar",
-        skills,
-      },
-      is_visible: true,
-      is_ai_generated: true,
-    },
-    {
-      block_type: "contact",
-      position: 3,
-      config: {
-        github_url: `https://github.com/${user.github_login}`,
-        email: user.email ?? undefined,
-        linkedin_url: undefined,
-      },
-      is_visible: true,
-      is_ai_generated: true,
-    },
-  ];
-
-  // RSS 연동이 있으면 blog_feed 블록 추가
-  const blogIntegration = await prisma.integrations.findFirst({
-    where: {
-      user_id: userId,
-      provider: { in: ["tistory", "velog", "medium"] },
-      is_active: true,
-    },
-  });
-  if (blogIntegration) {
-    blocks.push({
-      block_type: "blog_feed",
-      position: 4,
-      config: {
-        integration_provider: blogIntegration.provider,
-        max_items: 3,
-        show_thumbnail: true,
-      },
-      is_visible: true,
-      is_ai_generated: true,
-    });
-  }
-
-  // 블록 저장
-  await prisma.portfolio_blocks.createMany({
-    data: blocks.map((b) => ({ ...b, portfolio_id: portfolioId })),
-  });
-
-  // ✅ 즉시 배포 (auto_publish 기본값: true)
-  if (autoPublish) {
-    await prisma.portfolios.update({
-      where: { id: portfolioId },
-      data: {
-        is_published: true,
-        auto_published: true,
-        published_at: new Date(),
-      },
-    });
-    // on-demand revalidation 트리거
-    await fetch("/api/revalidate", {
-      method: "POST",
-      body: JSON.stringify({ portfolioId }),
-    });
-  }
-
-  // missing_optional_fields 계산 (배포 후 미세 조정 안내용)
-  const missing: string[] = [];
-  if (!user.email) missing.push("email");
-  missing.push("linkedin_url", "website_url");
-
-  const portfolio = await prisma.portfolios.findUnique({
-    where: { id: portfolioId },
-  });
-
-  return {
-    blocks,
-    missing_optional_fields: missing,
-    published_url: autoPublish ? `${portfolio.slug}.portfolioforge.app` : null,
-  };
-}
 ```
 
 ---
@@ -842,151 +529,68 @@ async function generatePortfolio(
 
 ### 7.1 서비스 레이어 구조
 
-| 레이어       | 경로                         | 렌더링 전략          | 목적                                               |
-| ------------ | ---------------------------- | -------------------- | -------------------------------------------------- |
-| **Public**   | `/(marketing)`               | SSG + ISR            | 랜딩·프라이싱·SEO 최적화                           |
-| **Auth**     | `/(auth)`                    | SSR                  | GitHub OAuth 로그인                                |
-| **Onboard**  | `/onboarding`                | SSR                  | GitHub bio 차단 페이지 (bio 미등록 사용자)         |
-| **App**      | `/(dashboard)`               | SSR + Client         | 포트폴리오 관리 작업 공간                          |
-| **Generate** | `/generate/[id]`             | SSR + Client         | 4단계 자동 생성 + 즉시 배포 플로우 (전체화면)      |
-| **Adjust**   | `/generate/[id]?step=adjust` | SSR + Client         | 배포 후 선택적 미세 조정 (전체화면, 크레딧 미차감) |
-| **Output**   | `/[slug]`                    | ISR (60s revalidate) | 배포된 포트폴리오 공개 페이지                      |
+| 레이어       | 경로                         | 렌더링 전략          | 목적                               |
+| ------------ | ---------------------------- | -------------------- | ---------------------------------- |
+| **Public**   | `/(marketing)`               | SSG + ISR            | 랜딩·프라이싱·SEO 최적화           |
+| **Auth**     | `/(auth)`                    | SSR                  | GitHub OAuth 로그인                |
+| **Onboard**  | `/onboarding`                | SSR                  | GitHub bio 차단 페이지             |
+| **App**      | `/(dashboard)`               | SSR + Client         | 포트폴리오 관리 작업 공간          |
+| **Generate** | `/generate/[id]`             | SSR + Client         | 4단계 자동 생성 + 즉시 배포 플로우 |
+| **Adjust**   | `/generate/[id]?step=adjust` | SSR + Client         | 배포 후 선택적 미세 조정           |
+| **Output**   | `/[slug]`                    | ISR (60s revalidate) | 배포된 포트폴리오 공개 페이지      |
 
 ### 7.2 App Router 디렉토리 구조
 
 ```
 app/
-├── (marketing)/               # [Public] 비로그인 사용자 대상
-│   ├── layout.tsx
-│   ├── page.tsx               # 서비스 메인 랜딩 (/)
-│   └── pricing/
-│
-├── (auth)/                    # [Auth] 인증만 담당
-│   └── login/
-│
-├── onboarding/                # [Onboard] GitHub bio 차단 플로우
-│   └── bio/
-│       └── page.tsx
-│
-├── (dashboard)/               # [App] 로그인 유저 작업 공간
-│   ├── layout.tsx             # 사이드바 내비게이션 (대시보드 / 프로젝트 / 설정)
-│   ├── dashboard/             # 포트폴리오 목록 + 미세 조정 / 배포 URL 버튼
-│   ├── projects/              # GitHub 레포 관리 + AI 분석 현황
-│   ├── analytics/[id]/        # 개별 포트폴리오 상세 분석 (Pro)
+├── (marketing)/
+├── (auth)/
+├── onboarding/bio/
+├── (dashboard)/
+│   ├── dashboard/
+│   ├── projects/
+│   ├── analytics/[id]/
 │   └── settings/
-│       ├── page.tsx
-│       ├── integrations/
-│       └── billing/
-│
-├── generate/[id]/             # [Generate] 자동 생성 + 즉시 배포 플로우 (전체화면)
-│   ├── layout.tsx             # 생성 전용 레이아웃 (사이드바 없음)
-│   ├── page.tsx               # Phase 01~04 스텝 컨테이너
+├── generate/[id]/
+│   ├── layout.tsx
+│   ├── page.tsx
 │   └── steps/
-│       ├── connect.tsx        # Phase 01: GitHub 연동 확인 + bio 검증
-│       ├── analyze.tsx        # Phase 02: AI 분석 진행 상황 (폴링 UI)
-│       ├── generate.tsx       # Phase 03: 블록 자동 구성 + 즉시 배포 완료 화면
-│       └── adjust.tsx         # Phase 04 (선택): 미세 조정 + 실시간 미리보기
-│
-├── [slug]/                    # [Output] 배포된 포트폴리오 공개 페이지
-│   └── page.tsx               # ISR 렌더링
-│
+│       ├── connect.tsx
+│       ├── analyze.tsx
+│       ├── generate.tsx
+│       └── adjust.tsx
+├── [slug]/
+│   └── page.tsx
 └── api/
     ├── auth/[...nextauth]/
     ├── integrations/github/
-    │   ├── bio/
-    │   ├── sync/
-    │   └── sync/[job_id]/
     ├── portfolios/
-    │   ├── generate/
-    │   ├── generate/[job_id]/
-    │   ├── [id]/
-    │   │   └── blocks/        # PATCH·PUT 시 자동 revalidation
-    │   └── route.ts
     ├── projects/
     ├── analytics/
-    ├── revalidate/            # on-demand ISR (생성 완료 / 조정 변경 시 자동 호출)
+    ├── revalidate/
     └── webhooks/github/
 ```
-
-### 7.3 주요 페이지 명세
-
-| 페이지           | 경로                         | 핵심 기능                                                         | 비고            |
-| ---------------- | ---------------------------- | ----------------------------------------------------------------- | --------------- |
-| 메인 랜딩        | `/`                          | Hero CTA ("연동하면 바로 배포"), 기능 소개, 테마 쇼케이스         | SSG + SEO       |
-| bio 안내 페이지  | `/onboarding/bio`            | GitHub bio 미등록 안내, 설정 링크, 재확인 버튼                    | bio 없으면 진입 |
-| 대시보드         | `/dashboard`                 | 포트폴리오 카드, "새 포트폴리오 만들기", "미세 조정", "배포 URL"  | 앱 홈           |
-| 자동 생성 플로우 | `/generate/[id]`             | 4단계 플로우 (연동→분석→생성+즉시배포→완료). 전체화면             | MVP 핵심        |
-| 미세 조정        | `/generate/[id]?step=adjust` | 블록 ON/OFF·순서·테마 조정. 변경 즉시 배포 반영. 재배포 버튼 없음 | 선택 사항       |
-| 데이터 관리      | `/projects`                  | GitHub 레포 동기화 리스트, AI 분석 현황                           |                 |
-| 통합 설정        | `/settings`                  | 프로필/계정, GitHub·RSS 연동                                    |                 |
-| 분석 대시보드    | `/analytics/[id]`            | 일별 방문자, 블록 클릭률, 레퍼러, 전환율                          | Pro 전용        |
-| 포트폴리오 출력  | `/[slug]`                    | ISR 렌더링, OG 이미지 자동 생성, 이벤트 수집                      | 60s revalidate  |
-
-### 7.4 UI 일관성 원칙
-
-- **컴포넌트 재사용**: Output Layer(`/[slug]`)와 미세 조정 미리보기(`?step=adjust`)는 동일 `<PortfolioPreview>` 컴포넌트 공유
-- **즉시 반영 원칙**: 미세 조정에서 변경 → 즉시 revalidation → 배포 페이지 자동 반영. "재배포" 버튼 없음
-- **반응형 전략**: 관리 페이지 모바일 전환 시 사이드바 → 하단 탭 메뉴 (shadcn/ui `Sheet` 활용)
-- **생성 플로우 격리**: `/generate/[id]`는 별도 layout.tsx. 대시보드 사이드바 없음
 
 ---
 
 ## 8. 기술 리스크 및 대응 전략
 
-### 🔴 Critical — MVP 전 반드시 해결
+### 🔴 Critical
 
-#### ① GitHub bio 미등록 사용자 이탈
+| 리스크                   | 대응                                                                   |
+| ------------------------ | ---------------------------------------------------------------------- |
+| GitHub bio 미등록 사용자 | 차단 페이지를 "준비 단계"로 프레이밍 + GitHub 설정 링크 + 재확인 버튼  |
+| 즉시 배포 결과물 품질    | bio 필수화 + ai_score 큐레이션 + WCAG 기준 테마 + "미세 조정하기" 버튼 |
+| GitHub API Rate Limit    | 사용자 토큰 요청 + Redis TTL 1h 캐싱 + Webhook 증분 업데이트           |
+| AI 비용 폭증             | Free Tier 월 3회 제한 + ai_summary DB 캐싱                             |
 
-| 항목       | 내용                                                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **리스크** | 개발자 중에도 GitHub bio를 등록하지 않은 사용자가 상당수 존재. 차단 페이지에서 이탈률 발생 가능                        |
-| **대응**   | 차단 페이지를 "포트폴리오를 더 잘 만들기 위한 준비 단계"로 프레이밍. GitHub 설정 직접 링크 + 작성 가이드 + 재확인 버튼 |
+### 🟡 Important
 
-#### ② 즉시 배포 결과물 품질 보증
-
-| 항목       | 내용                                                                                                                                                                                        |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **리스크** | 사용자 검토 없이 즉시 배포되므로 AI가 생성한 결과물이 기대에 미치지 못하면 신뢰도 하락 가능                                                                                                 |
-| **대응**   | bio 필수화로 hero 품질 보장. fork 제외 + ai_score로 프로젝트 품질 보장. 6개 WCAG 기준 테마 프리셋으로 디자인 품질 보장. 생성 완료 화면에서 URL과 함께 "미세 조정하기" 버튼을 눈에 띄게 배치 |
-
-#### ③ GitHub API Rate Limit
-
-| 항목       | 내용                                                                                                                               |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **리스크** | OAuth 인증 시 시간당 5,000회 제한. 레포 100개 + 커밋 이력 수집 시 단일 사용자가 수십 회 소진. 온보딩 집중 시 서비스 전체 중단 가능 |
-| **대응**   | 사용자 GitHub 토큰으로 요청 → Upstash Redis TTL 1시간 캐싱 → Webhook `push` 이벤트 시만 증분 업데이트                              |
-
-#### ④ AI 비용 폭증
-
-| 항목       | 내용                                                                                                                                |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **리스크** | GPT-4o-mini 레포 20개 요약 시 요청당 $0.02~0.05. Free Tier 사용자 1,000명 전수 실행 시 월 $20~50 발생. 무제한 허용 시 손익분기 붕괴 |
-| **대응**   | Free Tier 포트폴리오 자동 생성 월 3회 제한 (`ai_credits`). `ai_summary` DB 캐싱 → 동일 레포 재분석 시 OpenAI 호출 없이 반환         |
-
----
-
-### 🟡 Important — MVP 이후 반드시 고려
-
-#### ⑤ 미리보기 실제 결과물 불일치
-
-| 항목       | 내용                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------ |
-| **리스크** | 미세 조정 미리보기와 실제 배포된 포트폴리오 디자인이 다르면 신뢰도 하락                          |
-| **대응**   | `<PortfolioPreview>` 컴포넌트를 미리보기와 Output Layer가 공유. 조정 변경 즉시 revalidation 보장 |
-
-#### ⑥ 커스텀 도메인 복잡도
-
-| 항목       | 내용                                                                                                                       |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **리스크** | Vercel Domains API로 수백 개 도메인을 동적 관리하려면 별도 서비스 레이어 필요. DNS 전파 지연·SSL 발급 시간 등 UX 문제 복합 |
-| **대응**   | MVP는 서브도메인(`slug.portfolioforge.app`) 방식으로 출시. 커스텀 도메인은 Phase 2 Pro 기능으로 구현                       |
-
-#### ⑦ ISR 캐시 무효화 타이밍
-
-| 항목       | 내용                                                                                                                                            |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **리스크** | GitHub Webhook 업데이트는 최대 60초 지연. "즉시 배포" 마케팅 카피와 충돌 가능                                                                   |
-| **대응**   | 생성 완료 및 미세 조정 변경은 on-demand revalidation으로 즉시 반영. GitHub Webhook에 의한 자동 업데이트만 "최대 60초 이내 반영"으로 명시적 고지 |
+| 리스크                      | 대응                                                                  |
+| --------------------------- | --------------------------------------------------------------------- |
+| 미리보기 실제 결과물 불일치 | `<PortfolioPreview>` 컴포넌트 공유 + 조정 즉시 revalidation           |
+| 커스텀 도메인 복잡도        | MVP는 서브도메인 방식. 커스텀 도메인은 Phase 2                        |
+| ISR 캐시 무효화 타이밍      | 생성·조정은 on-demand revalidation. Webhook 업데이트만 60초 지연 고지 |
 
 ---
 
@@ -1004,3 +608,204 @@ app/
 | **합계** |                    | **$30 ~ $84/월** |                             |
 
 > 💡 **손익분기**: Pro ($8/월) 사용자 **11명** 전환 시 인프라 비용 전액 커버
+
+---
+
+## 10. 개발 원칙 및 커밋 규칙
+
+### 10.1 Next.js 16 필수 문법 규칙
+
+> ⚠️ Next.js 16부터 `params`, `searchParams`, `cookies()`, `headers()`가 모두 **비동기(Promise)** 로 변경되었습니다.  
+> 구버전 문법을 사용하면 빌드가 실패하므로, 아래 패턴을 반드시 준수합니다.
+
+#### Page / Layout — params와 searchParams를 반드시 await
+
+```typescript
+// ✅ Next.js 16 올바른 문법
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ step?: string }>;
+}) {
+  const { slug } = await params;
+  const { step } = await searchParams;
+}
+
+// ❌ 구버전 문법 — 빌드 에러 발생
+export default async function Page({ params }: { params: { slug: string } }) {
+  const { slug } = params; // 금지
+}
+```
+
+#### Route Handler — params를 반드시 await
+
+```typescript
+// ✅ Next.js 16
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+}
+
+// ❌ 구버전 문법
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
+  const { id } = params; // 금지
+}
+```
+
+#### next/headers — 반드시 await
+
+```typescript
+// ✅ Next.js 16
+import { cookies, headers } from "next/headers";
+
+const cookieStore = await cookies();
+const headersList = await headers();
+
+// ❌ 구버전 문법
+const cookieStore = cookies(); // 금지
+```
+
+#### generateMetadata — params를 반드시 await
+
+```typescript
+// ✅ Next.js 16
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return { title: slug };
+}
+```
+
+#### 기타 필수 준수 사항
+
+| 항목           | 올바른 방법                                   | 금지          |
+| -------------- | --------------------------------------------- | ------------- |
+| 라우터 훅      | `import { useRouter } from "next/navigation"` | `next/router` |
+| 리다이렉트     | `import { redirect } from "next/navigation"`  | 직접 구현     |
+| 404 처리       | `import { notFound } from "next/navigation"`  | 직접 구현     |
+| Image 컴포넌트 | `sizes` prop 반드시 지정                      | sizes 생략    |
+| Server Actions | 파일 최상단 또는 함수 내 `"use server"` 명시  | 생략          |
+| Font           | `display: 'swap'` 명시                        | 생략          |
+
+---
+
+### 10.2 빌드 및 린트 검사 규칙
+
+> ✅ **Task 단위 구현이 완료될 때마다 반드시 아래 순서로 실행하고, 두 명령 모두 성공한 후에만 커밋합니다.**
+
+```bash
+# 1단계: ESLint 정적 분석
+# 문법 오류, 미사용 변수, import 순서, Next.js 16 호환성 경고 등 검출
+npm run lint
+
+# 2단계: TypeScript 컴파일 + Next.js 전체 빌드 검사
+# lint보다 엄격하게 타입 불일치, params await 누락, 빌드 오류 등 검출
+npm run build
+
+# 두 명령을 한 번에 실행 (권장)
+npm run lint && npm run build
+```
+
+#### 에러 유형별 처리 규칙
+
+| 에러 유형                    | 처리 방법                                            |
+| ---------------------------- | ---------------------------------------------------- |
+| ESLint warning               | 즉시 수정. `eslint-disable` 주석으로 억제 금지       |
+| ESLint error                 | 반드시 수정. `// eslint-disable-next-line` 사용 금지 |
+| TypeScript 타입 에러         | `any` 캐스팅으로 우회 금지. 올바른 타입으로 해결     |
+| Next.js 16 params await 누락 | 즉시 `await params` 패턴으로 수정                    |
+| 빌드 에러                    | 에러 전문을 확인하고 수정 완료 후 재빌드 확인        |
+
+> ⚠️ `npm run lint` 또는 `npm run build` 가 실패한 상태로 커밋하는 것은 **절대 금지**합니다.
+
+---
+
+### 10.3 Git 커밋 규칙
+
+#### 커밋 타이밍 — Task 완료 시마다 즉시 커밋
+
+| 완료 시점                          | 커밋 여부               |
+| ---------------------------------- | ----------------------- |
+| API 엔드포인트 1개 구현 완료       | ✅ 커밋                 |
+| 컴포넌트 1개 구현 완료             | ✅ 커밋                 |
+| DB 스키마 / 마이그레이션 변경 완료 | ✅ 커밋                 |
+| 버그 수정 완료                     | ✅ 커밋                 |
+| lint / build 에러 수정 중 (미완료) | ❌ 커밋 안 함           |
+| 여러 Task를 하나로 묶어서 커밋     | ❌ 금지 — Task별로 분리 |
+
+#### 커밋 메시지 형식 (Conventional Commits)
+
+```
+<type>(<scope>): <설명>
+
+[본문 — 선택. 변경 이유나 주요 내용 기술]
+[푸터 — 선택. 관련 이슈 번호]
+```
+
+#### type 목록
+
+| type       | 사용 시점                                  |
+| ---------- | ------------------------------------------ |
+| `feat`     | 새 기능 추가                               |
+| `fix`      | 버그 수정                                  |
+| `refactor` | 동작 변화 없는 코드 구조 개선              |
+| `chore`    | 빌드 설정, 패키지, 환경변수 등 비코드 변경 |
+| `docs`     | 주석, README, 문서 변경                    |
+| `style`    | 포맷팅, 세미콜론 등 로직 무관 변경         |
+| `test`     | 테스트 추가 또는 수정                      |
+| `perf`     | 성능 개선                                  |
+
+#### scope 목록 (PortfolioForge 전용)
+
+| scope       | 해당 영역                     |
+| ----------- | ----------------------------- |
+| `github`    | GitHub 연동, 동기화, bio 검증 |
+| `portfolio` | 포트폴리오 생성, 배포, CRUD   |
+| `block`     | 포트폴리오 블록 관리          |
+| `ai`        | OpenAI 분석, 요약, 스코어     |
+| `auth`      | NextAuth, 세션, 인증          |
+| `analytics` | 방문자 이벤트, 통계           |
+| `theme`     | 디자인 토큰, 테마             |
+| `db`        | Prisma 스키마, 마이그레이션   |
+| `api`       | Route Handler 공통            |
+| `ui`        | 공유 컴포넌트, 레이아웃       |
+| `infra`     | 배포, 환경변수, Next.js 설정  |
+
+#### 커밋 예시
+
+```bash
+# 새 기능
+git commit -m "feat(github): GitHub bio 검증 API 및 미등록 차단 플로우 구현"
+
+# 버그 수정
+git commit -m "fix(portfolio): 포트폴리오 생성 완료 후 revalidation 누락 수정"
+
+# Next.js 16 마이그레이션
+git commit -m "refactor(infra): Next.js 16 params await 패턴으로 전체 마이그레이션"
+
+# DB 변경
+git commit -m "chore(db): analytics_events 테이블 월별 파티셔닝 인덱스 추가"
+
+# 빌드 에러 수정
+git commit -m "fix(infra): next/headers cookies() await 누락으로 인한 빌드 에러 수정"
+```
+
+#### 커밋 전 필수 체크리스트
+
+```bash
+npm run lint   # ✅ 에러 0개 확인
+npm run build  # ✅ 빌드 성공 확인
+
+git add .
+git commit -m "<type>(<scope>): <설명>"
+```
