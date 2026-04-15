@@ -25,7 +25,8 @@ import {
   GitFork,
   Clock,
   X,
-  Plus
+  Plus,
+  Globe
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -100,6 +101,8 @@ type MobileTab = "blocks" | "settings";
 
 export default function AdjustStep({ portfolioId, initialData }: { portfolioId: string; initialData?: {
   portfolioId: string;
+  slug: string | null;
+  customDomain: string | null;
   blocks: Array<{
     id: string;
     block_type: string;
@@ -337,8 +340,93 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
       <div className="bg-white border border-black/3 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
         <DesignEditor />
       </div>
+      {/* Domain Settings */}
+      <div className="bg-white border border-black/3 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
+        <div className="space-y-1">
+          <h3 className="text-[18px] sm:text-[20px] font-extrabold text-[#191F28] flex items-center gap-2">
+            <Settings className="w-5 h-5 text-blue-500" />
+            도메인 설정
+          </h3>
+          <p className="text-[13px] sm:text-[14px] text-gray-400 font-medium">사용자님이 소유한 도메인을 연결하거나 주소를 확인하세요.</p>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">기본 제공 주소</Label>
+            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-black/5 rounded-xl text-[14px] font-medium text-[#4E5968]">
+              <Globe className="w-4 h-4 text-gray-400" />
+              <span>{initialData?.slug}.portfolioforge.app</span>
+              <div className="ml-auto px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md">기본</div>
+            </div>
+          </div>
 
-      {/* Optional Fields */}
+          <div className="space-y-1.5">
+            <Label htmlFor="custom-domain" className="text-sm font-medium">커스텀 도메인 (Optional)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="custom-domain"
+                placeholder="www.yourdomain.com"
+                className="rounded-xl border-black/5 bg-gray-50/30 focus:bg-white transition-all h-11"
+                defaultValue={usePortfolioStore.getState().customDomain || ""}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = e.currentTarget.value;
+                    usePortfolioStore.getState().setCustomDomain(val || null)
+                      .then(() => toast.success("도메인이 업데이트되었습니다."))
+                      .catch((err) => toast.error(err.message));
+                  }
+                }}
+              />
+              <Button 
+                variant="outline" 
+                className="rounded-xl px-4 h-11 font-bold border-black/5"
+                onClick={() => {
+                   const input = document.getElementById('custom-domain') as HTMLInputElement;
+                   usePortfolioStore.getState().setCustomDomain(input.value || null)
+                     .then(() => toast.success("도메인이 업데이트되었습니다."))
+                     .catch((err) => toast.error(err.message));
+                }}
+              >
+                연결
+              </Button>
+            </div>
+            <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
+              * Hobby 플랜에서도 Vercel 네임서버 설정 시 사용 가능합니다.
+            </p>
+          </div>
+
+          {usePortfolioStore.getState().customDomain && (
+             <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-blue-800">연결 상태 확인</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 text-blue-600 font-bold hover:bg-blue-100/50"
+                    onClick={async () => {
+                      const domain = usePortfolioStore.getState().customDomain;
+                      if (!domain) return;
+                      const res = await fetch(`/api/domains/${domain}`);
+                      const data = await res.json();
+                      if (data.configured) {
+                        toast.success("도메인 설정이 올바릅니다!");
+                      } else {
+                        toast.error("DNS 설정이 아직 완료되지 않았습니다.");
+                      }
+                    }}
+                  >
+                    새로고침
+                  </Button>
+                </div>
+                <div className="text-[12px] text-blue-600 font-medium leading-relaxed">
+                  도메인의 Nameservers를 Vercel 가이드에 맞춰 설정해 주세요.
+                </div>
+             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Optional Fields (Contact info) */}
       <div className="bg-white border border-black/3 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
         <div className="space-y-1">
           <h3 className="text-[18px] sm:text-[20px] font-extrabold text-[#191F28] flex items-center gap-2">

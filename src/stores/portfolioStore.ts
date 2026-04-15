@@ -18,6 +18,8 @@ export type PortfolioStore = {
   isPublished: boolean;
   publishedUrl: string | null;
   designTokens: any;
+  customDomain: string | null;
+  slug: string | null;
   isSaving: boolean; // API 호출 중 여부
 
   // 초기화
@@ -28,6 +30,8 @@ export type PortfolioStore = {
     isPublished: boolean;
     publishedUrl: string | null;
     designTokens?: any;
+    customDomain?: string | null;
+    slug?: string | null;
   }) => void;
 
   setDesignTokens: (tokens: any) => Promise<void>;
@@ -46,6 +50,7 @@ export type PortfolioStore = {
     config: Record<string, unknown>,
   ) => Promise<void>;
   addBlock: (block_type: string) => Promise<void>;
+  setCustomDomain: (domain: string | null) => Promise<void>;
 };
 
 export const usePortfolioStore = create<PortfolioStore>()(
@@ -56,6 +61,8 @@ export const usePortfolioStore = create<PortfolioStore>()(
     isPublished: false,
     publishedUrl: null,
     designTokens: {},
+    customDomain: null,
+    slug: null,
     isSaving: false,
 
     initialize: (data) => {
@@ -66,6 +73,8 @@ export const usePortfolioStore = create<PortfolioStore>()(
         state.isPublished = data.isPublished;
         state.publishedUrl = data.publishedUrl;
         state.designTokens = data.designTokens || {};
+        state.customDomain = data.customDomain || null;
+        state.slug = data.slug || null;
       });
     },
 
@@ -324,6 +333,36 @@ export const usePortfolioStore = create<PortfolioStore>()(
         });
       } catch (e) {
         console.error("Failed to add block", e);
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
+    },
+    setCustomDomain: async (domain: string | null) => {
+      const { portfolioId, customDomain: prevDomain } = get();
+      if (!portfolioId) return;
+
+      // 낙관적 업데이트
+      set((state) => {
+        state.customDomain = domain;
+        state.isSaving = true;
+      });
+
+      try {
+        const method = domain ? "POST" : "DELETE";
+        const res = await fetch("/api/domains", {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ portfolioId, domain }),
+        });
+        if (!res.ok) throw new Error("도메인 설정에 실패했습니다.");
+      } catch (e) {
+        // 롤백
+        set((state) => {
+          state.customDomain = prevDomain;
+        });
+        throw e;
       } finally {
         set((state) => {
           state.isSaving = false;

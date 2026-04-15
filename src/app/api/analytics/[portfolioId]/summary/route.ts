@@ -4,7 +4,7 @@ import { analyticsService } from '@/services/analytics';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { portfolioId: string } }
+  { params }: { params: Promise<{ portfolioId: string }> }
 ) {
   try {
     // 1. Session verify
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
     }
 
-    const { portfolioId } = params;
+    const { portfolioId } = await params;
     const url = new NextRequest(req.url);
     const period = (url.nextUrl.searchParams.get('period') as '7d' | '30d' | '90d') || '7d';
 

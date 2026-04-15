@@ -33,11 +33,13 @@ export default async function GeneratePage(props: {
 
     const initialData = {
       portfolioId: portfolio.id,
+      slug: portfolio.slug,
+      customDomain: portfolio.custom_domain,
       blocks: blocks as any[],
       theme: portfolio.theme,
       isPublished: portfolio.is_published,
       publishedUrl: portfolio.slug
-        ? `http://localhost:3000/${portfolio.slug}`
+        ? `${process.env.NEXT_PUBLIC_APP_URL?.replace("://", `://${portfolio.slug}.`)}`
         : null,
     };
     return <AdjustStep portfolioId={id} initialData={initialData} />;

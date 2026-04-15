@@ -2,8 +2,8 @@ import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
 export const contentType = 'image/png';
 
-export default async function Image({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
 
   // Fetch portfolio and user data
   const portfolio = await prisma.portfolio.findUnique({
