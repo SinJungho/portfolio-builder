@@ -214,6 +214,7 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 - **디자인 토큰 커스텀**: [완료] 테마를 넘어 색상, 폰트, 여백, 라운드처리 세부 제어 엔진 구축
 - **서브도메인 라우팅**: [완료] `[slug].portfolioforge.app` 형태의 독립 페이지 지원
 - **멀티 테마 호환성**: [완료] 테마별 다이나믹 마크다운 스타일링 (prose-invert 최적화)
+- **품질 최적화 (QA)**: [완료] 전역 린트/타입 에러 제로(Zero) 달성, 이미지 최적화(next/image), 웹 접근성(OG Image alt) 보완
 
 ---
 
@@ -244,6 +245,8 @@ Phase 3는 플랫폼의 생태계를 확장하고 고급 기능들을 추가하�
 | **Step 4** | **마켓플레이스** | 템플릿 마켓플레이스 (커뮤니티 공유) 구축 | `app/(marketing)/templates/page.tsx` |
 | **Step 5** | **Pro 커스텀** | 고급 CSS 편집 (Pro) 기능 추가 | `components/AdvancedCSSEditor.tsx` |
 | **Step 6** | **CLI 도구** | CLI 도구 (포트폴리오 로컬 관리, GitHub Actions 연동) | `packages/cli/index.ts` |
+| **Step 7** | **다국어 지원** | i18next 기반 다국어(KO/EN) 전환 엔진 및 UI 적용 | `src/lib/i18n.ts` |
+| **Step 8** | **SEO 고도화** | JSON-LD 구조화 데이터 및 동적 sitemap.xml 자동 생성 | `app/sitemap.ts` |
 
-> 앞으로의 요청은 위 Phase 3의 **Step 1 ~ Step 6** 순서에 입각하여 하나씩 전개합니다.
+> 앞으로의 요청은 위 Phase 3의 **Step 1 ~ Step 8** 순서에 입각하여 하나씩 전개합니다.
 > 각 Step을 시작할 때는 반드시 기존과 동일하게 **Pre-flight 검증**을 먼저 거치고 구현을 시작합니다.

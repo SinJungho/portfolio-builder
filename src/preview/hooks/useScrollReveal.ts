@@ -34,6 +34,12 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // PDF 내보내기 모드인 경우 즉시 표시
+    if (typeof window !== "undefined" && window.location.search.includes("export=true")) {
+      setIsVisible(true);
+      return;
+    }
+
     const el = ref.current;
     if (!el) return;
 

@@ -109,6 +109,7 @@ export default async function PortfolioPage({ params }: Props) {
           theme={portfolio.theme} 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           designTokens={portfolio.design_tokens as any}
+          slug={portfolio.slug}
         />
       </main>
 

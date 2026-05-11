@@ -9,6 +9,9 @@ import BlogFeedBlock from "./blocks/BlogFeedBlock";
 import { DesignTokens } from "../schemas/portfolio";
 import { resolveTheme } from "./themes";
 
+import { useSearchParams } from "next/navigation";
+import { FileDown, Loader2 } from "lucide-react";
+
 type Block = {
   id: string;
   block_type: string;
@@ -22,9 +25,14 @@ interface PortfolioPreviewProps {
   blocks: Block[];
   theme: string;
   designTokens?: DesignTokens;
+  slug?: string;
 }
 
-export default function PortfolioPreview({ blocks, theme, designTokens }: PortfolioPreviewProps) {
+export default function PortfolioPreview({ blocks, theme, designTokens, slug }: PortfolioPreviewProps) {
+  const searchParams = useSearchParams();
+  const isExporting = searchParams.get("export") === "true";
+  const [isExportPending, setIsExportPending] = React.useState(false);
+
   const baseTheme = resolveTheme(theme);
   
   // 디자인 토큰 병합 로직 (강조색 및 관련 스타일 강제 대체)
@@ -112,6 +120,30 @@ export default function PortfolioPreview({ blocks, theme, designTokens }: Portfo
           </div>
         );
       })}
+
+      {/* PDF Download Button (Hidden during export) */}
+      {!isExporting && slug && (
+        <div className="fixed bottom-8 right-8 z-50 print:hidden">
+          <button
+            onClick={() => {
+              setIsExportPending(true);
+              // API 엔드포인트 호출
+              window.location.href = `/api/export/pdf?slug=${slug}`;
+              // 다운로드 시작 후 약간의 지연 후 로딩 상태 해제
+              setTimeout(() => setIsExportPending(false), 5000);
+            }}
+            disabled={isExportPending}
+            className="flex items-center gap-2 px-5 py-3 rounded-full bg-white/80 backdrop-blur-md border border-black/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 text-[#191F28] font-bold text-sm"
+          >
+            {isExportPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileDown className="w-4 h-4" />
+            )}
+            PDF 내보내기
+          </button>
+        </div>
+      )}
     </div>
   );
 }
