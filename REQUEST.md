@@ -206,7 +206,7 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 
 ## 🗺️ 현재 단계 및 다음 작업 우선순위
 
-**현재**: Phase 2 Step 5 (완료) 🎉 → **Phase 2 Step 6 (인프라 고도화) 진입 단계**
+**현재**: Phase 2 (완료) 🎉 → **Phase 3 (확장 고도화) 진입 단계**
 
 ### ✅ Phase 1 & 2 주요 달성 사항 (최신화)
 - **GitHub Oauth & Webhook**: [완료] Push 시 캐시 무효화 및 자동 재배포 완성
@@ -226,9 +226,24 @@ Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, P
 | **Step 1** | **외부 데이터 확장** | [완료] 블로그 RSS 피드 연동 (Tistory, Velog, Medium 지원) 및 `feed_items` DB 수집 파이프라인 | `api/integrations/rss/route.ts` |
 | **Step 2** | **에디터 고도화 1** | [완료] `dnd-kit` 기반 WYSIWYG 블록 에디터 도입 및 생성 타임아웃/상태 동기화 이슈 해결 | `generate/[id]/steps/adjust.tsx` |
 | **Step 3** | **에디터 고도화 2** | [완료] 디자인 토큰 편집기 구현 (색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
-| **Step 4** | **품질 보증 (QA)** | [완료] [x] 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
-| **Step 5** | **분석 대시보드** | [완료] [x] `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
+| **Step 4** | **품질 보증 (QA)** | [완료] 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
+| **Step 5** | **분석 대시보드** | [완료] `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
 | **Step 6** | **커스텀 도메인 및 인프라** | [완료] Hobby 와일드카드 지원 및 Next.js 16 proxy.ts 전환 | `api/domains/route.ts` |
 
-> 앞으로의 요청은 위 **Step 1 ~ Step 7**의 순서에 입각하여 하나씩 전개합니다.
+---
+
+### 🚀 Phase 3: 확장 고도화 (예정 목록)
+
+Phase 3는 플랫폼의 생태계를 확장하고 고급 기능들을 추가하는 단계입니다. 다음 **Step 단위**로 전개합니다.
+
+| 순서 | 카테고리 | 핵심 작업 (개발 선형 플로우) | 관련 예상 컴포넌트 / API |
+| :---: | :--- | :--- | :--- |
+| **Step 1** | **PDF 내보내기** | CV/이력서 PDF 내보내기 (Puppeteer 기반) 지원 | `api/export/pdf/route.ts` |
+| **Step 2** | **팀 & 채용 뷰** | 팀 포트폴리오 및 채용 담당자 뷰 모드 추가 | `app/(preview)/team/[slug]/page.tsx` |
+| **Step 3** | **협업 편집** | 실시간 협업 편집 (Yjs/CRDT 기반) 도입 | `components/CollaborativeEditor.tsx` |
+| **Step 4** | **마켓플레이스** | 템플릿 마켓플레이스 (커뮤니티 공유) 구축 | `app/(marketing)/templates/page.tsx` |
+| **Step 5** | **Pro 커스텀** | 고급 CSS 편집 (Pro) 기능 추가 | `components/AdvancedCSSEditor.tsx` |
+| **Step 6** | **CLI 도구** | CLI 도구 (포트폴리오 로컬 관리, GitHub Actions 연동) | `packages/cli/index.ts` |
+
+> 앞으로의 요청은 위 Phase 3의 **Step 1 ~ Step 6** 순서에 입각하여 하나씩 전개합니다.
 > 각 Step을 시작할 때는 반드시 기존과 동일하게 **Pre-flight 검증**을 먼저 거치고 구현을 시작합니다.
