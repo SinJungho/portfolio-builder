@@ -86,6 +86,39 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
         scrollBehavior: "smooth",
       }}
     >
+      {/* PDF Export Specific Overrides */}
+      {isExporting && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media print {
+            * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+          }
+          /* 배경 글로우 효과가 PDF에서 사각형 박스로 나오는 문제 해결 */
+          .absolute.blur-[140px], .absolute.blur-[120px], .absolute.blur-[100px], .absolute.blur-2xl {
+            display: none !important;
+          }
+          /* 텍스트 그라데이션이 PDF에서 보이지 않거나 깨지는 문제 해결 */
+          h1, h2, h3, p, span {
+            -webkit-text-fill-color: initial !important;
+            background-clip: border-box !important;
+            background: none !important;
+          }
+          /* 텍스트 색상 강제 지정 (그라데이션 대신 포인트 컬러 사용) */
+          h2 { color: ${mt.accent} !important; }
+          /* 유리 질감 효과(backdrop-blur)는 PDF에서 지원되지 않으므로 불투명도 조정 */
+          .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background-color: ${mt.cardBg} !important;
+            opacity: 1 !important;
+          }
+          /* 애니메이션 효과 강제 중단 */
+          .animate-ping, .animate-bounce, .animate-pulse {
+            animation: none !important;
+            display: none !important;
+          }
+        `}} />
+      )}
+
       {visibleBlocks.map((block) => {
         // Hero uses full-bleed (no container)
         if (block.block_type === "hero") {
