@@ -9,45 +9,21 @@ import {
   BarChart, 
   Mail, 
   Rss, 
-  ArrowUp, 
-  ArrowDown, 
-  Copy, 
-  ExternalLink, 
-  ArrowLeft, 
   Check, 
-  ArrowRight, 
   Sparkles, 
-  Palette,
-  Trash2,
   Settings,
   Search,
   Star,
   GitFork,
-  Clock,
   X,
   Plus,
   Globe
 } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 
 import {
@@ -99,7 +75,7 @@ interface RawProject {
 // 모바일 탭 타입
 type MobileTab = "blocks" | "settings";
 
-export default function AdjustStep({ portfolioId, initialData }: { portfolioId: string; initialData?: {
+export default function AdjustStep({ initialData }: { initialData?: {
   portfolioId: string;
   slug: string | null;
   customDomain: string | null;
@@ -117,19 +93,16 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
 } }) {
   const { 
     blocks, 
-    theme, 
     isSaving, 
     initialize, 
     toggleBlock, 
     reorderBlocks, 
-    setTheme, 
     updateOptionalField,
     deleteBlock,
     updateBlockConfig,
     addBlock,
   } = usePortfolioStore();
   
-  const [copied, setCopied] = useState(false);
   const [init, setInit] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("blocks");
   
@@ -156,21 +129,13 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
         ...initialData,
         blocks: initialData.blocks.map(b => ({
           ...b,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           block_type: b.block_type as any,
         })),
       });
       setInit(true);
     }
   }, [initialData, init, initialize]);
-
-  const pubUrl = initialData?.publishedUrl || `${typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/${portfolioId}`;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(pubUrl);
-    setCopied(true);
-    toast.success("배포 URL이 복사되었습니다.");
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -215,6 +180,7 @@ export default function AdjustStep({ portfolioId, initialData }: { portfolioId: 
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const openProjectEditor = (block: any) => {
     setEditingBlockId(block.id);
     setTempSelectedIds((block.config.project_ids as string[]) || []);

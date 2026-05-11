@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { subDays, startOfDay, format } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 export interface AnalyticsSummary {
   totalViews: number;
@@ -71,7 +71,7 @@ export class AnalyticsService {
         let domain = event.referrer;
         try {
           domain = new URL(event.referrer).hostname;
-        } catch (e) {}
+        } catch { /* ignore parse errors */ }
         referrerMap.set(domain, (referrerMap.get(domain) || 0) + 1);
       }
     });

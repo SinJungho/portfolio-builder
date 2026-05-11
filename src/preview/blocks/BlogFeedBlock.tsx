@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { ThemeTokens } from "../themes";
-import { useScrollReveal } from "../hooks/useScrollReveal";
+import { useScrollReveal, useStaggerReveal } from "../hooks/useScrollReveal";
 
 interface BlogFeedBlockProps {
   config: {
@@ -43,12 +43,13 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
   };
 
   const providerLabel = providerLabels[integration_provider] || "Blog";
-  const header = useScrollReveal("fadeUp");
+  const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
+  const feedReveals = useStaggerReveal<HTMLAnchorElement>(displayFeed.length, "fadeUp", { staggerDelay: 80 });
 
   return (
     <section className="space-y-12">
       {/* Section Header */}
-      <div ref={header.ref} style={header.style} className="space-y-4">
+      <div ref={headerRef} style={headerStyle} className="space-y-4">
         <div className="flex items-end gap-4">
           <h2
             className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
@@ -72,7 +73,7 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
       {/* Feed List */}
       <div className="flex flex-col gap-4">
         {displayFeed.map((item, idx) => {
-          const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: idx * 80 });
+          const { ref: revealRef, style: revealStyle } = feedReveals[idx];
           const thumbnail = item.metadata
             ? (item.metadata as Record<string, string>).thumbnail
             : undefined;
@@ -80,7 +81,7 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
           return (
             <Link
               key={item.id}
-              ref={reveal.ref}
+              ref={revealRef}
               href={item.url}
               target="_blank"
               rel="noreferrer"
@@ -94,7 +95,7 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
                 e.currentTarget.style.boxShadow = t.cardShadow;
               }}
               style={{
-                ...reveal.style,
+                ...revealStyle,
                 backgroundColor: t.cardBg,
                 border: `1px solid ${t.cardBorder}`,
                 borderRadius: t.cardRadius,

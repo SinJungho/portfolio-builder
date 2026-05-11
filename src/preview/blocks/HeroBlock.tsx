@@ -27,11 +27,11 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
     ? `https://github.com/${github_login}.png`
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(headline)}&size=200`;
 
-  const badge = useScrollReveal("fadeIn", { delay: 0 });
-  const heading = useScrollReveal("fadeUp", { delay: 100 });
-  const bioReveal = useScrollReveal("fadeUp", { delay: 250 });
-  const statsReveal = useScrollReveal("fadeUp", { delay: 400 });
-  const avatarReveal = useScrollReveal("scaleIn", { delay: 200 });
+  const { ref: badgeRef, style: badgeStyle } = useScrollReveal("fadeIn", { delay: 0 });
+  const { ref: headingRef, style: headingStyle } = useScrollReveal("fadeUp", { delay: 100 });
+  const { ref: bioRevealRef, style: bioRevealStyle } = useScrollReveal("fadeUp", { delay: 250 });
+  const { ref: statsRevealRef, style: statsRevealStyle } = useScrollReveal("fadeUp", { delay: 400 });
+  const { ref: avatarRevealRef, style: avatarRevealStyle } = useScrollReveal("scaleIn", { delay: 200 });
 
   const stats = [
     { icon: Code2, label: "Repositories", value: config.github_repos_count ?? "–" },
@@ -59,7 +59,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
         {/* ── Text Content ── */}
         <div className="flex-1 space-y-8 text-center lg:text-left">
           {/* Status Badge */}
-          <div ref={badge.ref} style={badge.style}>
+          <div ref={badgeRef} style={badgeStyle}>
             <div
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-[13px] font-semibold tracking-wide"
               style={{ backgroundColor: t.accentSoft, color: t.accent }}
@@ -78,7 +78,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
           </div>
 
           {/* Name & Title */}
-          <div ref={heading.ref} style={heading.style} className="space-y-4">
+          <div ref={headingRef} style={headingStyle} className="space-y-4">
             <h1
               className="text-[clamp(44px,7vw,72px)] font-extrabold leading-[1.02] tracking-[-3px]"
               style={{ color: t.text }}
@@ -101,7 +101,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
           </div>
 
           {/* Bio */}
-          <div ref={bioReveal.ref} style={bioReveal.style}>
+          <div ref={bioRevealRef} style={bioRevealStyle}>
             <p
               className="text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto lg:mx-0"
               style={{ color: t.textMuted }}
@@ -112,7 +112,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
 
           {/* GitHub Stats Row */}
           {show_github_stats && github_login && (
-            <div ref={statsReveal.ref} style={statsReveal.style}>
+            <div ref={statsRevealRef} style={statsRevealStyle}>
               <div className="flex flex-wrap justify-center lg:justify-start gap-4">
                 {stats.map((stat) => (
                   <div
@@ -151,7 +151,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
         </div>
 
         {/* ── Avatar ── */}
-        <div ref={avatarReveal.ref} style={avatarReveal.style} className="shrink-0 relative">
+        <div ref={avatarRevealRef} style={avatarRevealStyle} className="shrink-0 relative">
           {/* Glow ring */}
           <div
             className="absolute -inset-4 rounded-full opacity-25 blur-2xl"

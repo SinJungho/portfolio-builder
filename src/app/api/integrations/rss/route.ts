@@ -19,8 +19,8 @@ export async function POST(req: Request) {
 
     try {
       await rssService.parseFeed(url);
-    } catch (e: any) {
-      return NextResponse.json({ error: e.message || 'Failed to parse RSS feed' }, { status: 400 });
+    } catch (e: unknown) {
+      return NextResponse.json({ error: (e as Error).message || 'Failed to parse RSS feed' }, { status: 400 });
     }
 
     const integration = await rssService.upsertIntegration(session.user.id, url);
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       totalItems: result.totalItems,
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/integrations/rss error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -55,7 +55,7 @@ export async function GET() {
     });
 
     return NextResponse.json(integrations);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('GET /api/integrations/rss error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

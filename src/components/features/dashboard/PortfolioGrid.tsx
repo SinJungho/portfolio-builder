@@ -79,6 +79,7 @@ export function PortfolioGrid() {
       toast.success("포트폴리오가 생성되었습니다. AI 분석을 시작합니다.");
       router.push(`/generate/${data.portfolio_id}`);
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast.error(error.message);
       setIsCreating(false);
@@ -99,6 +100,7 @@ export function PortfolioGrid() {
       toast.success("포트폴리오가 삭제되었습니다");
       setDeleteId(null);
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast.error(error.message);
     },

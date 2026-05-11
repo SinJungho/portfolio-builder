@@ -6,12 +6,14 @@ import ProjectGridBlock from "./blocks/ProjectGridBlock";
 import SkillsBlock from "./blocks/SkillsBlock";
 import ContactBlock from "./blocks/ContactBlock";
 import BlogFeedBlock from "./blocks/BlogFeedBlock";
+import { DesignTokens } from "../schemas/portfolio";
 import { resolveTheme } from "./themes";
 
 type Block = {
   id: string;
   block_type: string;
   position: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: any;
   is_visible: boolean;
 };
@@ -19,7 +21,7 @@ type Block = {
 interface PortfolioPreviewProps {
   blocks: Block[];
   theme: string;
-  designTokens?: any;
+  designTokens?: DesignTokens;
 }
 
 export default function PortfolioPreview({ blocks, theme, designTokens }: PortfolioPreviewProps) {

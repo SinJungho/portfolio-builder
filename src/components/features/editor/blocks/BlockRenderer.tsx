@@ -9,12 +9,14 @@ import ContactBlock from './ContactBlock'
 interface Block {
   id: string
   block_type: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: any
   position: number
 }
 
 interface BlockRendererProps {
   blocks: Block[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   projectsData?: any[]
   tokens?: {
     primaryColor?: string

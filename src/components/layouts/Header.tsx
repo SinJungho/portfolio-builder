@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronRight, Github, Menu, Sparkles, LogOut, User, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import CTAButton from "../common/CTAButton";
 import { useSession, signOut } from "next-auth/react";
@@ -130,9 +131,11 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 p-1 rounded-full hover:bg-black/5 transition-colors focus:outline-none">
                   {user?.image ? (
-                    <img
+                    <Image
                       src={user.image}
                       alt={user.name || "User"}
+                      width={36}
+                      height={36}
                       className="w-9 h-9 rounded-full border border-ink-100"
                     />
                   ) : (
@@ -253,9 +256,11 @@ export default function Header() {
                   <>
                     <div className="flex items-center gap-3 p-3 rounded-2xl bg-ink-50 border border-ink-100 mb-2">
                        {user?.image ? (
-                        <img
+                        <Image
                           src={user.image}
                           alt={user.name || "User"}
+                          width={44}
+                          height={44}
                           className="w-11 h-11 rounded-full border border-ink-200"
                         />
                       ) : (

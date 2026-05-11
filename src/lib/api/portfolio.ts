@@ -41,6 +41,7 @@ export async function reorderBlocksApi(
 
 export async function updatePortfolioApi(
   portfolioId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: { theme?: string; design_tokens?: any }
 ) {
   const res = await fetch(`/api/portfolios/${portfolioId}`, {
@@ -54,6 +55,7 @@ export async function updatePortfolioApi(
 
 export async function updateDesignTokensApi(
   portfolioId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   design_tokens: any
 ) {
   return updatePortfolioApi(portfolioId, { design_tokens });

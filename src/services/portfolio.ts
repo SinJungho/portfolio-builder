@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { Portfolio } from '@prisma/client';
+
+
 
 export class PortfolioService {
   /**
@@ -43,7 +44,7 @@ export class PortfolioService {
    * Generate a unique slug based on github_login
    */
   async generateUniqueSlug(baseSlug: string): Promise<string> {
-    let slug = baseSlug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const slug = baseSlug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     let counter = 1;
     let finalSlug = slug;
 

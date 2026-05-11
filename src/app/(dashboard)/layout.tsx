@@ -14,6 +14,7 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!(session.user as any).github_bio_verified) {
     redirect("/onboarding/bio");
   }

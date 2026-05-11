@@ -8,7 +8,7 @@ async function updateJobProgress(jobId: string, updates: Partial<JobStatus>) {
   const key = JOB_KEY(jobId);
   const existingJobStr = await redis.get(key);
   if (existingJobStr) {
-    let existingJob = typeof existingJobStr === 'string' ? JSON.parse(existingJobStr) : existingJobStr;
+    const existingJob = typeof existingJobStr === 'string' ? JSON.parse(existingJobStr) : existingJobStr;
     const newJob = { ...existingJob, ...updates };
     await redis.set(key, JSON.stringify(newJob), { ex: JOB_TTL });
   }
@@ -39,6 +39,7 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 10 });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let topProjects: any[] = [];
 
     if (projectIds && projectIds.length > 0) {
@@ -60,6 +61,7 @@ export async function generatePortfolio(params: {
         if (score === null) {
           let readme_quality = 0.0;
           if (p.raw_data) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
             const readme = rawData?.readme || "";
             if (!readme) {
@@ -95,7 +97,7 @@ export async function generatePortfolio(params: {
 
     // Language aggregation
     const languageCounts: Record<string, number> = {};
-    let totalProjects = rawProjects.length;
+    const totalProjects = rawProjects.length;
     rawProjects.forEach(p => {
       if (p.language) {
         languageCounts[p.language] = (languageCounts[p.language] || 0) + 1;
@@ -108,6 +110,7 @@ export async function generatePortfolio(params: {
         try {
           let readme = "";
           if (p.raw_data) {
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
              const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
              readme = rawData?.readme || "";
           }
@@ -175,6 +178,7 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 30 });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const portfolioBlocksData: any[] = [];
 
     // Hero Block
@@ -225,6 +229,7 @@ export async function generatePortfolio(params: {
     await updateJobProgress(jobId, { progress: 70 });
 
     // Contact Block
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contactConfig: any = {
       github_url: `https://github.com/${user.github_login}`,
     };
@@ -318,8 +323,8 @@ export async function generatePortfolio(params: {
       missing_optional_fields,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("generatePortfolio error:", error);
-    await updateJobProgress(jobId, { status: "failed", error: error.message });
+    await updateJobProgress(jobId, { status: "failed", error: (error as Error).message });
   }
 }

@@ -4,7 +4,7 @@ import { redis, JOB_KEY } from "@/lib/redis";
 import type { GenerateJobResponse } from "@/types/generate";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ job_id: string }> }
 ) {
   try {
@@ -20,6 +20,7 @@ export async function GET(
       return NextResponse.json({ error: "job_not_found" }, { status: 404 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const job: any = typeof jobStr === "string" ? JSON.parse(jobStr) : jobStr;
 
     if (job.user_id !== session.user.id) {
@@ -36,9 +37,9 @@ export async function GET(
     };
 
     return NextResponse.json(response, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/portfolios/generate/[job_id] error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
   }
 }
 

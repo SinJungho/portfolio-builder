@@ -21,8 +21,8 @@ export async function GET(
     try {
       const summary = await analyticsService.getSummary(portfolioId, session.user.id, period);
       return NextResponse.json(summary);
-    } catch (e: any) {
-      if (e.message === 'FORBIDDEN') {
+    } catch (e: unknown) {
+      if ((e as Error).message === 'FORBIDDEN') {
         return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
       }
       throw e;

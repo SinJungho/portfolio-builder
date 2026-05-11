@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     let json = {};
     try {
       json = await req.json();
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -79,13 +79,13 @@ export async function POST(req: Request) {
       { portfolio_id: portfolio.id, slug: portfolio.slug },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/portfolios error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -115,8 +115,8 @@ export async function GET(req: Request) {
       user: dbUser,
       github_synced_at: integration?.synced_at || null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/portfolios error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
   }
 }

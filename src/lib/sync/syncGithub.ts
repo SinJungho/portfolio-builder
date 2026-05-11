@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { redis, JOB_KEY, type JobStatus } from '@/lib/redis'
-import { fetchUserRepos, fetchRepoReadme, type GithubRepo } from '@/lib/github'
+import { fetchUserRepos, fetchRepoReadme } from '@/lib/github'
 
 export interface SyncJobStatus extends JobStatus {
   synced_count: number
@@ -81,6 +81,7 @@ export async function syncGithubData({
           select: { raw_data: true, id: true },
         })
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawData = (existing?.raw_data as any) || {}
         let readme = rawData.readme || ''
 
@@ -152,10 +153,10 @@ export async function syncGithubData({
     })
 
     await updateProgress(100, { status: 'completed' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('syncGithubData process failed:', error)
     
-    let friendlyMessage = error.message || String(error);
+    let friendlyMessage = (error as Error).message || String(error);
     if (friendlyMessage.includes("Bad credentials")) {
       friendlyMessage = "GitHub 인증 세션이 만료되었습니다. 다시 로그인해 주세요.";
     }

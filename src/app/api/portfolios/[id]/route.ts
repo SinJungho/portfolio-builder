@@ -1,6 +1,5 @@
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -27,7 +26,7 @@ export async function PATCH(
     let json = {};
     try {
       json = await req.json();
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -40,6 +39,7 @@ export async function PATCH(
       return NextResponse.json({ error: zError.message }, { status: 400 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     if (data.theme !== undefined) updateData.theme = data.theme;
     if (data.title !== undefined) updateData.title = data.title;
@@ -76,10 +76,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ portfolio: updatedPortfolio }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PATCH /api/portfolios/[id] error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: (error as Error).message || "Internal server error" },
       { status: 500 },
     );
   }
@@ -91,7 +91,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { error, portfolio } = await validatePortfolioOwnership(id);
+    const { error } = await validatePortfolioOwnership(id);
     if (error) return error;
 
     await prisma.portfolio.delete({
@@ -99,10 +99,10 @@ export async function DELETE(
     });
 
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DELETE /api/portfolios/[id] error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: (error as Error).message || "Internal server error" },
       { status: 500 },
     );
   }

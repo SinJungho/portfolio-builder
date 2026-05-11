@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -32,7 +32,7 @@ export async function GET(
       is_published: portfolio.is_published,
       published_url: portfolio.slug ? `/${portfolio.slug}` : null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/portfolios/[id]/status error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

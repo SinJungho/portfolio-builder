@@ -17,6 +17,7 @@ export type PortfolioStore = {
   theme: string;
   isPublished: boolean;
   publishedUrl: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   designTokens: any;
   customDomain: string | null;
   slug: string | null;
@@ -29,11 +30,13 @@ export type PortfolioStore = {
     theme: string;
     isPublished: boolean;
     publishedUrl: string | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     designTokens?: any;
     customDomain?: string | null;
     slug?: string | null;
   }) => void;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setDesignTokens: (tokens: any) => Promise<void>;
 
   // 액션
@@ -78,6 +81,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
       });
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setDesignTokens: async (tokens: any) => {
       const { portfolioId, designTokens: prevTokens } = get();
       if (!portfolioId) return;
@@ -97,7 +101,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify({ design_tokens: newTokens }),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         // 롤백
         set((state) => {
           state.designTokens = prevTokens;
@@ -137,7 +141,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         // 롤백
         set((state) => {
           state.blocks = previousBlocks;
@@ -168,7 +172,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });
@@ -195,7 +199,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify({ theme }),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.theme = prevTheme;
         });
@@ -233,7 +237,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });
@@ -265,7 +269,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Delete failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });
@@ -298,7 +302,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch (e) {
+      } catch {
         set((state) => {
           state.blocks = previousBlocks;
         });

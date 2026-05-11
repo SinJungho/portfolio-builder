@@ -61,7 +61,7 @@ function parseSummary(summary: string | null) {
         role: data.role || null
       };
     }
-  } catch (e) {
+  } catch {
     // Fallback
   }
   return { headline: summary, highlights: [], demo_url: null, role: null };
@@ -84,7 +84,7 @@ export default function ProjectGridBlock({ config, theme: t }: ProjectGridBlockP
           stargazers_count: 0,
         }));
 
-  const header = useScrollReveal("fadeUp");
+  const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
 
   const featured = displayProjects[0];
   const rest = displayProjects.slice(1);
@@ -92,7 +92,7 @@ export default function ProjectGridBlock({ config, theme: t }: ProjectGridBlockP
   return (
     <section className="space-y-12">
       {/* Section Header */}
-      <div ref={header.ref} style={header.style} className="space-y-4">
+      <div ref={headerRef} style={headerStyle} className="space-y-4">
         <div className="flex items-end gap-4">
           <h2
             className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
@@ -149,21 +149,24 @@ function FeaturedCard({
   showTech,
   customDescription,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   project: any;
   theme: ThemeTokens;
   showTech: boolean;
   customDescription?: string;
 }) {
-  const reveal = useScrollReveal<HTMLDivElement>("fadeUp", { delay: 100 });
+  const { ref: revealRef, style: revealStyle } = useScrollReveal<HTMLDivElement>("fadeUp", {
+    delay: 200,
+  });
   const langColor = LANG_COLORS[p.language || ""] || t.accent;
   const { headline, highlights, demo_url } = parseSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
 
   return (
     <div
-      ref={reveal.ref}
+      ref={revealRef}
       style={{
-        ...reveal.style,
+        ...revealStyle,
         backgroundColor: t.cardBg,
         border: `1px solid ${t.cardBorder}`,
         borderRadius: t.cardRadius,
@@ -282,20 +285,23 @@ function SecondaryCard({
   showTech,
   customDescription,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   project: any;
   index: number;
   theme: ThemeTokens;
   showTech: boolean;
   customDescription?: string;
 }) {
-  const reveal = useScrollReveal<HTMLAnchorElement>("fadeUp", { delay: index * 100 });
+  const { ref: revealRef, style: revealStyle } = useScrollReveal<HTMLAnchorElement>("fadeUp", {
+    delay: index * 100,
+  });
   const langColor = LANG_COLORS[p.language || ""] || t.accent;
   const { headline } = parseSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
 
   return (
     <Link
-      ref={reveal.ref}
+      ref={revealRef}
       href={p.html_url || "#"}
       target="_blank"
       rel="noreferrer"
@@ -309,7 +315,7 @@ function SecondaryCard({
         e.currentTarget.style.boxShadow = t.cardShadow;
       }}
       style={{
-        ...reveal.style,
+        ...revealStyle,
         backgroundColor: t.cardBg,
         border: `1px solid ${t.cardBorder}`,
         borderRadius: t.cardRadius,

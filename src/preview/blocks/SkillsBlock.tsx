@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import type { ThemeTokens } from "../themes";
-import { useScrollReveal } from "../hooks/useScrollReveal";
+import { useScrollReveal, useStaggerReveal } from "../hooks/useScrollReveal";
 
 interface SkillsBlockProps {
   config: {
@@ -82,7 +82,7 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
           { name: "PostgreSQL", level: 60 },
         ];
 
-  const header = useScrollReveal("fadeUp");
+  const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
 
   // Group by category
   const grouped: Record<string, typeof displaySkills> = {};
@@ -93,11 +93,12 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
   });
 
   const categories = Object.entries(grouped);
+  const categoryReveals = useStaggerReveal<HTMLDivElement>(categories.length, "fadeUp", { staggerDelay: 100 });
 
   return (
     <section className="space-y-12">
       {/* Section Header */}
-      <div ref={header.ref} style={header.style} className="space-y-4">
+      <div ref={headerRef} style={headerStyle} className="space-y-4">
         <h2
           className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
           style={{ color: t.text }}
@@ -113,9 +114,9 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
       {/* Skill Categories */}
       <div className="space-y-10">
         {categories.map(([category, catSkills], catIdx) => {
-          const catReveal = useScrollReveal("fadeUp", { delay: catIdx * 100 });
+          const { ref: catRef, style: catStyle } = categoryReveals[catIdx];
           return (
-            <div key={category} ref={catReveal.ref} style={catReveal.style} className="space-y-5">
+            <div key={category} ref={catRef} style={catStyle} className="space-y-5">
               <h3
                 className="text-[15px] font-bold uppercase tracking-[2px]"
                 style={{ color: t.accent }}

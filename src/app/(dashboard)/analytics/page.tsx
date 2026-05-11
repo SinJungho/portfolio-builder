@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -12,7 +10,6 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  Cell
 } from "recharts";
 import { 
   BarChart3, 
@@ -20,7 +17,6 @@ import {
   Users, 
   MousePointer2, 
   ExternalLink,
-  ChevronDown,
   Layout,
   Clock
 } from "lucide-react";
@@ -42,9 +38,9 @@ export default function AnalyticsPage() {
   });
 
   // Set default selection
-  useMemo(() => {
+  useEffect(() => {
     if (portfolios && portfolios.length > 0 && !selectedPortfolioId) {
-      setSelectedPortfolioId(portfolios[0].id);
+      setTimeout(() => setSelectedPortfolioId(portfolios[0].id), 0);
     }
   }, [portfolios, selectedPortfolioId]);
 
@@ -83,7 +79,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const activePortfolio = portfolios.find(p => p.id === selectedPortfolioId);
+  // const activePortfolio = portfolios.find(p => p.id === selectedPortfolioId);
 
   return (
     <div className="p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -259,7 +255,7 @@ export default function AnalyticsPage() {
                <CardContent className="p-8 pt-0">
                   <div className="space-y-4">
                     {summary.topBlocks.length > 0 ? (
-                      summary.topBlocks.map((block: any, idx: number) => (
+                      summary.topBlocks.map((block: { block_id: string; type: string; count: number }, idx: number) => (
                         <div key={block.block_id} className="flex items-center justify-between group">
                           <div className="flex items-center gap-4">
                             <div className={`
@@ -300,7 +296,7 @@ export default function AnalyticsPage() {
                <CardContent className="p-8 pt-0">
                   <div className="space-y-2">
                     {summary.topReferrers.length > 0 ? (
-                      summary.topReferrers.map((ref: any, idx: number) => (
+                      summary.topReferrers.map((ref: { referrer: string; count: number }) => (
                         <div key={ref.referrer} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50/50 hover:bg-blue-50 transition-colors group">
                           <div className="flex items-center gap-3">
                             <div className="bg-white p-2 rounded-lg shadow-sm">

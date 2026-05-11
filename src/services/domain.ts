@@ -6,8 +6,8 @@ import { env } from '@/lib/env';
  */
 export class DomainService {
   private readonly baseUrl = 'https://api.vercel.com/v9/projects';
-  private readonly token = env.VERCEL_ACCESS_TOKEN;
-  private readonly projectId = env.VERCEL_PROJECT_ID;
+  private readonly token = process.env.VERCEL_ACCESS_TOKEN || "";
+  private readonly projectId = process.env.VERCEL_PROJECT_ID || "";
   private readonly teamId = env.VERCEL_TEAM_ID;
 
   /**

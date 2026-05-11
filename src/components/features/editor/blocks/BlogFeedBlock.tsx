@@ -1,9 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ExternalLink, Rss } from 'lucide-react'
+import { Rss } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import Link from 'next/link'
 
 interface BlogFeedBlockProps {
   config: {

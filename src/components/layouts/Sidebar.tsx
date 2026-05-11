@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -92,9 +93,11 @@ export function Sidebar() {
           <div className="bg-ink-50 rounded-2xl p-3 flex items-center gap-3 border border-ink-100/50">
             <div className="w-10 h-10 rounded-xl bg-white border border-ink-100 overflow-hidden shrink-0 flex items-center justify-center">
               {user?.image ? (
-                <img
+                <Image
                   src={user.image}
                   alt=""
+                  width={40}
+                  height={40}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -170,9 +173,11 @@ export function Sidebar() {
             <div className="px-6 mb-8 flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-white border border-ink-200 overflow-hidden flex items-center justify-center">
                 {user?.image ? (
-                  <img
+                  <Image
                     src={user.image}
                     alt=""
+                    width={56}
+                    height={56}
                     className="w-full h-full object-cover"
                   />
                 ) : (

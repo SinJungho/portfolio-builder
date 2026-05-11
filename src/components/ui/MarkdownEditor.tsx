@@ -6,10 +6,8 @@ import {
   Eye, 
   Upload, 
   Image as ImageIcon, 
-  X, 
   Loader2, 
   Info,
-  ChevronDown
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -109,6 +107,7 @@ export default function MarkdownEditor({
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         input.files = dataTransfer.files;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handleImageUpload({ target: input } as any);
       }
     }

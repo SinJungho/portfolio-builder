@@ -149,6 +149,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
              {user.avatar_url && (
               <img
                 src={user.avatar_url}
+                alt={userName}
                 style={{
                   width: '80px',
                   height: '80px',

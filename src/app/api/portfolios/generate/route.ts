@@ -12,10 +12,11 @@ export async function POST(req: Request) {
 
     const { user } = session;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let json: any = {};
     try {
       json = await req.json();
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -71,8 +72,8 @@ export async function POST(req: Request) {
     }).catch(console.error); // Fire and forget
 
     return NextResponse.json({ job_id, estimated_seconds: 30 }, { status: 202 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/portfolios/generate error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
   }
 }

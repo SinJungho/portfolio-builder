@@ -12,7 +12,6 @@ import {
   GitFork, 
   Clock, 
   Search,
-  Filter,
   CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,10 +47,12 @@ export default function ConfigureStep({ portfolioId }: { portfolioId: string }) 
       const data = await res.json();
       // Initialize selectedIds with featured projects or top 4
       if (selectedIds.length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const featured = data.filter((p: any) => p.is_featured).map((p: any) => p.id);
         if (featured.length > 0) {
           setSelectedIds(featured);
         } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setSelectedIds(data.slice(0, 4).map((p: any) => p.id));
         }
       }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Grid, Settings, ArrowUp, ArrowDown, Trash2, GripVertical, User, Mail, BarChart3, Radio } from 'lucide-react';
+import { Settings, ArrowUp, ArrowDown, Trash2, GripVertical } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
@@ -15,14 +15,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-const blockTypeIcons: Record<string, React.ReactNode> = {
-  hero: <User className="w-5 h-5 text-current" />,
-  project_grid: <Grid className="w-5 h-5 text-current" />,
-  skills: <BarChart3 className="w-5 h-5 text-current" />,
-  contact: <Mail className="w-5 h-5 text-current" />,
-  blog_feed: <Radio className="w-5 h-5 text-current" />,
-};
-
 const blockTypeLabels: Record<string, string> = {
   hero: "소개",
   project_grid: "프로젝트",
@@ -32,6 +24,7 @@ const blockTypeLabels: Record<string, string> = {
 };
 
 interface SortableBlockItemProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   block: any;
   index: number;
   totalBlocks: number;
@@ -40,6 +33,7 @@ interface SortableBlockItemProps {
   onDelete: (id: string) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onOpenProjectEditor: (block: any) => void;
 }
 

@@ -31,8 +31,8 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
         if (active) {
           router.push(`/generate/${portfolioId}?step=analyze&sync_job_id=${data.job_id}`);
         }
-      } catch (e: any) {
-        if (active) setError(e.message);
+      } catch (e: unknown) {
+        if (active) setError((e as Error).message);
       }
     }
     

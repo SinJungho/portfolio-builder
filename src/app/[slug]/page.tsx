@@ -63,6 +63,7 @@ export default async function PortfolioPage({ params }: Props) {
   });
 
   const populatedBlocks = await Promise.all(blocks.map(async (block) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = block.config as any;
     if (block.block_type === 'project_grid' && config.project_ids?.length) {
       const projectsData = await prisma.rawProject.findMany({
@@ -106,7 +107,8 @@ export default async function PortfolioPage({ params }: Props) {
         <PortfolioPreview 
           blocks={populatedBlocks} 
           theme={portfolio.theme} 
-          designTokens={portfolio.design_tokens}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          designTokens={portfolio.design_tokens as any}
         />
       </main>
 

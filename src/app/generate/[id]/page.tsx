@@ -35,6 +35,7 @@ export default async function GeneratePage(props: {
       portfolioId: portfolio.id,
       slug: portfolio.slug,
       customDomain: portfolio.custom_domain,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       blocks: blocks as any[],
       theme: portfolio.theme,
       isPublished: portfolio.is_published,
@@ -42,7 +43,7 @@ export default async function GeneratePage(props: {
         ? `${process.env.NEXT_PUBLIC_APP_URL?.replace("://", `://${portfolio.slug}.`)}`
         : null,
     };
-    return <AdjustStep portfolioId={id} initialData={initialData} />;
+    return <AdjustStep initialData={initialData} />;
   }
 
   if (step === "analyze") {

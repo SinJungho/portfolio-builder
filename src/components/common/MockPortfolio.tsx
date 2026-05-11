@@ -50,7 +50,7 @@ export default function MockPortfolio() {
   const prevSizeRef = useRef(9);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
     const el = wrapperRef.current;
     if (!el) return;
 
@@ -68,7 +68,10 @@ export default function MockPortfolio() {
     });
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
   }, []);
 
   return (
