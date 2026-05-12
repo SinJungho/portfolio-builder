@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Portfolio } from "@prisma/client";
 import { getUserPortfolios } from "./actions";
 
 export default function AnalyticsPage() {
@@ -32,7 +33,7 @@ export default function AnalyticsPage() {
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
 
   // 1. Fetch Portfolios
-  const { data: portfolios, isLoading: isPortfoliosLoading } = useQuery({
+  const { data: portfolios, isLoading: isPortfoliosLoading } = useQuery<Portfolio[]>({
     queryKey: ["portfolios", "analytics"],
     queryFn: () => getUserPortfolios(),
   });
@@ -99,7 +100,7 @@ export default function AnalyticsPage() {
               <SelectValue placeholder="포트폴리오 선택" />
             </SelectTrigger>
             <SelectContent className="rounded-2xl border-black/5 shadow-xl">
-              {portfolios.map(p => (
+              {portfolios.map((p: Portfolio) => (
                 <SelectItem key={p.id} value={p.id} className="rounded-xl py-3 cursor-pointer">
                   <div className="flex flex-col">
                     <span className="font-bold">{p.title || p.slug}</span>
