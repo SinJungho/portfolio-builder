@@ -1,7 +1,7 @@
+import { env } from "@/lib/env";
+import chromium from "@sparticuz/chromium";
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
-import { env } from "@/lib/env";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -16,15 +16,15 @@ export async function GET(req: NextRequest) {
   try {
     // 1. 브라우저 실행 옵션 설정 (Vercel vs Local)
     const isLocal = process.env.NODE_ENV === "development";
-    
+
     browser = await puppeteer.launch({
       args: isLocal ? [] : chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: isLocal 
+      defaultViewport: null,
+      executablePath: isLocal
         ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" // Mac 기준 경로, 환경에 따라 수정 필요할 수 있음
         : await chromium.executablePath(),
-      headless: isLocal ? true : (chromium.headless as any),
-      ignoreHTTPSErrors: true,
+      headless: true,
+      acceptInsecureCerts: true,
     });
 
     const page = await browser.newPage();
@@ -55,19 +55,18 @@ export async function GET(req: NextRequest) {
     });
 
     // 5. 응답 반환
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${slug}_portfolio.pdf"`,
       },
     });
-
   } catch (error: any) {
     console.error("[PDF_EXPORT_ERROR]", error);
     return NextResponse.json(
       { error: "PDF 생성을 실패했습니다.", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     if (browser) {
