@@ -123,7 +123,7 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
         // Hero uses full-bleed (no container)
         if (block.block_type === "hero") {
           return (
-            <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 ${spacingClass}`}>
+            <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 pb-16 md:pb-24`}>
               <HeroBlock config={block.config} theme={mt} />
             </div>
           );

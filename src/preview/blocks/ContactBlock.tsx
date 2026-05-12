@@ -31,8 +31,8 @@ export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
   };
 
   const { ref: headingRef, style: headingStyle } = useScrollReveal("fadeUp");
-  const { ref: ctaRef, style: ctaStyle } = useScrollReveal("fadeUp", { delay: 200 });
-  const { ref: linksRef, style: linksStyle } = useScrollReveal("fadeUp", { delay: 350 });
+  const { ref: ctaRef, style: ctaStyle } = useScrollReveal("fadeUp");
+  const { ref: linksRef, style: linksStyle } = useScrollReveal("fadeUp");
 
   const socialLinks = [
     github_url && { href: github_url, icon: Github, label: "GitHub", type: "github" },

@@ -44,7 +44,7 @@ export default function BlogFeedBlock({ config, theme: t }: BlogFeedBlockProps) 
 
   const providerLabel = providerLabels[integration_provider] || "Blog";
   const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
-  const feedReveals = useStaggerReveal<HTMLAnchorElement>(displayFeed.length, "fadeUp", { staggerDelay: 80 });
+  const feedReveals = useStaggerReveal<HTMLAnchorElement>(displayFeed.length, "fadeUp");
 
   return (
     <section className="space-y-12">

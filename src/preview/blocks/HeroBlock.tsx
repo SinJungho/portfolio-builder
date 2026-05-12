@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { ChevronDown, GitFork, Star, Code2 } from "lucide-react";
+import { GitFork, Star, Code2 } from "lucide-react";
 import type { ThemeTokens } from "../themes";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 
@@ -27,11 +27,11 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
     ? `https://github.com/${github_login}.png`
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(headline)}&size=200`;
 
-  const { ref: badgeRef, style: badgeStyle } = useScrollReveal("fadeIn", { delay: 0 });
-  const { ref: headingRef, style: headingStyle } = useScrollReveal("fadeUp", { delay: 100 });
-  const { ref: bioRevealRef, style: bioRevealStyle } = useScrollReveal("fadeUp", { delay: 250 });
-  const { ref: statsRevealRef, style: statsRevealStyle } = useScrollReveal("fadeUp", { delay: 400 });
-  const { ref: avatarRevealRef, style: avatarRevealStyle } = useScrollReveal("scaleIn", { delay: 200 });
+  const { ref: badgeRef, style: badgeStyle } = useScrollReveal("fadeIn");
+  const { ref: headingRef, style: headingStyle } = useScrollReveal("fadeUp");
+  const { ref: bioRevealRef, style: bioRevealStyle } = useScrollReveal("fadeUp");
+  const { ref: statsRevealRef, style: statsRevealStyle } = useScrollReveal("fadeUp");
+  const { ref: avatarRevealRef, style: avatarRevealStyle } = useScrollReveal("scaleIn");
 
   const stats = [
     { icon: Code2, label: "Repositories", value: config.github_repos_count ?? "–" },
@@ -127,7 +127,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
                   >
                     <stat.icon
                       className="w-4 h-4 shrink-0"
-                      style={{ color: t.accent }}
+                      style={{ color: stat.label === "Total Stars" ? "#F59E0B" : t.accent }}
                     />
                     <div className="flex flex-col">
                       <span
@@ -185,16 +185,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-        <span
-          className="text-[11px] font-bold uppercase tracking-[2px]"
-          style={{ color: t.textMuted }}
-        >
-          Scroll
-        </span>
-        <ChevronDown className="w-4 h-4" style={{ color: t.textMuted }} />
-      </div>
+
     </section>
   );
 }

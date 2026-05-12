@@ -93,7 +93,7 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
   });
 
   const categories = Object.entries(grouped);
-  const categoryReveals = useStaggerReveal<HTMLDivElement>(categories.length, "fadeUp", { staggerDelay: 100 });
+  const categoryReveals = useStaggerReveal<HTMLDivElement>(categories.length, "fadeUp");
 
   return (
     <section className="space-y-12">
