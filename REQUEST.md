@@ -240,7 +240,7 @@ Phase 3는 플랫폼의 생태계를 확장하고 고급 기능들을 추가하�
 | 순서 | 카테고리 | 핵심 작업 (개발 선형 플로우) | 관련 예상 컴포넌트 / API |
 | :---: | :--- | :--- | :--- |
 | **Step 1** | **PDF 내보내기** | CV/이력서 PDF 내보내기 (Puppeteer 기반) 지원 | `api/export/pdf/route.ts` |
-| **Step 2** | **팀 & 채용 뷰** | 팀 포트폴리오 및 채용 담당자 뷰 모드 추가 | `app/(preview)/team/[slug]/page.tsx` |
+| **Step 2** | **채용 담당자 뷰** | 채용 담당자 최적화 뷰 모드 (`?view=recruiter`) 추가 | `[slug]/page.tsx` |
 | **Step 3** | **협업 편집** | 실시간 협업 편집 (Yjs/CRDT 기반) 도입 | `components/CollaborativeEditor.tsx` |
 | **Step 4** | **마켓플레이스** | 템플릿 마켓플레이스 (커뮤니티 공유) 구축 | `app/(marketing)/templates/page.tsx` |
 | **Step 5** | **Pro 커스텀** | 고급 CSS 편집 (Pro) 기능 추가 | `components/AdvancedCSSEditor.tsx` |

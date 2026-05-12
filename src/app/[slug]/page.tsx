@@ -9,7 +9,8 @@ import Link from 'next/link'
 export const revalidate = 60;
 
 interface Props {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ export?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -43,8 +44,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PortfolioPage({ params }: Props) {
-  const { slug } = await params
+export default async function PortfolioPage({ params, searchParams }: Props) {
+  const { slug } = await params;
+  const { export: isExport } = await searchParams;
+  const isExportMode = isExport === "true";
 
   const portfolio = await prisma.portfolio.findUnique({
     where: { slug }
@@ -113,26 +116,28 @@ export default async function PortfolioPage({ params }: Props) {
         />
       </main>
 
-      <footer
-        className="py-10 px-6"
-        style={{ backgroundColor: t.footerBg }}
-      >
-        <div className="max-w-[960px] mx-auto flex flex-col items-center gap-3 text-center">
-          <p
-            className="text-[13px] font-medium"
-            style={{ color: t.footerText }}
-          >
-            © {new Date().getFullYear()} {portfolio.title || slug}
-          </p>
-          <Link
-            href="/"
-            className="text-[11px] font-bold uppercase tracking-[2px] transition-colors duration-200 hover:opacity-70"
-            style={{ color: t.textMuted }}
-          >
-            Powered by PortfolioForge
-          </Link>
-        </div>
-      </footer>
+      {!isExportMode && (
+        <footer
+          className="py-10 px-6 print:hidden"
+          style={{ backgroundColor: t.footerBg }}
+        >
+          <div className="max-w-[960px] mx-auto flex flex-col items-center gap-3 text-center">
+            <p
+              className="text-[13px] font-medium"
+              style={{ color: t.footerText }}
+            >
+              © {new Date().getFullYear()} {portfolio.title || slug}
+            </p>
+            <Link
+              href="/"
+              className="text-[11px] font-bold uppercase tracking-[2px] transition-colors duration-200 hover:opacity-70"
+              style={{ color: t.textMuted }}
+            >
+              Powered by PortfolioForge
+            </Link>
+          </div>
+        </footer>
+      )}
     </div>
   )
 }

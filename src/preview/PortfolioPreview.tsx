@@ -11,6 +11,7 @@ import { resolveTheme } from "./themes";
 
 import { useSearchParams } from "next/navigation";
 import { FileDown, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Block = {
   id: string;
@@ -86,6 +87,7 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
         scrollBehavior: "smooth",
       }}
     >
+
       {/* PDF Export Specific Overrides */}
       {isExporting && (
         <style dangerouslySetInnerHTML={{ __html: `
@@ -96,14 +98,13 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
           .absolute.blur-[140px], .absolute.blur-[120px], .absolute.blur-[100px], .absolute.blur-2xl {
             display: none !important;
           }
-          /* 텍스트 그라데이션이 PDF에서 보이지 않거나 깨지는 문제 해결 */
-          h1, h2, h3, p, span {
+          /* 텍스트 그라데이션이 PDF에서 보이지 않거나 깨지는 문제 해결 (배경색은 유지) */
+          h1.bg-clip-text, h2.bg-clip-text, span.bg-clip-text {
             -webkit-text-fill-color: initial !important;
             background-clip: border-box !important;
             background: none !important;
+            color: ${mt.accent} !important;
           }
-          /* 텍스트 색상 강제 지정 (그라데이션 대신 포인트 컬러 사용) */
-          h2 { color: ${mt.accent} !important; }
           /* 유리 질감 효과(backdrop-blur)는 PDF에서 지원되지 않으므로 불투명도 조정 */
           .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl {
             backdrop-filter: none !important;
@@ -116,31 +117,29 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
             animation: none !important;
             display: none !important;
           }
+          /* 인쇄 시 페이지 나눔 최적화 */
+          section, .pdf-block {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
         `}} />
       )}
 
+
       {visibleBlocks.map((block) => {
-        // Hero uses full-bleed (no container)
-        if (block.block_type === "hero") {
-          return (
-            <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 pb-16 md:pb-24`}>
-              <HeroBlock config={block.config} theme={mt} />
-            </div>
-          );
-        }
-
-        // Contact is nearly full bleed
-        if (block.block_type === "contact") {
-          return (
-            <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 ${spacingClass}`}>
-              <ContactBlock config={block.config} theme={mt} />
-            </div>
-          );
-        }
-
-        // All other blocks: contained with generous spacing
+        const isHero = block.block_type === "hero";
+        
         return (
-          <div key={block.id} className={`max-w-[1100px] mx-auto px-6 md:px-8 ${spacingClass}`}>
+          <div 
+            key={block.id} 
+            className={cn(
+              "max-w-[1100px] mx-auto px-6 md:px-8 pdf-block",
+              isHero ? "pb-16 md:pb-24" : "py-16 md:py-24 border-t border-ink-100/10"
+            )}
+          >
+            {block.block_type === "hero" && (
+              <HeroBlock config={block.config} theme={mt} />
+            )}
             {block.block_type === "project_grid" && (
               <ProjectGridBlock config={block.config} theme={mt} />
             )}
@@ -149,6 +148,9 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
             )}
             {block.block_type === "blog_feed" && (
               <BlogFeedBlock config={block.config} theme={mt} />
+            )}
+            {block.block_type === "contact" && (
+              <ContactBlock config={block.config} theme={mt} />
             )}
           </div>
         );
