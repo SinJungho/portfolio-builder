@@ -8,7 +8,8 @@
     "start": "next start",
     "prod": "dotenv -e .env -- npm run build && dotenv -e .env -- npm run start",
     "lint": "eslint",
-    "webhook:dev": "npx smee-client -u https://smee.io/3WfzDziiaf5Gl3o -t http://localhost:3000/api/webhooks/github"
+    "webhook:dev": "npx smee-client -u https://smee.io/3WfzDziiaf5Gl3o -t http://localhost:3000/api/webhooks/github",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
