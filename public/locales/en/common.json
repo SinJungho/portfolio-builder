@@ -1,0 +1,25 @@
+{
+  "common": {
+    "save": "Save",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "published": "Published",
+    "draft": "Draft"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "adjust": {
+    "blocks": "Manage Blocks",
+    "styles": "Styles & Contact",
+    "add_block": "Add New Block",
+    "block_config": "Block Configuration"
+  }
+}

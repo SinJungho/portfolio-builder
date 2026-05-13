@@ -1,0 +1,9 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@sentry/cli': set this to true or false
+  bufferutil: set this to true or false
+  msw: set this to true or false
+  prisma: true
+  sharp: true
+  unrs-resolver: set this to true or false
+  utf-8-validate: set this to true or false
