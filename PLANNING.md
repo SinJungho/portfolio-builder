@@ -290,12 +290,9 @@ git commit -m "fix(infra): next/headers cookies() await 누락 빌드 에러 수
 ### Phase 3 — 확장 고도화 (진행 중)
 
 - **[완료]** CV/이력서 PDF 내보내기 (Puppeteer 기반) — `api/export/pdf?slug=[slug]`
-- **[예정]** 실시간 협업 편집 (Yjs/CRDT)
-- **[예정]** 고급 CSS 편집 (Pro)
-- **[예정]** CLI 도구 (포트폴리오 로컬 관리, GitHub Actions 연동)
-- **[예정]** 템플릿 마켓플레이스 (커뮤니티 공유)
-- **[예정]** 다국어 지원 (i18next 기반 KO/EN 전환)
-- **[예정]** SEO 고도화 (JSON-LD 및 sitemap.xml 자동 생성)
+- **[완료]** 고급 CSS 편집
+- **[완료]** 다국어 지원 (i18next 기반 KO/EN 전환)
+- **[완료]** SEO 고도화 (JSON-LD 및 sitemap.xml 자동 생성)
 
 ---
 

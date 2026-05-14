@@ -28,9 +28,6 @@ export async function GET(req: NextRequest) {
     });
 
     const page = await browser.newPage();
-    
-    // 뷰포트 크기 고정 (레이아웃 안정화)
-    await page.setViewport({ width: 1100, height: 1600 });
 
     // 2. 포트폴리오 URL 결정
     // [slug].portfolioforge.app 형태가 아닌 /slug 형태로 접속하여 렌더링 (내부 서버에서 접근 용이)
@@ -45,46 +42,24 @@ export async function GET(req: NextRequest) {
       timeout: 30000,
     });
 
-    // 인쇄 모드 에뮬레이션
-    await page.emulateMediaType('print');
-
-    // 모든 이미지 로드를 위해 바닥까지 스크롤 (Lazy Loading 대응)
-    await page.evaluate(async () => {
-      await new Promise<void>((resolve) => {
-        let totalHeight = 0;
-        const distance = 100;
-        const timer = setInterval(() => {
-          const scrollHeight = document.body.scrollHeight;
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-
-          if (totalHeight >= scrollHeight) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 100);
-      });
-    });
-
-    // 폰트 로딩 대기 및 최종 안정화
+    // 폰트 로딩 대기 및 안정화 시간 추가
     await page.evaluateHandle("document.fonts.ready");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // 2초 추가 대기
 
     // 4. PDF 생성 옵션
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true, // 배경색/이미지 포함
-      preferCSSPageSize: true,
       margin: {
-        top: "10mm",
-        bottom: "10mm",
-        left: "10mm",
-        right: "10mm",
+        top: "20px",
+        bottom: "20px",
+        left: "20px",
+        right: "20px",
       },
     });
 
     // 5. 응답 반환
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toISOString().split("T")[0];
     const filename = `${slug}_CV_${date}.pdf`;
 
     return new NextResponse(Buffer.from(pdfBuffer), {
