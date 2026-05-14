@@ -2,7 +2,6 @@
 
 import { SettingsContent } from "@/components/features/settings/SettingsContent";
 import { SettingsNav } from "@/components/features/settings/SettingsNav";
-import { Sidebar } from "@/components/layouts/Sidebar";
 import { useState } from "react";
 
 export default function Page() {
@@ -11,20 +10,20 @@ export default function Page() {
   >("profile");
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-
-      <main className="flex-1 ml-[240px]">
-        <div className="border-b border-gray-200 bg-white px-8 py-6">
-          <h1 className="text-gray-900">Settings</h1>
+    <div className="flex min-h-screen bg-spotify-near-black">
+      <main className="flex-1">
+        <div className="border-b border-white/5 bg-spotify-near-black/50 backdrop-blur-md sticky top-0 z-10 px-8 py-6">
+          <h1 className="text-2xl font-black text-white tracking-tight">Settings</h1>
         </div>
 
-        <div className="flex">
+        <div className="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-8 gap-8">
           <SettingsNav
             activeSection={activeSection}
             onSectionChange={setActiveSection}
           />
-          <SettingsContent activeSection={activeSection} />
+          <div className="flex-1">
+            <SettingsContent activeSection={activeSection} />
+          </div>
         </div>
       </main>
     </div>

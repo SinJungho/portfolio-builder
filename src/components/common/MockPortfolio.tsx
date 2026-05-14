@@ -5,34 +5,24 @@ import type { ThemeInput } from "react-activity-calendar";
 import { GitHubCalendar } from "react-github-calendar";
 
 const PROJECTS = [
-  { name: "AI Portfolio Builder", stars: "128", color: "#3182F6" },
-  { name: "Design System Kit", stars: "89", color: "#6366F1" },
-  { name: "Real-time Dashboard", stars: "64", color: "#10B981" },
-  { name: "Open Graph Studio", stars: "47", color: "#F59E0B" },
+  { name: "AI Portfolio Builder", stars: "128", color: "#1ed760" },
+  { name: "Design System Kit", stars: "89", color: "#b3b3b3" },
+  { name: "Real-time Dashboard", stars: "64", color: "#1ed760" },
+  { name: "Open Graph Studio", stars: "47", color: "#539df5" },
 ];
 
 const TECH_TAGS = ["React", "TypeScript", "Next.js", "Tailwind"];
 
-const DARK_THEME: ThemeInput = {
+const SPOTIFY_THEME: ThemeInput = {
   dark: [
-    "#1E293B",
-    "rgba(49,130,246,0.25)",
-    "rgba(49,130,246,0.50)",
-    "rgba(49,130,246,0.78)",
-    "#3182F6",
+    "#1f1f1f",
+    "rgba(30,215,96,0.15)",
+    "rgba(30,215,96,0.40)",
+    "rgba(30,215,96,0.70)",
+    "#1ed760",
   ],
 };
 
-/**
- * react-activity-calendar SVG width 계산식 (라이브러리 소스 기반):
- *   svgWidth = weeks × (blockSize + blockMargin) - blockMargin
- *
- * 역산:
- *   blockSize = floor((containerWidth + blockMargin) / weeks) - blockMargin
- *
- * GitHubCalendar는 최근 1년(53주 이하)을 렌더링.
- * 안전하게 weeks=53 기준으로 계산하고 최소 4 / 최대 12로 클램프.
- */
 function calcBlockSize(containerWidth: number): number {
   const margin = 2;
   const weeks = 53;
@@ -42,9 +32,7 @@ function calcBlockSize(containerWidth: number): number {
 
 export default function MockPortfolio() {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  // blockSize만 state로 관리 (blockMargin은 항상 2로 고정)
   const [blockSize, setBlockSize] = useState(9);
-  // blockSize 변경 시 GitHubCalendar를 재마운트해 새 props 반영
   const [calKey, setCalKey] = useState(0);
   const [mounted, setMounted] = useState(false);
   const prevSizeRef = useRef(9);
@@ -59,7 +47,6 @@ export default function MockPortfolio() {
       if (!width) return;
 
       const next = calcBlockSize(width);
-      // 값이 실제로 바뀔 때만 state 업데이트 → 불필요한 리렌더 방지
       if (next !== prevSizeRef.current) {
         prevSizeRef.current = next;
         setBlockSize(next);
@@ -75,124 +62,70 @@ export default function MockPortfolio() {
   }, []);
 
   return (
-    <div className="relative max-w-[760px] mx-auto rounded-[20px] overflow-hidden shadow-portrait bg-white">
+    <div className="relative max-w-[840px] mx-auto rounded-3xl overflow-hidden shadow-spotify bg-spotify-near-black border border-white/5">
       {/* 브라우저 상단 바 */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#F3F4F6] border-b border-[#E5E7EB]">
-        <div className="flex gap-1.5">
-          {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
+      <div className="flex items-center gap-3 px-6 py-4 bg-spotify-dark-surface border-b border-white/5">
+        <div className="flex gap-2">
+          {["#f3727f", "#ffa42b", "#1ed760"].map((c) => (
             <div
               key={c}
               style={{ background: c }}
-              className="w-3 h-3 rounded-full"
+              className="w-3 h-3 rounded-full opacity-80"
             />
           ))}
         </div>
-        <div className="flex-1 bg-white border border-[#E5E7EB] rounded-lg px-3 py-1 text-[11px] text-ink-300 ml-2 font-mono">
-          portfolioforge.dev/kim-jaemin
+        <div className="flex-1 bg-spotify-near-black border border-white/5 rounded-full px-4 py-1.5 text-[12px] text-spotify-silver font-medium text-center">
+          portfolioforge.app/jaemin-dev
         </div>
       </div>
 
       {/* 포트폴리오 바디 */}
-      <div className="p-8 bg-[#0F172A] min-h-[360px]">
-        {/* ── mobile/tablet (< lg): 세로 스택 ── */}
-        <div className="lg:hidden">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-[16px] bg-linear-to-br from-[#3182F6] to-[#6366F1] shrink-0" />
-            <div>
-              <div className="text-[20px] font-bold text-white leading-tight">
+      <div className="p-8 sm:p-12 bg-spotify-near-black min-h-[400px]">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 mb-12">
+          <div className="shrink-0 flex flex-col items-center lg:items-start">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-spotify-mid-dark border-4 border-spotify-dark-surface shadow-spotify-md mb-6 overflow-hidden">
+               <div className="w-full h-full bg-gradient-to-br from-spotify-green to-spotify-green-border opacity-80 flex items-center justify-center text-black font-black text-2xl">KJ</div>
+            </div>
+            <div className="text-center lg:text-left">
+              <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
                 김재민
-              </div>
-              <div className="text-[13px] text-slate-500 mt-0.5">
+              </h3>
+              <p className="text-[14px] font-bold text-spotify-green uppercase tracking-spotify mb-6">
                 Frontend Engineer · Seoul
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {TECH_TAGS.map((t) => (
-              <span
-                key={t}
-                className="px-2.5 py-1 rounded-full text-[11px] font-medium"
-                style={{
-                  background: "rgba(49,130,246,0.15)",
-                  color: "#60A5FA",
-                }}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-2.5 mb-6">
-            {PROJECTS.map((p) => (
-              <div
-                key={p.name}
-                className="rounded-xl p-3.5"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <div className="text-[12px] font-semibold text-white mb-2">
-                  {p.name}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: p.color }}
-                  />
-                  <span className="text-[11px] text-slate-500">
-                    ⭐ {p.stars}
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+                {TECH_TAGS.map((t) => (
+                  <span
+                    key={t}
+                    className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/5 border border-white/10 text-spotify-silver uppercase tracking-spotify-wide"
+                  >
+                    {t}
                   </span>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── desktop (lg+): 원본 flex 레이아웃 ── */}
-        <div className="hidden lg:flex gap-6 mb-6">
-          <div className="shrink-0">
-            <div className="w-14 h-14 rounded-[16px] bg-linear-to-br from-[#3182F6] to-[#6366F1] mb-4" />
-            <div className="text-[20px] font-bold text-white leading-tight">
-              김재민
-            </div>
-            <div className="text-[13px] text-slate-500 mt-0.5 mb-4">
-              Frontend Engineer · Seoul
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {TECH_TAGS.map((t) => (
-                <span
-                  key={t}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium"
-                  style={{
-                    background: "rgba(49,130,246,0.15)",
-                    color: "#60A5FA",
-                  }}
-                >
-                  {t}
-                </span>
-              ))}
             </div>
           </div>
-          <div className="flex-1 grid grid-cols-2 gap-2.5">
+          
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {PROJECTS.map((p) => (
               <div
                 key={p.name}
-                className="rounded-xl p-3.5"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
+                className="rounded-2xl p-5 bg-spotify-dark-surface border border-white/5 hover:bg-spotify-mid-dark transition-colors group"
               >
-                <div className="text-[12px] font-semibold text-white mb-2">
+                <div className="text-[15px] font-bold text-white mb-3 flex justify-between items-center">
                   {p.name}
-                </div>
-                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-2 h-2 rounded-full shrink-0"
+                    className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(30,215,96,0.5)]"
                     style={{ background: p.color }}
                   />
-                  <span className="text-[11px] text-slate-500">
-                    ⭐ {p.stars}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] font-bold text-spotify-silver uppercase tracking-spotify">
+                    ⭐ {p.stars} Stars
+                  </span>
+                  <div className="h-1 w-1 rounded-full bg-white/10" />
+                  <span className="text-[12px] font-bold text-spotify-green opacity-0 group-hover:opacity-100 transition-opacity">
+                    View Project
                   </span>
                 </div>
               </div>
@@ -201,35 +134,28 @@ export default function MockPortfolio() {
         </div>
 
         {/* ── GitHub 기여도 캘린더 ── */}
-        <div>
-          <div className="text-[11px] text-slate-600 mb-3 font-medium">
-            최근 1년 기여도
+        <div className="pt-8 border-t border-white/5">
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-[13px] font-bold text-white uppercase tracking-spotify">
+              최근 1년 기여도
+            </div>
+            <div className="text-[11px] font-bold text-spotify-silver uppercase tracking-spotify-wide">
+              Total 1,428 Contributions
+            </div>
           </div>
-          {/*
-           * ref wrapper: ResizeObserver가 이 요소의 너비를 관찰.
-           * overflow-hidden: SVG가 계산 오차로 1~2px 삐져나오는 것 방지.
-           * key: blockSize 변경 시 GitHubCalendar 재마운트 → 새 blockSize 적용.
-           *
-           * GitHubCalendar props (react-github-calendar → react-activity-calendar):
-           *   blockSize   : 셀 크기(px) — ResizeObserver로 컨테이너에 맞게 동적 계산
-           *   blockMargin : 셀 간격(px) — 2로 고정
-           *   showColorLegend={false}  : 하단 범례 숨김
-           *   showTotalCount={false}   : "N contributions in ..." 텍스트 숨김
-           *   showMonthLabels 기본값   : true (월 레이블 표시)
-           */}
-          <div ref={wrapperRef} className="w-full overflow-hidden">
+          <div ref={wrapperRef} className="w-full overflow-hidden p-6 rounded-2xl bg-spotify-dark-surface border border-white/5">
             {mounted && (
               <GitHubCalendar
                 key={calKey}
                 username="torvalds"
                 colorScheme="dark"
-                theme={DARK_THEME}
+                theme={SPOTIFY_THEME}
                 blockSize={blockSize}
                 blockMargin={2}
                 fontSize={9}
                 showColorLegend={false}
                 showTotalCount={false}
-                style={{ color: "#475569", width: "100%", maxWidth: "100%" }}
+                style={{ color: "#b3b3b3", width: "100%", maxWidth: "100%" }}
               />
             )}
           </div>

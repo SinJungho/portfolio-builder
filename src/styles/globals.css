@@ -46,6 +46,26 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  
+  --tracking-spotify: 1.4px;
+  --tracking-spotify-wide: 2px;
+
+  --color-spotify-near-black: #121212;
+  --color-spotify-dark-surface: #181818;
+  --color-spotify-mid-dark: #1f1f1f;
+  --color-spotify-green: #1ed760;
+  --color-spotify-green-border: #1db954;
+  --color-spotify-silver: #b3b3b3;
+  --color-spotify-near-white: #cbcbcb;
+  --color-spotify-negative: #f3727f;
+  --color-spotify-warning: #ffa42b;
+  --color-spotify-announcement: #539df5;
+
+  --radius-pill: 9999px;
+  --radius-pill-large: 500px;
+
+  --shadow-spotify: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-spotify-md: 0 8px 8px rgba(0,0,0,0.3);
 }
 
 :root {
@@ -118,11 +138,13 @@
   }
   
   .btn-pill-primary {
-    @apply btn-pill px-8 py-3 bg-spotify-green text-black hover:scale-105 active:scale-95;
+    @apply inline-flex items-center justify-center rounded-full font-bold transition-all uppercase tracking-spotify
+           px-8 py-3 bg-spotify-green text-black hover:scale-105 active:scale-95;
   }
   
   .btn-pill-secondary {
-    @apply btn-pill px-8 py-3 bg-transparent border border-spotify-silver text-white hover:border-white;
+    @apply inline-flex items-center justify-center rounded-full font-bold transition-all uppercase tracking-spotify
+           px-8 py-3 bg-transparent border border-spotify-silver text-white hover:border-white;
   }
   
   .spotify-card {

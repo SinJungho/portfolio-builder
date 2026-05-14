@@ -13,7 +13,6 @@ import { ArrowRight, ChevronRight, Github, Menu, Sparkles, LogOut, User, LayoutD
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import CTAButton from "../common/CTAButton";
 import { useSession, signOut } from "next-auth/react";
 import {
   DropdownMenu,
@@ -32,14 +31,8 @@ const NAV_LINKS = [
 ] as const;
 
 const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-[0_4px_12px_rgba(49,130,246,0.3)] shrink-0">
-    <Sparkles className="h-5 w-5" />
-  </div>
-);
-
-const LogoMarkSm = () => (
-  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-[0_3px_10px_rgba(49,130,246,0.3)] shrink-0">
-    <Sparkles className="h-4 w-4" />
+  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-spotify-green text-black shadow-[0_4px_12px_rgba(30,215,96,0.3)] shrink-0">
+    <Sparkles className="h-5 w-5 stroke-[2.5px]" />
   </div>
 );
 
@@ -52,23 +45,6 @@ export default function Header() {
   const isLoggedIn = status === "authenticated";
   const user = session?.user;
 
-  /**
-   * 하이드레이션 전략:
-   *
-   * ① scrolled className 불일치
-   *    → <header>에 suppressHydrationWarning 적용.
-   *      SSR은 항상 non-scrolled HTML을 내보내고,
-   *      클라이언트가 마운트 직후 scroll 위치를 읽어 필요하면 업데이트.
-   *      suppressHydrationWarning이 있으면 React가 className 차이를 경고 없이 무시.
-   *
-   * ② setIsMounted를 effect 안에서 동기 호출 → cascading renders 경고
-   *    → isMounted state 제거. 대신 useRef로 마운트 여부 추적.
-   *      Sheet는 항상 렌더하되 open state는 클라이언트에서만 제어됨.
-   *      (Sheet가 SSR에서 portal을 생성하지 않으므로 실제 불일치 없음)
-   *
-   * ③ onScroll 즉시 호출 → effect 내 동기 setState
-   *    → requestAnimationFrame으로 한 프레임 뒤에 실행해 cascading 방지.
-   */
   const mountedRef = useRef(false);
 
   useEffect(() => {
@@ -78,7 +54,6 @@ export default function Header() {
       if (mountedRef.current) setScrolled(window.scrollY > 20);
     };
 
-    // 진입 시 즉시 체크 — rAF로 감싸 effect body 내 동기 setState 경고 회피
     const raf = requestAnimationFrame(onScroll);
     window.addEventListener("scroll", onScroll, { passive: true });
 
@@ -95,103 +70,95 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-white/90 backdrop-blur-xl border-b border-ink-100 shadow-[0_1px_0_rgba(0,0,0,0.06)]"
+          ? "bg-spotify-near-black/70 backdrop-blur-md border-b border-white/5"
           : "bg-transparent border-b border-transparent",
       )}
     >
-      <div className="max-w-280 mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 h-16 sm:h-20 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="flex items-center gap-2 no-underline">
+        <Link href="/" className="flex items-center gap-3 no-underline group">
           <LogoMark />
-          <span className="text-[19px] font-bold text-ink-900 tracking-tight">
+          <span className="text-[20px] font-bold text-white tracking-tight">
             PortfolioForge
           </span>
         </Link>
 
         {/* 데스크탑 네비게이션 */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-2">
           {NAV_LINKS.map((item) => (
-            <Button
+            <Link
               key={item.name}
-              variant="ghost"
-              asChild
-              className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/4 transition-all duration-200"
+              href={item.href}
+              className="px-4 py-2 text-[14px] font-bold text-spotify-silver hover:text-white transition-colors no-underline uppercase tracking-spotify"
             >
-              <Link href={item.href}>{item.name}</Link>
-            </Button>
+              {item.name}
+            </Link>
           ))}
         </nav>
 
         {/* 데스크탑 CTA */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-4">
           {isLoading ? (
-            <div className="w-24 h-10 rounded-xl bg-ink-50 animate-pulse" />
+            <div className="w-10 h-10 rounded-full bg-white/5 animate-pulse" />
           ) : isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-1 rounded-full hover:bg-black/5 transition-colors focus:outline-none">
+                <button className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 overflow-hidden outline-none focus:ring-2 focus:ring-spotify-green/20">
                   {user?.image ? (
                     <Image
                       src={user.image}
                       alt={user.name || "User"}
-                      width={36}
-                      height={36}
-                      className="w-9 h-9 rounded-full border border-ink-100"
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
-                      <User size={20} />
-                    </div>
+                    <User size={20} className="text-spotify-silver" />
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 mt-2">
-                <DropdownMenuLabel className="font-normal">
+              <DropdownMenuContent align="end" className="w-60 mt-2 bg-spotify-mid-dark border-none rounded-2xl p-2 shadow-spotify">
+                <DropdownMenuLabel className="font-normal px-3 py-3">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-bold leading-none text-ink-900">
-                      {user?.name}
-                    </p>
-                    <p className="text-xs leading-none text-ink-500">
-                      {user?.email}
-                    </p>
+                    <p className="text-[15px] font-bold text-white">{user?.name}</p>
+                    <p className="text-xs text-spotify-silver truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>대시보드</span>
+                <DropdownMenuSeparator className="bg-white/5 mb-1" />
+                <DropdownMenuItem asChild className="rounded-xl py-2.5 cursor-pointer focus:bg-white/5 focus:text-white text-spotify-silver">
+                  <Link href="/dashboard" className="flex items-center w-full">
+                    <LayoutDashboard className="mr-3 h-4.5 w-4.5 opacity-70" />
+                    <span className="font-bold">대시보드</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex items-center">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>설정</span>
+                <DropdownMenuItem asChild className="rounded-xl py-2.5 cursor-pointer focus:bg-white/5 focus:text-white text-spotify-silver">
+                  <Link href="/settings" className="flex items-center w-full">
+                    <Settings className="mr-3 h-4.5 w-4.5 opacity-70" />
+                    <span className="font-bold">설정</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/5 my-1" />
                 <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500"
+                  className="rounded-xl py-2.5 cursor-pointer text-spotify-negative focus:bg-spotify-negative/10 focus:text-spotify-negative font-bold"
                   onClick={() => signOut()}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="mr-3 h-4.5 w-4.5" />
                   <span>로그아웃</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <>
-              <Button
-                variant="outline"
-                asChild
-                className="px-3.5 py-2 rounded-xl text-[15px] font-medium text-ink-500 hover:text-ink-900 hover:bg-black/4 transition-all duration-200"
+              <Link 
+                href="/login" 
+                className="text-[14px] font-bold text-spotify-silver hover:text-white transition-colors no-underline uppercase tracking-spotify px-4 py-2"
               >
-                <Link href="/login">로그인</Link>
-              </Button>
-              <Button asChild className="px-5 py-3.5">
+                로그인
+              </Link>
+              <Button asChild className="btn-pill-primary h-11 px-6">
                 <Link href="/login">
                   <Github size={18} />
-                  GitHub로 시작하기
+                  시작하기
                 </Link>
               </Button>
             </>
@@ -205,27 +172,27 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl text-ink-500 hover:text-ink-900 hover:bg-black/4"
+                className="text-spotify-silver hover:text-white hover:bg-white/5 rounded-full"
                 aria-label="메뉴 열기"
               >
-                <Menu size={22} />
+                <Menu size={24} />
               </Button>
             </SheetTrigger>
 
             <SheetContent
               side="right"
-              className="w-75 p-0 flex flex-col bg-white border-l border-ink-100 shadow-[-8px_0_32px_rgba(0,0,0,0.08)]"
+              className="w-full sm:w-80 p-0 flex flex-col bg-spotify-near-black border-none shadow-spotify"
             >
               {/* 헤더 — 로고 */}
-              <SheetHeader className="px-5 h-16 flex-row items-center border-b border-ink-100 space-y-0">
+              <SheetHeader className="px-6 h-16 sm:h-20 flex-row items-center justify-between border-b border-white/5 space-y-0">
                 <SheetTitle asChild>
                   <Link
                     href="/"
-                    className="flex items-center gap-2 no-underline"
+                    className="flex items-center gap-3 no-underline"
                     onClick={() => setOpen(false)}
                   >
-                    <LogoMarkSm />
-                    <span className="text-[17px] font-bold text-ink-900 tracking-tight">
+                    <LogoMark />
+                    <span className="text-[18px] font-bold text-white tracking-tight">
                       PortfolioForge
                     </span>
                   </Link>
@@ -233,85 +200,80 @@ export default function Header() {
               </SheetHeader>
 
               {/* 네비게이션 링크 */}
-              <nav className="flex-1 flex flex-col overflow-y-auto py-2">
+              <nav className="flex-1 flex flex-col overflow-y-auto py-4">
                 {NAV_LINKS.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="group flex items-center justify-between mx-2 px-4 py-3.5 rounded-2xl text-[16px] font-medium text-ink-800 hover:bg-[#F9FAFB] active:bg-[#F3F4F6] transition-colors duration-150 no-underline"
+                    className="flex items-center justify-between px-8 py-4 text-[16px] font-bold text-spotify-silver hover:text-white hover:bg-white/5 transition-all no-underline uppercase tracking-spotify"
                   >
                     {item.name}
-                    <ChevronRight
-                      size={16}
-                      className="text-ink-300 group-hover:text-ink-500 transition-colors"
-                    />
+                    <ChevronRight size={18} className="opacity-20" />
                   </Link>
                 ))}
               </nav>
 
               {/* 하단 CTA */}
-              <div className="px-5 pb-8 pt-4 border-t border-ink-100 flex flex-col gap-3">
+              <div className="px-6 pb-12 pt-6 border-t border-white/5 flex flex-col gap-4">
                 {isLoggedIn ? (
                   <>
-                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-ink-50 border border-ink-100 mb-2">
+                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 mb-2">
                        {user?.image ? (
                         <Image
                           src={user.image}
                           alt={user.name || "User"}
-                          width={44}
-                          height={44}
-                          className="w-11 h-11 rounded-full border border-ink-200"
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 rounded-full border border-white/10"
                         />
                       ) : (
-                        <div className="w-11 h-11 rounded-full bg-linear-to-br from-[#3182F6] to-[#6366F1] flex items-center justify-center text-white">
+                        <div className="w-12 h-12 rounded-full bg-spotify-mid-dark flex items-center justify-center text-spotify-silver">
                           <User size={24} />
                         </div>
                       )}
                       <div className="flex flex-col">
-                        <span className="text-[15px] font-bold text-ink-900">{user?.name}</span>
-                        <span className="text-[12px] text-ink-500 truncate max-w-[150px]">{user?.email}</span>
+                        <span className="text-[16px] font-bold text-white">{user?.name}</span>
+                        <span className="text-[13px] text-spotify-silver truncate max-w-[150px]">{user?.email}</span>
                       </div>
                     </div>
                     <Button
-                      variant="outline"
-                      className="w-full h-12 rounded-2xl text-[15px] font-bold text-ink-700 bg-white"
+                      className="btn-pill-primary h-12 w-full text-[15px]"
                       asChild
                     >
                       <Link href="/dashboard" onClick={() => setOpen(false)}>
-                        <LayoutDashboard size={18} className="mr-2" />
+                        <LayoutDashboard size={18} className="mr-3" />
                         대시보드로 가기
                       </Link>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full h-12 rounded-2xl text-[15px] font-medium text-red-500 hover:bg-red-50"
+                      className="w-full h-12 rounded-full text-[15px] font-bold text-spotify-negative hover:bg-spotify-negative/10"
                       onClick={() => {
                         signOut();
                         setOpen(false);
                       }}
                     >
-                      <LogOut size={18} className="mr-2" />
+                      <LogOut size={18} className="mr-3" />
                       로그아웃
                     </Button>
                   </>
                 ) : (
                   <>
-                    <CTAButton primary>
-                      <Github size={18} />
-                      GitHub로 시작하기
-                      <ArrowRight size={16} />
-                    </CTAButton>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className="w-full h-11 rounded-2xl text-[15px] font-medium text-ink-500 hover:text-ink-800 hover:bg-[#F3F4F6] transition-colors duration-200"
-                    >
+                    <Button asChild className="btn-pill-primary h-14 w-full text-[16px]">
                       <Link href="/login" onClick={() => setOpen(false)}>
-                        이미 계정이 있으신가요?&nbsp;
-                        <span className="text-[#3182F6] font-semibold">로그인</span>
+                        <Github size={20} className="mr-3" />
+                        GitHub로 시작하기
+                        <ArrowRight size={18} className="ml-2" />
                       </Link>
                     </Button>
+                    <Link 
+                      href="/login" 
+                      onClick={() => setOpen(false)}
+                      className="text-center py-3 text-[14px] font-bold text-spotify-silver hover:text-white transition-colors no-underline"
+                    >
+                      이미 계정이 있으신가요? <span className="text-spotify-green ml-1">로그인</span>
+                    </Link>
                   </>
                 )}
               </div>

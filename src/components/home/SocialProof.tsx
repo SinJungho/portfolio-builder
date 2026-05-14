@@ -9,24 +9,25 @@ export default function SocialProof() {
   ];
 
   return (
-    <section className="border-y border-[#F0F0F0] bg-white px-6 py-12">
-      <div className="mx-auto grid grid-cols-2 md:flex max-w-280 justify-center gap-x-8 gap-y-4 md:gap-20">
+    <section className="border-y border-white/5 bg-spotify-near-black px-6 py-16 sm:py-24">
+      <div className="mx-auto grid grid-cols-2 lg:flex max-w-7xl justify-center gap-x-12 gap-y-10 md:gap-24 lg:gap-32">
         {stats.map((s, i) => (
           <Reveal key={i} delay={i * 80}>
-            <div className="text-center">
+            <div className="text-center group">
               <div
                 className="
-                  mb-1
-                  text-[36px]
-                  font-extrabold
-                  tracking-[-1px]
-                  text-[#191F28]
+                  mb-2
+                  text-[32px] sm:text-[42px]
+                  font-black
+                  tracking-tight
+                  text-white
+                  group-hover:text-spotify-green transition-colors duration-500
                 "
               >
                 {s.value}
               </div>
 
-              <div className="text-[14px] font-medium text-gray-400">
+              <div className="text-[14px] font-bold text-spotify-silver uppercase tracking-spotify">
                 {s.label}
               </div>
             </div>

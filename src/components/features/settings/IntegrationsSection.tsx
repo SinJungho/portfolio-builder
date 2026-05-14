@@ -1,4 +1,5 @@
 import { Github, Rss } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function IntegrationsSection() {
   const integrations = [
@@ -7,69 +8,73 @@ export function IntegrationsSection() {
       name: "GitHub",
       icon: Github,
       connected: true,
-      description: "Sync your repositories and contribution data",
+      description: "Sync your repositories and contribution data to build your portfolio automatically.",
     },
     {
       id: "blog",
       name: "Blog Feed",
       icon: Rss,
       connected: false,
-      description: "Display your latest blog posts automatically",
+      description: "Display your latest blog posts from Tistory, Velog, or custom RSS feeds.",
     },
   ];
 
   return (
-    <div>
-      <h2 className="text-gray-900 mb-6">Connected Services</h2>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify">Connected Services</h2>
 
-      <div className="space-y-4">
-        {integrations.map((integration) => {
-          const Icon = integration.icon;
-          return (
-            <div
-              key={integration.id}
-              className="p-6 border border-gray-200 rounded-lg flex items-start justify-between"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Icon className="w-6 h-6 text-gray-700" />
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-gray-900">{integration.name}</h3>
-                    {integration.connected && (
-                      <span className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
-                        Connected
-                      </span>
-                    )}
-                    {!integration.connected && (
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        Not Connected
-                      </span>
-                    )}
+        <div className="grid grid-cols-1 gap-4">
+          {integrations.map((integration) => {
+            const Icon = integration.icon;
+            return (
+              <div
+                key={integration.id}
+                className="p-8 bg-spotify-dark-surface rounded-[32px] border border-white/5 flex flex-col sm:flex-row items-start justify-between gap-6 hover:bg-spotify-mid-dark transition-all group"
+              >
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform duration-500">
+                    <Icon className={integration.connected ? "w-7 h-7 text-white" : "w-7 h-7 text-spotify-silver"} strokeWidth={1.5} />
                   </div>
-                  <p className="text-sm text-gray-600">
-                    {integration.description}
-                  </p>
+
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <h3 className="text-[18px] font-black text-white tracking-tight">{integration.name}</h3>
+                      {integration.connected ? (
+                        <span className="flex items-center gap-2 text-[11px] font-black text-spotify-green bg-spotify-green/10 px-3 py-1 rounded-full uppercase tracking-spotify">
+                          <span className="w-1.5 h-1.5 bg-spotify-green rounded-full shadow-[0_0_8px_rgba(30,215,96,0.6)]"></span>
+                          Connected
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-black text-spotify-silver bg-white/5 px-3 py-1 rounded-full uppercase tracking-spotify">
+                          Not Connected
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[14px] text-spotify-silver font-medium leading-relaxed max-w-md">
+                      {integration.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-full sm:w-auto">
+                  {integration.connected ? (
+                    <Button 
+                      variant="outline" 
+                      className="w-full sm:w-auto btn-pill-secondary h-11 px-8 text-spotify-silver hover:text-spotify-negative hover:border-spotify-negative/30 hover:bg-spotify-negative/5"
+                    >
+                      Disconnect
+                    </Button>
+                  ) : (
+                    <Button className="w-full sm:w-auto btn-pill-primary h-11 px-10">
+                      Connect Service
+                    </Button>
+                  )}
                 </div>
               </div>
-
-              <div>
-                {integration.connected ? (
-                  <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 hover:border-red-300 hover:text-red-700 transition-colors">
-                    Disconnect
-                  </button>
-                ) : (
-                  <button className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
-                    Connect
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

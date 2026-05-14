@@ -9,7 +9,7 @@ import Testimonials from "@/components/home/Testimonials";
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-spotify-near-black">
       <main>
         <Hero />
         <SocialProof />

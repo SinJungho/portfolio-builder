@@ -1,30 +1,38 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function DangerZoneSection() {
   return (
-    <div>
-      <h2 className="text-gray-900 mb-6">Danger Zone</h2>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify">Danger Zone</h2>
 
-      <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
-        <div className="flex items-start gap-3 mb-4">
-          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
-          <div>
-            <h3 className="text-red-900 mb-1">Delete Account</h3>
-            <p className="text-sm text-red-700">
-              Once you delete your account, there is no going back. Please be
-              certain.
+        <div className="bg-spotify-negative/5 border border-spotify-negative/20 rounded-[32px] p-10 shadow-spotify-md">
+          <div className="flex flex-col sm:flex-row items-start gap-8 mb-10">
+            <div className="w-16 h-16 rounded-2xl bg-spotify-negative/10 flex items-center justify-center text-spotify-negative shrink-0 shadow-[0_0_20px_rgba(243,114,127,0.1)]">
+              <AlertTriangle className="w-8 h-8" strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="text-[20px] font-black text-white mb-2 tracking-tight">Delete Account</h3>
+              <p className="text-[15px] text-spotify-silver font-medium leading-relaxed max-w-lg">
+                Once you delete your account, there is no going back. All your portfolios, analytic data, and custom configurations will be <span className="text-spotify-negative font-bold italic">permanently deleted</span>.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-8 border-t border-spotify-negative/10">
+            <p className="text-[12px] font-bold text-spotify-negative uppercase tracking-spotify-wide">
+              Proceed with extreme caution
             </p>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto h-12 px-10 rounded-full border-2 border-spotify-negative text-spotify-negative hover:bg-spotify-negative hover:text-white transition-all font-black uppercase tracking-spotify"
+            >
+              <Trash2 className="w-4.5 h-4.5 mr-2" />
+              Delete Account
+            </Button>
           </div>
         </div>
-
-        <button className="px-4 py-2 border-2 border-red-600 text-red-700 rounded-md hover:bg-red-600 hover:text-white transition-colors">
-          Delete Account
-        </button>
-
-        <p className="text-xs text-red-600 mt-3">
-          This action cannot be undone. All your portfolios and data will be
-          permanently deleted.
-        </p>
       </div>
     </div>
   );

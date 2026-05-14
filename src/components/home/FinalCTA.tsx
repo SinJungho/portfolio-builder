@@ -1,51 +1,47 @@
-import { TOSS_BLUE } from "@/lib/validations/color";
 import { ArrowRight, Github } from "lucide-react";
 import Reveal from "../common/Reveal";
+import CTAButton from "../common/CTAButton";
 
 export default function FinalCTA() {
   return (
-    <section className="relative overflow-hidden bg-[#191F28] py-30 px-6 text-center">
-      {/* radial background */}
+    <section className="relative overflow-hidden bg-spotify-near-black py-32 sm:py-48 px-6 text-center">
+      {/* Spotify Green Glow */}
       <div
-        className="pointer-events-none absolute top-1/2 left-1/2 w-200 h-200 -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(49,130,246,0.15) 0%, transparent 70%)",
-        }}
+        className="
+          pointer-events-none absolute left-1/2 top-1/2
+          h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full
+          bg-[radial-gradient(circle,rgba(30,215,96,0.12)_0%,transparent_70%)]
+          blur-[100px]
+        "
       />
 
       <Reveal>
-        <div className="relative max-w-150 mx-auto">
+        <div className="relative max-w-4xl mx-auto">
           {/* title */}
-          <h2 className="text-[clamp(40px,6vw,72px)] font-extrabold text-white tracking-[-2px] leading-[1.1] mb-6">
+          <h2 className="text-[clamp(44px,7vw,88px)] font-black text-white tracking-tight leading-[1.05] mb-8">
             지금 시작하면
             <br />
-            <span style={{ color: TOSS_BLUE }}>오늘 완성</span>돼요
+            <span className="text-spotify-green">오늘 완성</span>돼요
           </h2>
 
           {/* description */}
-          <p className="text-[18px] text-gray-200 leading-[1.7] mb-12">
-            수백 명의 개발자가 포트폴리오포지로
-            <br />
-            꿈의 회사에 합격했어요.
+          <p className="text-[18px] sm:text-[22px] text-spotify-silver font-medium leading-relaxed mb-14 max-w-2xl mx-auto">
+            수백 명의 개발자가 PortfolioForge와 함께 <br className="hidden sm:block" />
+            성공적인 커리어 여정을 시작했습니다.
           </p>
 
           {/* CTA button */}
-          <button
-            className="inline-flex items-center gap-2.5 px-9 py-3 md:py-4 rounded-full text-[18px] md:text-lg lg:text-xl font-bold text-white transition-all"
-            style={{
-              background: TOSS_BLUE,
-              boxShadow: "0 8px 32px rgba(49,130,246,0.4)",
-            }}
-          >
-            <Github size={20} />
-            GitHub로 무료 시작하기
-            <ArrowRight size={18} />
-          </button>
+          <div className="flex flex-col items-center gap-6">
+            <CTAButton primary className="h-16 px-12 text-[20px] shadow-spotify">
+              <Github size={24} />
+              GitHub로 무료 시작하기
+              <ArrowRight size={22} />
+            </CTAButton>
 
-          {/* sub text */}
-          <div className="mt-5 text-sm text-gray-300">
-            신용카드 불필요 · 1분이면 완성 · 언제든 취소 가능
+            {/* sub text */}
+            <div className="text-[14px] font-bold text-spotify-silver/60 uppercase tracking-spotify">
+              신용카드 불필요 · 1분 완성 · 평생 무료
+            </div>
           </div>
         </div>
       </Reveal>

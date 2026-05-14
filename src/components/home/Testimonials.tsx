@@ -1,4 +1,3 @@
-import { TOSS_BLUE } from "@/lib/validations/color";
 import Reveal from "../common/Reveal";
 
 export default function Testimonials() {
@@ -27,18 +26,15 @@ export default function Testimonials() {
   ];
 
   return (
-    <section className="bg-[#FAFAFA] py-30 px-6">
-      <div className="max-w-280 mx-auto">
+    <section className="bg-spotify-near-black py-32 px-6">
+      <div className="max-w-7xl mx-auto">
         <Reveal>
-          <div className="text-center mb-16">
-            <p
-              className="text-sm font-semibold mb-3 tracking-[0.5px]"
-              style={{ color: TOSS_BLUE }}
-            >
+          <div className="text-center mb-20">
+            <p className="text-[14px] font-bold text-spotify-green uppercase tracking-spotify-wide mb-4">
               TESTIMONIALS
             </p>
 
-            <h2 className="text-[clamp(36px,5vw,56px)] font-extrabold text-[#191F28] tracking-[-1.5px] leading-[1.15] m-0">
+            <h2 className="text-[clamp(36px,5vw,56px)] font-black text-white tracking-tight leading-tight m-0">
               이미 많은 개발자가
               <br />
               취업에 성공했어요
@@ -46,41 +42,41 @@ export default function Testimonials() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reviews.map((r, i) => (
             <Reveal key={i} delay={i * 100}>
-              <div className="bg-white rounded-4xl p-8 shadow-[0_2px_20px_rgba(0,0,0,0.06)] border border-black/5">
+              <div className="bg-spotify-dark-surface rounded-[32px] p-10 shadow-spotify-md border border-white/5 hover:bg-spotify-mid-dark transition-colors duration-300">
                 {/* rating */}
-                <div className="flex gap-0.5 mb-5">
+                <div className="flex gap-1 mb-6">
                   {Array.from({ length: r.rating }).map((_, j) => (
-                    <span key={j} className="text-[16px] text-[#FCD34D]">
+                    <span key={j} className="text-[18px] text-spotify-green">
                       ★
                     </span>
                   ))}
                 </div>
 
                 {/* review text */}
-                <p className="text-[16px] leading-[1.7] text-gray-700 mb-6 font-normal">
+                <p className="text-[17px] leading-relaxed text-white mb-8 font-medium italic opacity-90">
                   &quot;{r.text}&quot;
                 </p>
 
                 {/* user */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-[16px] font-bold"
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-black shadow-spotify-md"
                     style={{
-                      background: `hsl(${i * 80 + 200}, 70%, 85%)`,
-                      color: `hsl(${i * 80 + 200}, 60%, 40%)`,
+                      background: `hsl(${i * 80 + 160}, 60%, 40%)`,
+                      color: "white",
                     }}
                   >
                     {r.name[0]}
                   </div>
 
                   <div>
-                    <div className="text-sm font-bold text-[#191F28]">
+                    <div className="text-[16px] font-black text-white tracking-tight">
                       {r.name}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-[13px] font-bold text-spotify-silver uppercase tracking-spotify mt-0.5">
                       {r.role} @ {r.company}
                     </div>
                   </div>

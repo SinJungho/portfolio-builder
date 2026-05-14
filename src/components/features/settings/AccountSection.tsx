@@ -1,5 +1,7 @@
-import { Check, X } from "lucide-react";
+import { Check, X, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 export function AccountSection() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -8,49 +10,51 @@ export function AccountSection() {
   );
 
   const checkUsername = (value: string) => {
-    // Simulate username availability check
+    if (value.length === 0) {
+      setUsernameAvailable(null);
+      return;
+    }
     setTimeout(() => {
       setUsernameAvailable(value.length > 3);
     }, 500);
   };
 
   return (
-    <div className="space-y-12">
-      {/* Account Settings */}
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-gray-900 mb-6">Account Settings</h2>
+        <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify">Account Settings</h2>
 
-        <div className="space-y-6">
+        <div className="space-y-6 bg-spotify-dark-surface p-8 rounded-[32px] border border-white/5 shadow-spotify-md">
           {/* Username */}
           <div>
             <label
               htmlFor="username"
-              className="text-sm text-gray-700 mb-2 block"
+              className="text-[13px] font-bold text-spotify-silver mb-3 block uppercase tracking-spotify"
             >
               Username
             </label>
-            <div className="relative">
+            <div className="relative group">
               <input
                 id="username"
                 type="text"
                 defaultValue="johndeveloper"
                 onChange={(e) => checkUsername(e.target.value)}
-                className="w-full h-10 px-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 transition-colors"
+                className="w-full h-12 px-5 pr-12 bg-spotify-near-black border border-white/10 rounded-xl text-white focus:outline-none focus:border-spotify-green transition-all font-medium"
               />
               {usernameAvailable !== null && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
                   {usernameAvailable ? (
-                    <Check className="w-5 h-5 text-green-600" />
+                    <Check className="w-5 h-5 text-spotify-green" />
                   ) : (
-                    <X className="w-5 h-5 text-red-600" />
+                    <X className="w-5 h-5 text-spotify-negative" />
                   )}
                 </div>
               )}
             </div>
             {usernameAvailable !== null && (
               <p
-                className={`text-xs mt-1 ${
-                  usernameAvailable ? "text-green-600" : "text-red-600"
+                className={`text-[12px] mt-2 font-bold uppercase tracking-spotify ${
+                  usernameAvailable ? "text-spotify-green" : "text-spotify-negative"
                 }`}
               >
                 {usernameAvailable
@@ -60,40 +64,46 @@ export function AccountSection() {
             )}
           </div>
 
+          <div className="h-px bg-white/5" />
+
           {/* Password */}
-          <div>
-            <label className="text-sm text-gray-700 mb-2 block">Password</label>
-            <button
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <label className="text-[14px] font-bold text-white mb-1 block">Account Password</label>
+              <p className="text-[13px] text-spotify-silver">Last changed 3 months ago</p>
+            </div>
+            <Button
               type="button"
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              variant="outline"
+              className="btn-pill-secondary h-11 px-8"
             >
               Change Password
-            </button>
+            </Button>
           </div>
 
+          <div className="h-px bg-white/5" />
+
           {/* Two-Factor Authentication */}
-          <div className="flex items-start justify-between gap-4 p-4 border border-gray-200 rounded-lg">
-            <div className="flex-1">
-              <h4 className="text-sm text-gray-900 mb-1">
-                Two-Factor Authentication
-              </h4>
-              <p className="text-xs text-gray-500">
-                Add an extra layer of security to your account
-              </p>
+          <div className="flex items-center justify-between gap-6 p-6 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-colors">
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 rounded-full bg-spotify-green/10 flex items-center justify-center text-spotify-green">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-[15px] font-bold text-white mb-1">
+                  Two-Factor Authentication
+                </h4>
+                <p className="text-[13px] text-spotify-silver font-medium">
+                  Add an extra layer of security to your account
+                </p>
+              </div>
             </div>
 
-            <button
-              onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                twoFactorEnabled ? "bg-gray-900" : "bg-gray-300"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  twoFactorEnabled ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
+            <Switch 
+              checked={twoFactorEnabled}
+              onCheckedChange={setTwoFactorEnabled}
+              className="data-[state=checked]:bg-spotify-green"
+            />
           </div>
         </div>
       </div>

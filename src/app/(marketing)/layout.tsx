@@ -7,10 +7,10 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="bg-spotify-near-black min-h-screen">
       <Header />
       {children}
       <Footer />
-    </>
+    </div>
   );
 }
