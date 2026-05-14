@@ -50,7 +50,12 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
   const isExportMode = isExport === "true";
 
   const portfolio = await prisma.portfolio.findUnique({
-    where: { slug }
+    where: { slug },
+    include: {
+      user: {
+        select: { name: true }
+      }
+    }
   })
 
   if (!portfolio || !portfolio.is_published) {
@@ -106,6 +111,21 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
     >
       <AnalyticsTracker portfolioId={portfolio.id} />
       
+      {/* SEO JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": portfolio.user?.name || slug,
+            "url": `https://${portfolio.slug}.portfolioforge.app`,
+            "description": portfolio.seo_description || portfolio.title,
+            "image": portfolio.og_image_url || undefined,
+          })
+        }}
+      />
+
       <main className="flex-1 w-full">
         <PortfolioPreview 
           blocks={populatedBlocks} 
