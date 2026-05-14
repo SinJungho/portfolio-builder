@@ -12,7 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Palette, Type, Square, ArrowUpDown, Check, Sparkles, AlertTriangle } from "lucide-react";
+import { Palette, Type, Square, ArrowUpDown, Check, Sparkles, AlertTriangle, Code } from "lucide-react";
 import { getContrastRatio } from "@/utils/accessibility";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -268,6 +268,52 @@ export default function DesignEditor() {
                 <span className="text-[12px]">{r.name}</span>
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Advanced Custom CSS */}
+      <section className="space-y-6 pt-6 border-t border-black/5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gray-900 rounded-2xl">
+            <Code className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="text-[18px] sm:text-[20px] font-extrabold text-[#191F28] tracking-tight">
+              고급 CSS 편집
+            </h3>
+            <p className="text-[12px] text-gray-400 font-medium italic">Advanced Styling</p>
+          </div>
+        </div>
+
+        <div className="bg-[#1e1e1e] p-6 rounded-[32px] shadow-2xl space-y-4 border border-white/5 ring-1 ring-black/10">
+          <div className="flex items-center justify-between">
+             <div className="flex items-center gap-2">
+               <div className="flex gap-1.5">
+                 <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                 <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                 <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+               </div>
+               <span className="ml-2 text-[11px] font-mono text-gray-500 uppercase tracking-widest">custom-styles.css</span>
+             </div>
+          </div>
+          
+          <div className="relative">
+            <textarea
+              value={designTokens?.customCss || ""}
+              onChange={(e) => updateToken("customCss", e.target.value)}
+              placeholder="/* 이곳에 커스텀 CSS를 입력하세요 */&#10;.portfolio-header { background: linear-gradient(...) }"
+              className="w-full h-48 bg-transparent text-[#d4d4d4] font-mono text-[13px] leading-relaxed resize-none focus:outline-none placeholder:text-gray-600 custom-scrollbar"
+              spellCheck={false}
+            />
+          </div>
+          
+          <div className="pt-4 border-t border-white/5">
+             <p className="text-[11px] text-gray-500 font-medium">
+               <span className="text-blue-400 mr-1">팁:</span> 
+               특정 클래스나 ID를 타겟팅하여 테마 스타일을 완전히 재정의할 수 있습니다. 
+               변경사항은 우측 미리보기에 즉시 반영됩니다.
+             </p>
           </div>
         </div>
       </section>

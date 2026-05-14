@@ -125,6 +125,11 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
         `}} />
       )}
 
+      {/* Custom User CSS Injection */}
+      {designTokens?.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: designTokens.customCss }} />
+      )}
+
 
       {visibleBlocks.map((block) => {
         const isHero = block.block_type === "hero";

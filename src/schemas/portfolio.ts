@@ -18,6 +18,7 @@ export const DesignTokenSchema = z.object({
   spacing: z
     .enum(["compact", "normal", "relaxed"])
     .optional(),
+  customCss: z.string().optional(),
 });
 
 /**
