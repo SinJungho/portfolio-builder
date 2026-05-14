@@ -24,10 +24,10 @@ export const LanguageSwitcher = () => {
       variant="ghost"
       size="sm"
       onClick={toggleLanguage}
-      className="flex items-center gap-2 text-gray-500 hover:text-[#3182F6] font-bold"
+      className="flex items-center gap-2 text-spotify-silver hover:text-white hover:bg-white/5 font-bold rounded-full px-3 py-1 transition-all"
     >
       <Globe className="w-4 h-4" />
-      <span className="uppercase">{currentLng}</span>
+      <span className="uppercase tracking-spotify">{currentLng}</span>
     </Button>
   )
 }

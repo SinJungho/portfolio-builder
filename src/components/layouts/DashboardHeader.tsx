@@ -19,8 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-[0_4px_12px_rgba(49,130,246,0.3)] shrink-0">
-    <Sparkles className="h-5 w-5" />
+  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-spotify-green text-black shadow-[0_4px_12px_rgba(30,215,96,0.3)] shrink-0">
+    <Sparkles className="h-5 w-5 stroke-[2.5px]" />
   </div>
 );
 
@@ -46,28 +46,28 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-ink-100 bg-white/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full bg-spotify-near-black/70 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 md:px-10">
         <div className="flex items-center gap-2">
           {isGenerateFlow && (
             <div className="flex items-center">
               <button 
                 onClick={() => router.back()}
-                className="group flex h-9 w-9 items-center justify-center rounded-xl bg-ink-50 hover:bg-ink-100 transition-all active:scale-95 border border-ink-100 mr-3"
+                className="group flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all active:scale-95 border border-white/5 mr-3"
               >
-                <ChevronLeft className="h-5 w-5 text-ink-900 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2.5} />
+                <ChevronLeft className="h-5 w-5 text-white group-hover:-translate-x-0.5 transition-transform" strokeWidth={2.5} />
               </button>
             </div>
           )}
 
-          <Link href="/" className={cn("flex items-center gap-2 hover:opacity-80 transition-all", isGenerateFlow ? "hidden sm:flex" : "md:hidden")}>
+          <Link href="/" className={cn("flex items-center gap-3 hover:opacity-80 transition-all", isGenerateFlow ? "hidden sm:flex" : "md:hidden")}>
             <LogoMark />
-            <span className="text-[18px] font-bold tracking-tight text-ink-900">PortfolioForge</span>
+            <span className="text-[20px] font-bold tracking-tight text-white">PortfolioForge</span>
           </Link>
 
-          {!isGenerateFlow && <div className="h-4 w-px bg-ink-100 mx-4 hidden lg:block" />}
+          {!isGenerateFlow && <div className="h-4 w-px bg-white/10 mx-4 hidden lg:block" />}
 
-          <h1 className={cn("hidden lg:block text-[15px] font-bold text-ink-500", !isGenerateFlow && "lg:block")}>
+          <h1 className={cn("hidden lg:block text-[15px] font-bold text-spotify-silver", !isGenerateFlow && "lg:block")}>
             {isGenerateFlow ? (isAdjustStep ? "디자인 및 상세 조정" : "포트폴리오 생성") : "내 포트폴리오"}
           </h1>
         </div>
@@ -75,9 +75,9 @@ export function DashboardHeader() {
         <div className="flex items-center gap-2 sm:gap-3">
           {isAdjustStep ? (
             <div className="flex items-center gap-2">
-              <div className="hidden lg:flex flex-col items-end mr-2">
-                <span className="text-[9px] font-bold text-ink-300 uppercase tracking-widest leading-none mb-1">Public URL</span>
-                <span className="font-mono text-[11px] font-medium text-blue-600 truncate max-w-[150px]">
+              <div className="hidden lg:flex flex-col items-end mr-3">
+                <span className="text-[9px] font-bold text-spotify-silver uppercase tracking-spotify leading-none mb-1">Public URL</span>
+                <span className="font-mono text-[11px] font-medium text-spotify-green truncate max-w-[150px]">
                   {portfolioId}.portfolioforge.app
                 </span>
               </div>
@@ -85,15 +85,15 @@ export function DashboardHeader() {
                 variant="outline" 
                 size="sm" 
                 onClick={handleCopy} 
-                className="rounded-xl h-10 px-4 border-ink-100 hover:bg-ink-50 font-bold gap-2 text-ink-600"
+                className="btn-pill h-10 px-5 border-white/10 hover:bg-white/5 bg-transparent font-bold gap-2 text-white"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-spotify-green" /> : <Copy className="w-4 h-4" />}
                 <span className="hidden sm:inline">{copied ? "복사됨" : "링크 복사"}</span>
               </Button>
               <Button 
                 size="sm" 
                 asChild 
-                className="rounded-xl h-10 px-5 bg-blue-600 hover:bg-blue-700 font-bold shadow-[0_4px_12px_rgba(49,130,246,0.2)]"
+                className="btn-pill-primary h-10 px-6 font-bold"
               >
                 <Link href={`/${portfolioId}`} target="_blank" className="flex items-center gap-2">
                   <span className="hidden sm:inline">결과 보기</span>
@@ -103,56 +103,56 @@ export function DashboardHeader() {
             </div>
           ) : !isGenerateFlow && (
             <Link href="/generate/new">
-              <Button size="sm" className="rounded-xl h-10 px-5 bg-blue-600 hover:bg-blue-700 font-bold shadow-[0_4px_12px_rgba(49,130,246,0.2)] gap-2 border-none">
+              <Button size="sm" className="btn-pill-primary h-10 px-6 font-bold gap-2">
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">새 포트폴리오</span>
               </Button>
             </Link>
           )}
           
-          <div className="h-6 w-px bg-ink-100 mx-1 hidden sm:block" />
+          <div className="h-6 w-px bg-white/10 mx-2 hidden sm:block" />
           
           <div className="flex items-center gap-1.5">
-            <Button variant="ghost" size="icon" className="hidden xs:flex h-9 w-9 rounded-xl text-ink-400 hover:text-blue-600 hover:bg-blue-50">
+            <Button variant="ghost" size="icon" className="hidden xs:flex h-9 w-9 rounded-full text-spotify-silver hover:text-white hover:bg-white/5">
               <Bell className="h-4.5 w-4.5" />
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink-50 hover:bg-ink-100 transition-all border border-ink-100 overflow-hidden outline-none focus:ring-2 focus:ring-blue-500/20">
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 overflow-hidden outline-none focus:ring-2 focus:ring-spotify-green/20">
                    {user?.image ? (
                     <Image src={user.image} alt={user.name || ""} width={36} height={36} className="w-full h-full object-cover" />
                   ) : (
-                    <User className="h-5 w-5 text-ink-400" />
+                    <User className="h-5 w-5 text-spotify-silver" />
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 mt-2 rounded-2xl p-2 border-ink-100 shadow-xl">
-                <DropdownMenuLabel className="font-normal px-2 py-2">
+              <DropdownMenuContent align="end" className="w-60 mt-2 bg-spotify-mid-dark border-none rounded-2xl p-2 shadow-spotify">
+                <DropdownMenuLabel className="font-normal px-3 py-3">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-bold text-ink-900">{user?.name || "사용자"}</p>
-                    <p className="text-xs text-ink-500 truncate">{user?.email}</p>
+                    <p className="text-[15px] font-bold text-white">{user?.name || "사용자"}</p>
+                    <p className="text-xs text-spotify-silver truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-ink-50 mb-1" />
-                <DropdownMenuItem asChild className="rounded-xl py-2 cursor-pointer focus:bg-ink-50 focus:text-ink-900">
+                <DropdownMenuSeparator className="bg-white/5 mb-1" />
+                <DropdownMenuItem asChild className="rounded-xl py-2.5 cursor-pointer focus:bg-white/5 focus:text-white text-spotify-silver">
                   <Link href="/dashboard" className="flex items-center w-full">
-                    <LayoutDashboard className="mr-2 h-4 w-4 text-ink-400" />
-                    <span>대시보드</span>
+                    <LayoutDashboard className="mr-3 h-4.5 w-4.5 opacity-70" />
+                    <span className="font-bold">대시보드</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-xl py-2 cursor-pointer focus:bg-ink-50 focus:text-ink-900">
+                <DropdownMenuItem asChild className="rounded-xl py-2.5 cursor-pointer focus:bg-white/5 focus:text-white text-spotify-silver">
                   <Link href="/settings" className="flex items-center w-full">
-                    <Settings className="mr-2 h-4 w-4 text-ink-400" />
-                    <span>설정</span>
+                    <Settings className="mr-3 h-4.5 w-4.5 opacity-70" />
+                    <span className="font-bold">설정</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-ink-50 my-1" />
+                <DropdownMenuSeparator className="bg-white/5 my-1" />
                 <DropdownMenuItem 
                   onClick={() => signOut()}
-                  className="rounded-xl py-2 cursor-pointer text-red-500 focus:bg-red-50 focus:text-red-600 font-medium"
+                  className="rounded-xl py-2.5 cursor-pointer text-spotify-negative focus:bg-spotify-negative/10 focus:text-spotify-negative font-bold"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="mr-3 h-4.5 w-4.5" />
                   <span>로그아웃</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

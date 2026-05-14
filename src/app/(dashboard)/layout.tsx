@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F8F9FA]">
+    <div className="flex min-h-screen flex-col bg-spotify-near-black">
       <Sidebar />
       <div className="flex flex-col flex-1 md:pl-64">
         <DashboardHeader />

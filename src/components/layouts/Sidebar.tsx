@@ -26,8 +26,8 @@ const navItems = [
 ];
 
 const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-[0_4px_12px_rgba(49,130,246,0.3)] shrink-0">
-    <Sparkles className="h-5 w-5" />
+  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-spotify-green text-black shadow-[0_4px_12px_rgba(30,215,96,0.3)] shrink-0">
+    <Sparkles className="h-5 w-5 stroke-[2.5px]" />
   </div>
 );
 
@@ -40,19 +40,19 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-white border-r border-ink-100 flex-col z-50">
+      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-spotify-near-black flex-col z-50">
         {/* Logo */}
-        <div className="h-16 flex items-center px-8 border-b border-ink-50">
-          <Link href="/" className="flex items-center gap-2 group no-underline">
+        <div className="h-20 flex items-center px-8">
+          <Link href="/" className="flex items-center gap-3 group no-underline">
             <LogoMark />
-            <span className="text-ink-900 font-bold text-[18px] tracking-tight">
+            <span className="text-white font-bold text-[20px] tracking-tight">
               PortfolioForge
             </span>
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-8 px-4">
+        <nav className="flex-1 py-4 px-3">
           <ul className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -62,26 +62,21 @@ export function Sidebar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 group no-underline",
+                      "flex items-center gap-4 px-4 py-3 rounded-md transition-all duration-300 group no-underline",
                       isActive
-                        ? "bg-blue-600 text-white shadow-[0_8px_16px_rgba(49,130,246,0.15)]"
-                        : "text-ink-500 hover:bg-ink-50 hover:text-ink-900 font-medium",
+                        ? "text-white"
+                        : "text-spotify-silver hover:text-white",
                     )}
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={cn(
-                          "w-5 h-5",
-                          isActive
-                            ? "text-white"
-                            : "text-ink-300 group-hover:text-ink-900 transition-colors",
-                        )}
-                      />
-                      <span className="text-[15px]">{item.label}</span>
-                    </div>
-                    {isActive && (
-                      <ChevronRight className="w-4 h-4 text-white/60" />
-                    )}
+                    <Icon
+                      className={cn(
+                        "w-6 h-6 transition-colors",
+                        isActive ? "text-white" : "text-spotify-silver group-hover:text-white",
+                      )}
+                    />
+                    <span className={cn("text-[14px]", isActive ? "font-bold" : "font-semibold")}>
+                      {item.label}
+                    </span>
                   </Link>
                 </li>
               );
@@ -90,12 +85,12 @@ export function Sidebar() {
         </nav>
 
         {/* User Profile Footer */}
-        <div className="p-4 border-t border-ink-50 space-y-4">
+        <div className="p-4 space-y-4">
           <div className="px-4">
              <LanguageSwitcher />
           </div>
-          <div className="bg-ink-50 rounded-2xl p-3 flex items-center gap-3 border border-ink-100/50">
-            <div className="w-10 h-10 rounded-xl bg-white border border-ink-100 overflow-hidden shrink-0 flex items-center justify-center">
+          <div className="bg-spotify-mid-dark rounded-xl p-3 flex items-center gap-3 shadow-spotify-md">
+            <div className="w-10 h-10 rounded-full bg-spotify-dark-surface overflow-hidden shrink-0 flex items-center justify-center border border-white/5">
               {user?.image ? (
                 <Image
                   src={user.image}
@@ -105,23 +100,29 @@ export function Sidebar() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User size={20} className="text-ink-400" />
+                <User size={20} className="text-spotify-silver" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-bold text-ink-900 truncate">
+              <div className="text-[14px] font-bold text-white truncate">
                 {user?.name || "사용자"}
               </div>
-              <div className="text-[11px] font-medium text-ink-400 truncate">
+              <div className="text-[11px] font-medium text-spotify-silver truncate">
                 {user?.email}
               </div>
             </div>
+            <button 
+              onClick={() => signOut()}
+              className="p-1.5 text-spotify-silver hover:text-white transition-colors"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-t border-ink-100 px-6 flex items-center justify-between z-50 safe-area-inset-bottom shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 px-6 flex items-center justify-between z-50 safe-area-inset-bottom">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -131,22 +132,15 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-1 min-w-[64px] transition-all no-underline",
-                isActive ? "text-blue-600" : "text-ink-300",
+                isActive ? "text-white" : "text-spotify-silver",
               )}
             >
-              <div
+              <Icon
                 className={cn(
-                  "p-1 rounded-xl transition-all",
-                  isActive ? "bg-blue-50" : "",
+                  "w-[22px] h-[22px]",
+                  isActive ? "stroke-[2.5px]" : "stroke-[2px]",
                 )}
-              >
-                <Icon
-                  className={cn(
-                    "w-[22px] h-[22px]",
-                    isActive ? "stroke-[2.5px]" : "stroke-[2px]",
-                  )}
-                />
-              </div>
+              />
               <span
                 className={cn(
                   "text-[10px] font-bold",
@@ -162,20 +156,18 @@ export function Sidebar() {
         {/* Mobile More / Sheet */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center gap-1 min-w-[64px] text-ink-300 outline-none">
-              <div className="p-1 rounded-xl">
-                <Menu className="w-[22px] h-[22px] stroke-[2px]" />
-              </div>
+            <button className="flex flex-col items-center gap-1 min-w-[64px] text-spotify-silver outline-none">
+              <Menu className="w-[22px] h-[22px] stroke-[2px]" />
               <span className="text-[10px] font-bold opacity-60">더보기</span>
             </button>
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="rounded-t-[32px] px-0 pb-12 pt-4 border-none shadow-2xl"
+            className="bg-spotify-dark-surface border-none rounded-t-[32px] px-0 pb-12 pt-4 shadow-spotify"
           >
-            <div className="mx-auto w-12 h-1.5 bg-ink-100 rounded-full mb-6" />
+            <div className="mx-auto w-12 h-1.5 bg-white/10 rounded-full mb-6" />
             <div className="px-6 mb-8 flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white border border-ink-200 overflow-hidden flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-spotify-mid-dark border border-white/5 overflow-hidden flex items-center justify-center">
                 {user?.image ? (
                   <Image
                     src={user.image}
@@ -185,14 +177,14 @@ export function Sidebar() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User size={28} className="text-ink-400" />
+                  <User size={28} className="text-spotify-silver" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-[18px] text-ink-900 leading-tight">
+                <p className="font-bold text-[18px] text-white leading-tight">
                   {user?.name || "사용자"}
                 </p>
-                <p className="text-[14px] text-ink-500 truncate">
+                <p className="text-[14px] text-spotify-silver truncate">
                   {user?.email}
                 </p>
               </div>
@@ -202,28 +194,28 @@ export function Sidebar() {
               <Link
                 href="/settings"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between p-4 rounded-2xl hover:bg-ink-50 transition-all font-bold text-ink-700 group no-underline"
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-all font-bold text-white group no-underline"
               >
                 <div className="flex items-center gap-3">
                   <Settings
                     size={20}
-                    className="text-ink-300 group-hover:text-blue-600"
+                    className="text-spotify-silver group-hover:text-white"
                   />
                   <span>사용 설정</span>
                 </div>
-                <ChevronRight size={18} className="text-ink-200" />
+                <ChevronRight size={18} className="text-white/20" />
               </Link>
 
               <button
                 onClick={() => signOut()}
-                className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-red-50 transition-all font-bold text-ink-700 group"
+                className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-spotify-negative/10 transition-all font-bold text-white group"
               >
                 <div className="flex items-center gap-3">
                   <LogOut
                     size={20}
-                    className="text-ink-300 group-hover:text-red-500"
+                    className="text-spotify-silver group-hover:text-spotify-negative"
                   />
-                  <span className="group-hover:text-red-500">로그아웃</span>
+                  <span className="group-hover:text-spotify-negative">로그아웃</span>
                 </div>
               </button>
             </div>
