@@ -293,6 +293,10 @@ git commit -m "fix(infra): next/headers cookies() await 누락 빌드 에러 수
 - **[완료]** 고급 CSS 편집
 - **[완료]** 다국어 지원 (i18next 기반 KO/EN 전환)
 - **[완료]** SEO 고도화 (JSON-LD 및 sitemap.xml 자동 생성)
+- **[완료]** **전체 서비스 Spotify 스타일 몰입형 다크 모드 리디자인**
+    - 전역 디자인 토큰 통합 (`globals.css`)
+    - 마케팅, 인증, 대시보드 전 페이지 테마 적용
+    - 알약(Pill) UI 및 고급 타이포그래피 시스템 구축
 
 ---
 
