@@ -17,6 +17,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { LanguageSwitcher } from "../common/LanguageSwitcher";
 
 const navItems = [
   { icon: Home, label: "대시보드", href: "/dashboard" },
@@ -89,7 +90,10 @@ export function Sidebar() {
         </nav>
 
         {/* User Profile Footer */}
-        <div className="p-4 border-t border-ink-50">
+        <div className="p-4 border-t border-ink-50 space-y-4">
+          <div className="px-4">
+             <LanguageSwitcher />
+          </div>
           <div className="bg-ink-50 rounded-2xl p-3 flex items-center gap-3 border border-ink-100/50">
             <div className="w-10 h-10 rounded-xl bg-white border border-ink-100 overflow-hidden shrink-0 flex items-center justify-center">
               {user?.image ? (
