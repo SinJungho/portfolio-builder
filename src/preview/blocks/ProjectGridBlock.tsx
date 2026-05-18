@@ -29,6 +29,8 @@ interface ProjectGridBlockProps {
     }>;
   };
   theme: ThemeTokens;
+  portfolioId?: string;
+  blockId?: string;
 }
 
 const LANG_COLORS: Record<string, string> = {
@@ -68,7 +70,7 @@ function parseSummary(summary: string | null) {
   return { headline: summary, highlights: [], demo_url: null, role: null };
 }
 
-export default function ProjectGridBlock({ config, theme: t }: ProjectGridBlockProps) {
+export default function ProjectGridBlock({ config, theme: t, portfolioId, blockId }: ProjectGridBlockProps) {
   const { project_ids, show_tech_stack, projectsData = [] } = config;
 
   const displayProjects =
@@ -124,6 +126,8 @@ export default function ProjectGridBlock({ config, theme: t }: ProjectGridBlockP
             showTech={show_tech_stack} 
             customDescription={config.custom_descriptions?.[p.id]}
             index={i}
+            portfolioId={portfolioId}
+            blockId={blockId}
           />
         ))}
       </div>
@@ -138,6 +142,8 @@ function FeaturedCard({
   showTech,
   customDescription,
   index = 0,
+  portfolioId,
+  blockId,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   project: any;
@@ -145,11 +151,30 @@ function FeaturedCard({
   showTech: boolean;
   customDescription?: string;
   index?: number;
+  portfolioId?: string;
+  blockId?: string;
 }) {
   const { ref: revealRef, style: revealStyle } = useScrollReveal<HTMLDivElement>("fadeUp");
   const langColor = LANG_COLORS[p.language || ""] || t.accent;
   const { headline, highlights, demo_url } = parseSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
+
+  const trackClick = async () => {
+    if (!portfolioId || !blockId) return;
+    try {
+      await fetch("/api/analytics/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          event_type: "block_click", 
+          portfolio_id: portfolioId,
+          block_id: blockId 
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to track project click:", e);
+    }
+  };
 
   return (
     <div
@@ -262,6 +287,7 @@ function FeaturedCard({
               href={p.html_url || "#"}
               target="_blank"
               rel="noreferrer"
+              onClick={trackClick}
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
               style={{ backgroundColor: t.accent, color: "#fff" }}
             >
@@ -273,6 +299,7 @@ function FeaturedCard({
                 href={demo_url}
                 target="_blank"
                 rel="noreferrer"
+                onClick={trackClick}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold border transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ borderColor: t.cardBorder, color: t.text, backgroundColor: t.cardBg }}
               >

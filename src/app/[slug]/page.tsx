@@ -133,6 +133,7 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           designTokens={portfolio.design_tokens as any}
           slug={portfolio.slug}
+          portfolioId={portfolio.id}
         />
       </main>
 

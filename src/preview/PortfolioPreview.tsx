@@ -27,9 +27,10 @@ interface PortfolioPreviewProps {
   theme: string;
   designTokens?: DesignTokens;
   slug?: string;
+  portfolioId?: string;
 }
 
-export default function PortfolioPreview({ blocks, theme, designTokens, slug }: PortfolioPreviewProps) {
+export default function PortfolioPreview({ blocks, theme, designTokens, slug, portfolioId }: PortfolioPreviewProps) {
   const searchParams = useSearchParams();
   const isExporting = searchParams.get("export") === "true";
   const [isExportPending, setIsExportPending] = React.useState(false);
@@ -146,7 +147,7 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
               <HeroBlock config={block.config} theme={mt} />
             )}
             {block.block_type === "project_grid" && (
-              <ProjectGridBlock config={block.config} theme={mt} />
+              <ProjectGridBlock config={block.config} theme={mt} portfolioId={portfolioId} blockId={block.id} />
             )}
             {block.block_type === "skills" && (
               <SkillsBlock config={block.config} theme={mt} />
@@ -155,7 +156,7 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug }: 
               <BlogFeedBlock config={block.config} theme={mt} />
             )}
             {block.block_type === "contact" && (
-              <ContactBlock config={block.config} theme={mt} />
+              <ContactBlock config={block.config} theme={mt} portfolioId={portfolioId} blockId={block.id} />
             )}
           </div>
         );

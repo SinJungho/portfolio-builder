@@ -1,14 +1,22 @@
 "use server";
 
 import { auth } from "@/auth";
-import { portfolioService } from "@/services/portfolio";
-import type { Portfolio } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import type { Portfolio, PortfolioBlock } from "@prisma/client";
 
-export async function getUserPortfolios(): Promise<Portfolio[]> {
+export type PortfolioWithBlocks = Portfolio & {
+  blocks: PortfolioBlock[];
+};
+
+export async function getUserPortfolios(): Promise<PortfolioWithBlocks[]> {
   const session = await auth();
   if (!session || !session.user?.id) {
     throw new Error("UNAUTHORIZED");
   }
 
-  return portfolioService.findAllByUserId(session.user.id);
+  return prisma.portfolio.findMany({
+    where: { user_id: session.user.id },
+    include: { blocks: true },
+    orderBy: { updated_at: "desc" },
+  }) as any;
 }

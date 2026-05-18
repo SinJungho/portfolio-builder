@@ -13,9 +13,11 @@ interface ContactBlockProps {
     website_url?: string;
   };
   theme: ThemeTokens;
+  portfolioId?: string;
+  blockId?: string;
 }
 
-export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
+export default function ContactBlock({ config, theme: t, portfolioId, blockId }: ContactBlockProps) {
   const { github_url, email, linkedin_url, website_url } = config;
 
   const handleContactClick = async (type: string) => {
@@ -23,7 +25,11 @@ export default function ContactBlock({ config, theme: t }: ContactBlockProps) {
       await fetch("/api/analytics/event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_type: "contact_click", provider: type }),
+        body: JSON.stringify({ 
+          event_type: "block_click", 
+          portfolio_id: portfolioId,
+          block_id: blockId 
+        }),
       });
     } catch (error) {
       console.error(`Failed to send analytics event for ${type}:`, error);
