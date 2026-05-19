@@ -159,102 +159,8 @@ Phase 2에서 가능: 블록 내부 직접 편집, 새 블록 추가·삭제, �
 
 ### ⚙️ 개발 공통 원칙 (모든 Phase에 적용)
 
-> 아래 원칙은 Phase 1부터 Phase 3까지 **모든 개발 단계에서 예외 없이 적용**합니다.
-
-#### Next.js 16 문법 필수 준수
-
-Next.js 16에서 `params`, `searchParams`, `cookies()`, `headers()`가 모두 **비동기(Promise)** 로 변경되었습니다.  
-구버전 문법 사용 시 빌드가 실패하므로 반드시 아래 패턴을 사용합니다.
-
-```typescript
-// ✅ Page / Layout — params, searchParams 반드시 await
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ step?: string }>;
-}) {
-  const { slug } = await params;
-  const { step } = await searchParams;
-}
-
-// ✅ Route Handler — params 반드시 await
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-}
-
-// ✅ next/headers — 반드시 await
-import { cookies, headers } from "next/headers";
-const cookieStore = await cookies();
-const headersList = await headers();
-
-// ✅ 라우터 / 리다이렉트 / 404 — next/navigation에서만 import
-import { useRouter, redirect, notFound } from "next/navigation";
-```
-
-#### Task 완료 시 빌드·린트 검사 필수
-
-모든 Task 단위 구현이 완료될 때마다 아래 두 명령을 순서대로 실행합니다.  
-**두 명령 모두 성공한 후에만 커밋을 작성합니다.**
-
-```bash
-npm run lint   # ESLint: 문법 오류, 미사용 변수, Next.js 16 호환성 등 검출
-npm run build  # TypeScript 컴파일 + Next.js 전체 빌드 검사
-```
-
-| 에러 유형                    | 처리 방법                                            |
-| ---------------------------- | ---------------------------------------------------- |
-| ESLint warning               | 즉시 수정. `eslint-disable` 주석으로 억제 금지       |
-| ESLint error                 | 반드시 수정. `// eslint-disable-next-line` 사용 금지 |
-| TypeScript 타입 에러         | `any` 캐스팅 우회 금지. 올바른 타입으로 해결         |
-| Next.js 16 params await 누락 | 즉시 `await params` 패턴으로 수정                    |
-| 빌드 에러                    | 수정 완료 후 재빌드로 반드시 확인                    |
-
-#### Task 완료 시 Git 커밋 필수
-
-`npm run lint && npm run build` 성공 직후, **Task 단위마다** 커밋을 작성합니다.
-
-```bash
-# 커밋 순서
-npm run lint && npm run build  # 반드시 먼저 성공 확인
-git add .
-git commit -m "<type>(<scope>): <설명>"
-```
-
-**커밋 메시지 형식 (Conventional Commits)**
-
-```
-<type>(<scope>): <설명>
-```
-
-| type       | 사용 시점        | scope 예시                                   |
-| ---------- | ---------------- | -------------------------------------------- |
-| `feat`     | 새 기능          | `github`, `portfolio`, `block`, `ai`, `auth` |
-| `fix`      | 버그 수정        | `analytics`, `theme`, `db`, `api`, `ui`      |
-| `refactor` | 구조 개선        | `infra`, `auth`, `portfolio`                 |
-| `chore`    | 빌드·패키지·환경 | `infra`, `db`                                |
-| `docs`     | 문서·주석        | —                                            |
-| `perf`     | 성능 개선        | `ai`, `github`                               |
-
-```bash
-# 커밋 예시
-git commit -m "feat(github): GitHub bio 검증 API 및 미등록 차단 플로우 구현"
-git commit -m "fix(portfolio): 포트폴리오 생성 완료 후 revalidation 누락 수정"
-git commit -m "refactor(infra): Next.js 16 params await 패턴으로 전체 마이그레이션"
-git commit -m "chore(db): analytics_events 테이블 월별 파티셔닝 인덱스 추가"
-git commit -m "fix(infra): next/headers cookies() await 누락 빌드 에러 수정"
-```
-
-> ⚠️ **금지 사항**
->
-> - lint / build 실패 상태로 커밋 — 절대 금지
-> - 여러 Task를 하나로 묶어서 커밋 — 금지. Task별로 분리
-> - `any` 타입 캐스팅으로 타입 에러 우회 — 금지
-> - `eslint-disable` 주석으로 경고 억제 — 금지
+> **알림**: Next.js 16 필수 문법, 빌드/린트 규칙, Git 커밋 규칙 등 모든 개발 공통 원칙은 AI 에이전트 아키텍처 최적화를 위해 단일 컨텍스트 파일로 분리되었습니다.
+> 상세 규칙은 **[05-conventions.md](./.gemini/rules/05-conventions.md)**를 최우선으로 참조하세요.
 
 ---
 
@@ -334,12 +240,14 @@ git commit -m "fix(infra): next/headers cookies() await 누락 빌드 에러 수
 
 ### 8.2 GitHub 저장소 구성
 
-```
+```text
 portfolio-forge/
 ├── README.md
 ├── CHANGELOG.md
 ├── PLANNING.md       ← 이 문서
-├── GEMINI.md         ← 기술 스택 및 아키텍처
+├── GEMINI.md         ← AI 아키텍처 인덱스 및 목차 (Index)
+├── .gemini/          ← AI 에이전트 전용 아키텍처 규칙 디렉토리
+│   └── rules/        ← 도메인별 세부 컨텍스트 문서 모음 (*.md)
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── API.md
