@@ -27,6 +27,31 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserPortfolios, type PortfolioWithBlocks } from "./actions";
 
+interface DailyStat {
+  date: string;
+  views: number;
+}
+
+interface TopBlock {
+  block_id: string;
+  type: string;
+  count: number;
+}
+
+interface TopReferrer {
+  referrer: string;
+  count: number;
+}
+
+interface AnalyticsSummary {
+  totalViews: number;
+  uniqueVisitors: number;
+  totalClicks: number;
+  dailyStats: DailyStat[];
+  topBlocks: TopBlock[];
+  topReferrers: TopReferrer[];
+}
+
 export default function AnalyticsPage() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
@@ -45,7 +70,7 @@ export default function AnalyticsPage() {
   }, [portfolios, selectedPortfolioId]);
 
   // 2. Fetch Summary
-  const { data: summary, isLoading: isSummaryLoading, isFetching: isSummaryFetching } = useQuery({
+  const { data: summary, isLoading: isSummaryLoading, isFetching: isSummaryFetching } = useQuery<AnalyticsSummary>({
     queryKey: ["analytics", selectedPortfolioId, period],
     queryFn: async () => {
       const res = await fetch(`/api/analytics/${selectedPortfolioId}/summary?period=${period}`);
@@ -239,7 +264,7 @@ export default function AnalyticsPage() {
                       tickLine={false}
                       tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
                       dy={10}
-                      tickFormatter={(val) => val.split('-').slice(1).join('/')}
+                      tickFormatter={(val: string) => val.split('-').slice(1).join('/')}
                     />
                     <YAxis 
                       axisLine={false}

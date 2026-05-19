@@ -696,6 +696,19 @@ export async function generateMetadata({
 | Image 컴포넌트 | `sizes` prop 반드시 지정                      | sizes 생략    |
 | Server Actions | 파일 최상단 또는 함수 내 `"use server"` 명시  | 생략          |
 | Font           | `display: 'swap'` 명시                        | 생략          |
+| 매개변수 타입  | 화살표 함수, 이벤트 핸들러 매개변수 타입 지정 | `any` 또는 생략(Implicit Any) |
+
+#### 💡 매개변수 엄격한 타입 지정 규칙 (Explicit Parameter Typing)
+* Vercel 배포 시 `noImplicitAny` 엄격한 타입 컴파일 환경에서 빌드가 실패하는 것을 원천 방지하기 위해, 화살표 함수 및 이벤트 핸들러(예: `React.FormEvent`, `React.ChangeEvent<HTMLInputElement>`)의 모든 매개변수에는 **생략이나 `any` 없이 명시적 타입을 항시 지정**합니다.
+* 예외적으로 인라인 익명 콜백 함수 등 타입 추론이 확실하게 성립하는 경우는 생략을 허용하되, 그 외에는 명시적 타입 지정을 기본 원칙으로 합니다.
+
+#### 🇰🇷 한국어 작성 표준 규칙 (Korean Localization Standard)
+* **프로젝트 일관성 및 글로벌 다국어 표준 준수**를 위해, 모든 사용자 대면 문구(UI/UX), 개발용 소스코드 주석(Comments), API 오류 응답(JSON error message), 그리고 서버/클라이언트 콘솔 로그(`console.log`, `console.warn`, `console.error`) 등 프로젝트 내부에서 작성되는 모든 텍스트/문구/로그/주석은 **원칙적으로 한국어로 명확하고 친절하게 작성**하는 것을 기본 개발 원칙으로 삼습니다.
+* 단, 외부 시스템(Vercel, GitHub, OpenAI 등)에서 발생한 원본 스택트레이스나 라이브러리 고유 에러 키를 파싱 및 기록하는 등 기술적 목적의 보존이 필요한 데이터는 예외를 허용합니다.
+
+#### 🍞 전역적 오류 알림 표준 규칙 (Global Toast Error Notification Rule)
+* 화면 프리징이나 무반응 현상으로 사용자가 겪을 수 있는 혼란과 불편을 방지하기 위해, 단순히 예외 상황에서 `throw new Error()`를 던지고 조용히 멈추는(Silent failure) 설계는 엄격하게 금지합니다.
+* 비동기 데이터 통신(`fetch`, `axios` 등)이나 상태 제어 로직이 수행되는 모든 `catch` 블록 및 비정상 흐름에서는 반드시 **사용자 친화적이고 명확한 한글 Toast 에러 알림(`toast.error(...)`)을 호출하여 즉시 직관적인 시각적 오류 피드백을 사용자에게 제공**해야 합니다.
 
 ---
 

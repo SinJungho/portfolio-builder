@@ -1,83 +1,114 @@
-'use client'
+'use client';
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Github, RefreshCw, CheckCircle2, AlertCircle, Sparkles, ArrowRight, Copy, Check, ExternalLink } from 'lucide-react'
-import { toast } from 'sonner'
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Github, RefreshCw, CheckCircle2, AlertCircle, Sparkles, ArrowRight, Copy, Check, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 
-const TOSS_BLUE = '#3182F6'
+const TOSS_BLUE = '#3182F6';
 
-type BioStatus = 'loading' | 'missing' | 'verified' | 'error'
+type BioStatus = 'loading' | 'missing' | 'verified' | 'error';
 
 const bioExamples = [
   {
     role: '백엔드',
-    text: 'Backend Engineer. Java/Spring Boot/PostgreSQL. Interested in distributed systems.',
+    text: '분산 시스템에 관심이 많은 백엔드 개발자입니다. Java, Spring Boot, PostgreSQL을 주로 사용합니다.',
     emoji: '⚙️',
   },
   {
     role: '프론트엔드',
-    text: 'Frontend Developer. React/TypeScript. UX-focused. Open to work.',
+    text: 'React와 TypeScript로 더 나은 사용자 경험(UX)을 만드는 프론트엔드 개발자입니다.',
     emoji: '🎨',
   },
   {
     role: '풀스택',
-    text: 'Fullstack Engineer. Node.js/React/AWS. Open-source contributor.',
+    text: 'Node.js, React, AWS 기반으로 제품을 만드는 풀스택 개발자입니다. 오픈소스 기여를 좋아합니다.',
     emoji: '🚀',
   },
-]
+];
 
 export default function OnboardingBioPage() {
-  const router = useRouter()
-  const [status, setStatus] = useState<BioStatus>('loading')
-  const [bio, setBio] = useState<string | null>(null)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
-  const [mounted, setMounted] = useState(false)
+  const router = useRouter();
+  const [status, setStatus] = useState<BioStatus>('loading');
+  const [bio, setBio] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 100)
-    return () => clearTimeout(t)
-  }, [])
+    const t = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   const checkBio = useCallback(async (isManual = false) => {
-    if (isManual) setIsRefreshing(true)
+    if (isManual) setIsRefreshing(true);
     try {
-      if (isManual) await new Promise(r => setTimeout(r, 600))
+      if (isManual) await new Promise<void>((resolve) => setTimeout(resolve, 600));
 
-      const res = await fetch('/api/integrations/github/bio')
-      if (!res.ok) throw new Error()
+      const res = await fetch('/api/integrations/github/bio');
+      if (!res.ok) throw new Error();
 
-      const data = await res.json()
+      const data = await res.json();
       if (data.exists) {
-        setBio(data.bio)
-        setStatus('verified')
-        setTimeout(() => router.push('/dashboard'), 1500)
+        setBio(data.bio);
+        setStatus('verified');
+        setTimeout(() => router.push('/dashboard'), 1500);
       } else {
-        setStatus('missing')
+        setStatus('missing');
+        if (isManual) toast.error('GitHub Bio가 아직 등록되지 않았습니다.');
       }
     } catch {
-      setStatus('error')
+      setStatus('error');
+      toast.error('GitHub 프로필 정보를 조회하는 중 오류가 발생했습니다.');
     } finally {
-      if (isManual) setIsRefreshing(false)
+      if (isManual) setIsRefreshing(false);
     }
-  }, [router])
+  }, [router]);
 
   useEffect(() => {
-    checkBio()
-  }, [checkBio])
+    let isCurrent = true;
+
+    const loadInitialBioStatus = async () => {
+      try {
+        const res = await fetch('/api/integrations/github/bio');
+        if (!res.ok) throw new Error();
+
+        const data = await res.json();
+        if (!isCurrent) return;
+
+        if (data.exists) {
+          setBio(data.bio);
+          setStatus('verified');
+          setTimeout(() => router.push('/dashboard'), 1500);
+        } else {
+          setStatus('missing');
+        }
+      } catch {
+        if (isCurrent) {
+          setStatus('error');
+          toast.error('GitHub 연동 정보를 불러오지 못했습니다.');
+        }
+      }
+    };
+
+    loadInitialBioStatus();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [router]);
 
   const handleCopyExample = (text: string, index: number) => {
-    navigator.clipboard.writeText(text)
-    setCopiedIndex(index)
-    toast.success('클립보드에 복사되었습니다!')
-    setTimeout(() => setCopiedIndex(null), 2000)
-  }
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    toast.success('클립보드에 복사되었습니다!');
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#FAFAFA] px-6 py-12">
-      {/* Subtle grid background */}
+      {/* 미세한 격자(Grid) 배경 스타일링 */}
       <div
         className="
           pointer-events-none absolute inset-0
@@ -87,7 +118,7 @@ export default function OnboardingBioPage() {
         "
       />
 
-      {/* Blue glow */}
+      {/* 부드러운 블루 네온 광채 */}
       <div
         className="
           pointer-events-none absolute left-1/2 top-1/2
@@ -96,7 +127,7 @@ export default function OnboardingBioPage() {
         "
       />
 
-      {/* Main Card */}
+      {/* 메인 카드 컨테이너 */}
       <div
         className={`
           relative z-10 w-full max-w-[480px]
@@ -108,7 +139,7 @@ export default function OnboardingBioPage() {
           ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}
         `}
       >
-        {/* Header */}
+        {/* 카드 헤더 영역 */}
         <div className="flex flex-col items-center text-center mb-8">
           <div
             className="mb-6 flex h-16 w-16 items-center justify-center rounded-[18px]"
@@ -124,7 +155,7 @@ export default function OnboardingBioPage() {
           </p>
         </div>
 
-        {/* Content */}
+        {/* 동적 상태별 콘텐츠 렌더링 */}
         <div className="space-y-6">
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center py-10 gap-4">
@@ -159,7 +190,7 @@ export default function OnboardingBioPage() {
 
           {status === 'missing' && (
             <div className="space-y-5">
-              {/* Warning Banner */}
+              {/* GitHub Bio 미등록 경고 배너 */}
               <div
                 className="flex items-start gap-3 rounded-2xl px-5 py-4"
                 style={{
@@ -176,7 +207,7 @@ export default function OnboardingBioPage() {
                 </div>
               </div>
 
-              {/* Bio Examples */}
+              {/* 추천 Bio 예시 가이드 */}
               <div className="space-y-2.5">
                 <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-[0.5px]">
                   예시 (클릭하면 복사)
@@ -210,7 +241,7 @@ export default function OnboardingBioPage() {
                 ))}
               </div>
 
-              {/* Action Buttons */}
+              {/* 확인 및 수정 액션 버튼 */}
               <div className="space-y-3 pt-2">
                 <Link
                   href="https://github.com/settings/profile"
@@ -239,15 +270,15 @@ export default function OnboardingBioPage() {
                     background: TOSS_BLUE,
                     boxShadow: '0 4px 16px rgba(49,130,246,0.25)',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#1A6EE8'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(49,130,246,0.35)'
+                  onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget.style.background = '#1A6EE8';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(49,130,246,0.35)';
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = TOSS_BLUE
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(49,130,246,0.25)'
+                  onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget.style.background = TOSS_BLUE;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(49,130,246,0.25)';
                   }}
                 >
                   {isRefreshing ? (
@@ -278,7 +309,7 @@ export default function OnboardingBioPage() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* 카드 하단 팁 정보 */}
         <div className="mt-8 pt-6 border-t border-black/5 flex items-center justify-center">
           <div className="flex items-center gap-2 text-[11px] text-gray-400">
             <span className="inline-block w-1 h-1 rounded-full bg-gray-300" />
@@ -287,12 +318,12 @@ export default function OnboardingBioPage() {
         </div>
       </div>
 
-      {/* Footer Branding */}
+      {/* 하단 브랜드 표기 */}
       <footer className="relative z-10 mt-10">
         <p className="text-[11px] font-semibold text-gray-300 tracking-[2px] uppercase">
           PortfolioForge
         </p>
       </footer>
     </div>
-  )
+  );
 }

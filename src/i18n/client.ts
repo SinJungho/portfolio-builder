@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import i18next from 'i18next'
-import { initReactI18next, useTranslation as useTranslationOrg } from 'react-i18next'
-import resourcesToBackend from 'i18next-resources-to-backend'
-import LanguageDetector from 'i18next-browser-languagedetector'
-import { getOptions, languages, cookieName } from './settings'
+import { useEffect, useState } from 'react';
+import i18next from 'i18next';
+import { initReactI18next, useTranslation as useTranslationOrg, UseTranslationOptions } from 'react-i18next';
+import resourcesToBackend from 'i18next-resources-to-backend';
+import LanguageDetector from 'i18next-browser-languagedetector';
+import { getOptions, languages, cookieName } from './settings';
 
-const runsOnServerSide = typeof window === 'undefined'
+const runsOnServerSide = typeof window === 'undefined';
 
 i18next
   .use(initReactI18next)
@@ -15,36 +15,42 @@ i18next
   .use(resourcesToBackend((language: string, namespace: string) => import(`../../public/locales/${language}/${namespace}.json`)))
   .init({
     ...getOptions(),
-    lng: undefined, // let detect the language on client side
+    lng: undefined, // 클라이언트 사이드에서 언어를 자동으로 감지하도록 설정
     detection: {
       order: ['path', 'htmlTag', 'cookie', 'navigator'],
     },
-    preload: runsOnServerSide ? languages : []
-  })
+    preload: runsOnServerSide ? languages : [],
+  });
 
-export function useTranslation(lng: string, ns?: string, options?: any) {
-  const ret = useTranslationOrg(ns, options)
-  const { i18n } = ret
+/**
+ * 클라이언트 사이드 전용 다국어 번역 Custom Hook
+ */
+export function useTranslation(lng: string, ns?: string, options?: UseTranslationOptions<undefined>) {
+  const ret = useTranslationOrg(ns, options);
+  const { i18n } = ret;
+
+  // 1. 서버 사이드 렌더링 시점에 언어가 다른 경우 즉시 언어 동기화 수행
   if (runsOnServerSide && lng && i18n.resolvedLanguage !== lng) {
-    i18n.changeLanguage(lng)
-  } else {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage)
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      if (activeLng === i18n.resolvedLanguage) return
-      setActiveLng(i18n.resolvedLanguage)
-    }, [activeLng, i18n.resolvedLanguage])
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      if (!lng || i18n.resolvedLanguage === lng) return
-      i18n.changeLanguage(lng)
-    }, [lng, i18n])
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      if (!lng) return
-      document.cookie = `${cookieName}=${lng}; path=/`
-    }, [lng])
+    i18n.changeLanguage(lng);
   }
-  return ret
+
+  // 2. 클라이언트 사이드 활성 언어 상태 관리 (React Hook 규칙 준수를 위해 무조건 호출)
+  const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
+
+  useEffect(() => {
+    if (activeLng === i18n.resolvedLanguage) return;
+    setActiveLng(i18n.resolvedLanguage);
+  }, [activeLng, i18n.resolvedLanguage]);
+
+  useEffect(() => {
+    if (!lng || i18n.resolvedLanguage === lng) return;
+    i18n.changeLanguage(lng);
+  }, [lng, i18n]);
+
+  useEffect(() => {
+    if (!lng) return;
+    document.cookie = `${cookieName}=${lng}; path=/`;
+  }, [lng]);
+
+  return ret;
 }

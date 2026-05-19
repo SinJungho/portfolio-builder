@@ -18,5 +18,5 @@ export async function getUserPortfolios(): Promise<PortfolioWithBlocks[]> {
     where: { user_id: session.user.id },
     include: { blocks: true },
     orderBy: { updated_at: "desc" },
-  }) as any;
+  }) as unknown as PortfolioWithBlocks[];
 }
