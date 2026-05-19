@@ -65,14 +65,6 @@ export default function PortfolioPreview({ blocks, theme, designTokens, slug, po
   };
   const fontFamily = fontMap[designTokens?.fontFamily || "inter"] || fontMap.inter;
 
-  // 간격 매핑 (Spacing Mapping - 정석 수치 반영)
-  const spacingClassMap = {
-    compact: "py-10 md:py-16",
-    normal: "py-16 md:py-24",
-    relaxed: "py-24 md:py-40",
-  };
-  const spacingClass = spacingClassMap[designTokens?.spacing as keyof typeof spacingClassMap] || spacingClassMap.normal;
-
   const visibleBlocks = blocks
     .filter((b) => b.is_visible)
     .sort((a, b) => a.position - b.position);

@@ -33,23 +33,6 @@ interface ProjectGridBlockProps {
   blockId?: string;
 }
 
-const LANG_COLORS: Record<string, string> = {
-  TypeScript: "#3178C6",
-  JavaScript: "#F7DF1E",
-  Python: "#3776AB",
-  Rust: "#DEA584",
-  Go: "#00ADD8",
-  Java: "#ED8B00",
-  "C++": "#00599C",
-  Ruby: "#CC342D",
-  Swift: "#F05138",
-  Kotlin: "#7F52FF",
-  PHP: "#777BB4",
-  HTML: "#E34F26",
-  CSS: "#1572B6",
-  Shell: "#89E051",
-  Dart: "#0175C2",
-};
 
 function parseSummary(summary: string | null) {
   if (!summary) return { headline: null, highlights: [], demo_url: null, role: null };
@@ -89,9 +72,6 @@ export default function ProjectGridBlock({ config, theme: t, portfolioId, blockI
 
   const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
 
-  const featured = displayProjects[0];
-  const rest = displayProjects.slice(1);
-
   return (
     <section className="space-y-12">
       {/* Section Header */}
@@ -118,14 +98,13 @@ export default function ProjectGridBlock({ config, theme: t, portfolioId, blockI
 
       {/* Projects List — Unified Design */}
       <div className="space-y-8 md:space-y-12">
-        {displayProjects.map((p, i) => (
+        {displayProjects.map((p) => (
           <FeaturedCard 
             key={p.id} 
             project={p} 
             theme={t} 
             showTech={show_tech_stack} 
             customDescription={config.custom_descriptions?.[p.id]}
-            index={i}
             portfolioId={portfolioId}
             blockId={blockId}
           />
@@ -141,7 +120,6 @@ function FeaturedCard({
   theme: t,
   showTech,
   customDescription,
-  index = 0,
   portfolioId,
   blockId,
 }: {
@@ -150,12 +128,10 @@ function FeaturedCard({
   theme: ThemeTokens;
   showTech: boolean;
   customDescription?: string;
-  index?: number;
   portfolioId?: string;
   blockId?: string;
 }) {
   const { ref: revealRef, style: revealStyle } = useScrollReveal<HTMLDivElement>("fadeUp");
-  const langColor = LANG_COLORS[p.language || ""] || t.accent;
   const { headline, highlights, demo_url } = parseSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
 

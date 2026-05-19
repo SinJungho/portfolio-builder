@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import i18next from 'i18next';
 import { initReactI18next, useTranslation as useTranslationOrg, UseTranslationOptions } from 'react-i18next';
 import resourcesToBackend from 'i18next-resources-to-backend';
@@ -33,14 +33,6 @@ export function useTranslation(lng: string, ns?: string, options?: UseTranslatio
   if (runsOnServerSide && lng && i18n.resolvedLanguage !== lng) {
     i18n.changeLanguage(lng);
   }
-
-  // 2. 클라이언트 사이드 활성 언어 상태 관리 (React Hook 규칙 준수를 위해 무조건 호출)
-  const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
-
-  useEffect(() => {
-    if (activeLng === i18n.resolvedLanguage) return;
-    setActiveLng(i18n.resolvedLanguage);
-  }, [activeLng, i18n.resolvedLanguage]);
 
   useEffect(() => {
     if (!lng || i18n.resolvedLanguage === lng) return;
