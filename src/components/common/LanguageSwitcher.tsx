@@ -1,13 +1,9 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
-import { languages } from '@/i18n/settings'
 import { Button } from '@/components/ui/button'
 import { Globe } from 'lucide-react'
 
 export const LanguageSwitcher = () => {
-  const pathname = usePathname()
-  const router = useRouter()
   
   const currentLng = typeof document !== 'undefined' 
     ? document.cookie.split('; ').find(row => row.startsWith('i18next='))?.split('=')[1] || 'ko'

@@ -35,12 +35,17 @@ export function useTranslation(lng: string, ns?: string, options?: UseTranslatio
   }
 
   // 2. 클라이언트 사이드 활성 언어 상태 관리 (React Hook 규칙 준수를 위해 무조건 호출)
-  const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
+  const [, setActiveLng] = useState(i18n.resolvedLanguage);
 
   useEffect(() => {
-    if (activeLng === i18n.resolvedLanguage) return;
-    setActiveLng(i18n.resolvedLanguage);
-  }, [activeLng, i18n.resolvedLanguage]);
+    const handleLanguageChanged = (currentLng: string) => {
+      setActiveLng(currentLng);
+    };
+    i18n.on('languageChanged', handleLanguageChanged);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
 
   useEffect(() => {
     if (!lng || i18n.resolvedLanguage === lng) return;
