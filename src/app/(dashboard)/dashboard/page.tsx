@@ -223,7 +223,7 @@ export default function DashboardPage() {
                       보기
                     </a>
                     <Link 
-                      href={`/generate/${p.id}?step=adjust`} 
+                      href={`/editor/${p.id}`} 
                       className="flex-[1.5] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-white hover:bg-spotify-near-white transition-all rounded-full shadow-spotify-md"
                     >
                       <Edit2 className="w-4 h-4" />
