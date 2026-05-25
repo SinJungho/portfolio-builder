@@ -18,7 +18,6 @@ import {
   Loader2,
   Mail,
   Plus,
-  RefreshCw,
   Rss,
   Search,
   Sparkles,
@@ -27,8 +26,9 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import CustomDomainSection from "./components/CustomDomainSection";
 
 import { SortableBlockItem } from "@/app/generate/[id]/steps/components/SortableBlockItem";
 import DesignEditor from "@/components/features/editor/DesignEditor";
@@ -105,11 +105,18 @@ export default function EditorClient({
     deleteBlock,
     updateBlockConfig,
     addBlock,
-    customDomain,
-    setCustomDomain,
   } = usePortfolioStore();
 
-  const [init, setInit] = useState(false);
+  const [init] = useState(() => {
+    initialize({
+      ...initialData,
+      blocks: initialData.blocks.map((b: Block) => ({
+        ...b,
+        block_type: b.block_type,
+      })),
+    });
+    return true;
+  });
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("blocks");
 
   // 프로젝트 선택 상태
@@ -130,20 +137,6 @@ export default function EditorClient({
     },
     enabled: init,
   });
-
-  useEffect(() => {
-    if (initialData && !init) {
-      initialize({
-        ...initialData,
-        blocks: initialData.blocks.map((b) => ({
-          ...b,
-          block_type: b.block_type,
-        })),
-      });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInit(true);
-    }
-  }, [initialData, init, initialize]);
 
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -220,14 +213,14 @@ export default function EditorClient({
   };
 
   const filteredProjects = rawProjects?.filter(
-    (p) =>
+    (p: RawProject) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const toggleTempProject = (id: string) => {
-    setTempSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    setTempSelectedIds((prevIds: string[]) =>
+      prevIds.includes(id) ? prevIds.filter((i: string) => i !== id) : [...prevIds, id],
     );
   };
 
@@ -256,7 +249,7 @@ export default function EditorClient({
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-4">
-            {blocks.map((block, index) => (
+            {blocks.map((block: Block, index: number) => (
               <SortableBlockItem
                 key={block.id}
                 block={block}
@@ -296,7 +289,7 @@ export default function EditorClient({
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {Object.keys(blockTypeLabels).map((type) => {
+          {Object.keys(blockTypeLabels).map((type: string) => {
             const isUnique = type === "hero" || type === "contact";
             const alreadyExists =
               isUnique && blocks.some((b: Block) => b.block_type === type);
@@ -393,76 +386,7 @@ export default function EditorClient({
             </div>
           </div>
 
-          <div className="space-y-2.5 pt-2 border-t border-white/5">
-            <Label
-              htmlFor="custom-domain"
-              className="text-[10px] font-black uppercase text-spotify-silver tracking-wider"
-            >
-              커스텀 도메인 연결{" "}
-              <span className="text-[9px] text-spotify-silver/50 lowercase font-medium">
-                (optional)
-              </span>
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="custom-domain"
-                placeholder="www.yourdomain.com"
-                className="rounded-full h-9 bg-spotify-near-black border-white/5 focus:border-spotify-green text-white placeholder:text-spotify-silver/20 text-xs px-4"
-                defaultValue={customDomain || ""}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const val = e.currentTarget.value.trim();
-                    setCustomDomain(val || null)
-                      .then(() => toast.success("도메인이 업데이트되었습니다."))
-                      .catch((err) => toast.error(err.message));
-                  }
-                }}
-              />
-              <Button
-                className="btn-pill-primary h-9 px-4 text-xs font-bold"
-                onClick={() => {
-                  const input = document.getElementById(
-                    "custom-domain",
-                  ) as HTMLInputElement;
-                  const val = input.value.trim();
-                  setCustomDomain(val || null)
-                    .then(() => toast.success("도메인이 업데이트되었습니다."))
-                    .catch((err) => toast.error(err.message));
-                }}
-              >
-                연결
-              </Button>
-            </div>
-          </div>
-
-          {customDomain && (
-            <div className="p-3 bg-spotify-green/5 border border-spotify-green/20 rounded-xl space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black text-spotify-green flex items-center gap-1.5">
-                  <span className="w-1 h-1 bg-spotify-green rounded-full animate-pulse" />
-                  연결 상태
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-spotify-green hover:text-white hover:bg-spotify-green/10 text-[10px] font-bold rounded px-2"
-                  onClick={async () => {
-                    const res = await fetch(`/api/domains/${customDomain}`);
-                    const data = await res.json();
-                    if (data.configured) toast.success("연결 완료되었습니다!");
-                    else toast.error("DNS 설정을 확인하고 있습니다.");
-                  }}
-                >
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  새로고침
-                </Button>
-              </div>
-              <div className="text-[11px] text-spotify-silver font-medium">
-                <strong className="text-white">{customDomain}</strong> 등록됨
-                (DNS 전파 대기 중)
-              </div>
-            </div>
-          )}
+          <CustomDomainSection />
         </div>
       </div>
 
@@ -543,7 +467,7 @@ export default function EditorClient({
 
   return (
     <div className="flex flex-col h-screen w-full bg-spotify-near-black overflow-hidden text-white">
-      {/* Top Header */}
+      {/* 상단 헤더 */}
       <header className="h-14 border-b border-white/5 bg-spotify-near-black flex items-center justify-between px-6 shrink-0 z-20">
         <Link
           href="/dashboard"
@@ -568,9 +492,9 @@ export default function EditorClient({
         </div>
       </header>
 
-      {/* Editor Body */}
+      {/* 에디터 본문 */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Sidebar (Settings) */}
+        {/* 좌측 사이드바 (설정) */}
         <aside className="w-full md:w-[380px] lg:w-[420px] shrink-0 border-r border-white/5 bg-spotify-dark-surface flex flex-col z-10 shadow-spotify">
           <div className="flex p-3 gap-2 bg-spotify-near-black border-b border-white/5 shrink-0">
             <button
@@ -599,9 +523,9 @@ export default function EditorClient({
           </div>
         </aside>
 
-        {/* Right Sidebar (Live Preview) */}
+        {/* 우측 사이드바 (실시간 미리보기) */}
         <main className="hidden md:flex flex-1 bg-spotify-near-black overflow-y-auto relative items-start justify-center pt-8 pb-32">
-          {/* Subtle grid background for preview area */}
+          {/* 미리보기 영역용 은은한 격자 배경 */}
           <div
             className="
               pointer-events-none absolute inset-0
@@ -610,7 +534,7 @@ export default function EditorClient({
             "
           />
           <div className="w-full max-w-[1000px] bg-spotify-dark-surface rounded-t-[32px] md:rounded-[32px] overflow-hidden shadow-spotify border border-white/5 mx-6 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            {/* Browser mock header */}
+            {/* 브라우저 목업 헤더 */}
             <div className="h-10 bg-spotify-near-black border-b border-white/5 flex items-center px-4 gap-2 shrink-0">
               <div className="w-3 h-3 rounded-full bg-red-400" />
               <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -621,7 +545,7 @@ export default function EditorClient({
               </div>
             </div>
 
-            {/* Live Portfolio Preview Mount */}
+            {/* 실시간 포트폴리오 미리보기 컴포넌트 마운트 */}
             <div className="w-full h-full min-h-[800px] overflow-hidden bg-white">
               <PortfolioPreview
                 blocks={blocks}
@@ -635,7 +559,7 @@ export default function EditorClient({
         </main>
       </div>
 
-      {/* Project Selection Modal (Copied from AdjustStep) */}
+      {/* 프로젝트 선택 모달 (AdjustStep에서 이관됨) */}
       {isEditingProjects && (
         <div className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
           <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md">
@@ -667,13 +591,13 @@ export default function EditorClient({
                   placeholder="리포지토리 검색..."
                   className="pl-12 h-14 bg-spotify-dark-surface border border-white/5 rounded-full text-[16px] focus:border-spotify-green text-white placeholder:text-spotify-silver/30 transition-all"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredProjects?.map((project) => (
+              {filteredProjects?.map((project: RawProject) => (
                 <Card
                   key={project.id}
                   onClick={() => toggleTempProject(project.id)}
@@ -725,7 +649,7 @@ export default function EditorClient({
                     {tempSelectedIds.includes(project.id) && (
                       <div
                         className="pt-4 border-t border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                       >
                         <Label className="text-[11px] font-bold text-spotify-green uppercase tracking-wider flex items-center gap-2">
                           포트폴리오용 프로젝트 소개
@@ -740,10 +664,10 @@ export default function EditorClient({
                             project.description ||
                             ""
                           }
-                          onChange={(val) => {
-                            setTempCustomDescriptions((prev) => ({
-                              ...prev,
-                              [project.id]: val,
+                          onChange={(value: string) => {
+                            setTempCustomDescriptions((prevDescriptions: Record<string, string>) => ({
+                              ...prevDescriptions,
+                              [project.id]: value,
                             }));
                           }}
                         />
