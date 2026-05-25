@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { AlertCircle, Loader2, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Loader2, AlertCircle, LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
   const router = useRouter();
@@ -17,9 +17,9 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ force: false }),
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
           let msg = data.error || "GitHub 연동 확인 중 오류가 발생했습니다.";
           if (msg.includes("Bad credentials")) {
@@ -29,65 +29,72 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
         }
 
         if (active) {
-          router.push(`/generate/${portfolioId}?step=analyze&sync_job_id=${data.job_id}`);
+          router.push(
+            `/generate/${portfolioId}?step=analyze&sync_job_id=${data.job_id}`,
+          );
         }
       } catch (e: unknown) {
         if (active) setError((e as Error).message);
       }
     }
-    
+
     run();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [portfolioId, router]);
 
   if (error) {
-    const isAuthError = error.includes("인증 세션") || error.includes("Bad credentials");
+    const isAuthError =
+      error.includes("인증 세션") || error.includes("Bad credentials");
 
     return (
-      <div className="flex flex-col items-center gap-8 text-center max-w-sm animate-in fade-in zoom-in-95 duration-500">
+      <div className="flex flex-col items-center gap-8 text-center max-w-sm w-full bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500">
         <div className="relative">
-          <div className="w-20 h-20 bg-red-50 rounded-[28px] flex items-center justify-center">
+          <div className="w-20 h-20 bg-spotify-negative/10 rounded-[28px] flex items-center justify-center">
             {isAuthError ? (
-              <LogIn className="w-10 h-10 text-red-500" />
+              <LogIn className="w-10 h-10 text-spotify-negative" />
             ) : (
-              <AlertCircle className="w-10 h-10 text-red-500" />
+              <AlertCircle className="w-10 h-10 text-spotify-negative" />
             )}
           </div>
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
-             <div className="w-4 h-4 bg-red-200 rounded-full animate-ping opacity-75" />
-             <div className="absolute w-2 h-2 bg-red-500 rounded-full" />
+          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-spotify-dark-surface rounded-full flex items-center justify-center border border-white/5 shadow-md">
+            <div className="w-4 h-4 bg-spotify-negative/20 rounded-full animate-ping opacity-75" />
+            <div className="absolute w-2 h-2 bg-spotify-negative rounded-full" />
           </div>
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-[22px] font-extrabold text-[#191F28] tracking-tight">
-            {isAuthError ? "GitHub 연동 정보가 만료되었어요" : "오류가 발생했습니다"}
+          <h3 className="text-[22px] font-extrabold text-white tracking-tight">
+            {isAuthError
+              ? "GitHub 연동 정보가 만료되었어요"
+              : "오류가 발생했습니다"}
           </h3>
-          <p className="text-[15px] font-medium text-[#4E5968] leading-relaxed">
+          <p className="text-[15px] font-medium text-spotify-silver leading-relaxed">
             {error}
           </p>
         </div>
 
         <div className="flex flex-col gap-3 w-full">
           {isAuthError ? (
-             <button 
-                onClick={() => window.location.href = '/api/auth/signin/github'} 
-                className="w-full h-14 bg-[#3182F6] text-white rounded-2xl font-bold hover:bg-[#1b64da] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
-             >
-                GitHub 다시 연동하기
-             </button>
+            <button
+              onClick={() => (window.location.href = "/api/auth/signin/github")}
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+            >
+              GitHub 다시 연동하기
+            </button>
           ) : (
-             <button
-               onClick={() => window.location.reload()}
-               className="w-full h-14 bg-[#3182F6] text-white rounded-2xl font-bold hover:bg-[#1b64da] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
-             >
-               다시 시도하기
-             </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+            >
+              다시 시도하기
+            </button>
           )}
-          
-          <button 
-            onClick={() => router.push('/')}
-            className="w-full h-14 bg-gray-50 text-[#4E5968] rounded-2xl font-bold hover:bg-gray-100 transition-all"
+
+          <button
+            onClick={() => router.push("/")}
+            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold uppercase tracking-spotify transition-all cursor-pointer"
           >
             대시보드로 돌아가기
           </button>
@@ -97,9 +104,11 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
-      <div className="text-lg font-medium">GitHub 데이터를 가져오는 중...</div>
+    <div className="flex flex-col items-center gap-6 py-20">
+      <Loader2 className="w-12 h-12 animate-spin text-spotify-green" />
+      <div className="text-lg font-bold text-white tracking-tight">
+        GitHub 데이터를 가져오는 중...
+      </div>
     </div>
   );
 }

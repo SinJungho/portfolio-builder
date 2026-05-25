@@ -1,11 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Copy, ExternalLink, Settings2, Check, Sparkles, AlertCircle, RotateCcw, ArrowRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 import type { GenerateJobResponse } from "@/types/generate";
+import { useQuery } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  Copy,
+  ExternalLink,
+  Loader2,
+  RotateCcw,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 const TOSS_BLUE = "#3182F6";
 
@@ -76,39 +86,50 @@ export default function GenerateStep({
     refetchInterval: (query) => (query.state.data?.is_published ? false : 5000),
   });
 
-  const isActuallyFinished = dbCheck?.is_published || data?.status === "completed";
+  const isActuallyFinished =
+    dbCheck?.is_published || data?.status === "completed";
 
   // --- Content Rendering ---
   const renderContent = () => {
-    if (!isActuallyFinished && (error || data?.status === "failed" || isTimedOut)) {
+    if (
+      !isActuallyFinished &&
+      (error || data?.status === "failed" || isTimedOut)
+    ) {
       return (
         <div
           className="
             w-full max-w-[480px] rounded-[32px]
-            border border-black/5 bg-white
+            border border-white/5 bg-spotify-dark-surface
             px-8 py-12 text-center
-            shadow-[0_8px_40px_rgba(0,0,0,0.04)]
+            shadow-spotify
           "
         >
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#FF616112]">
-            <AlertCircle className="w-10 h-10 text-[#FF6161]" />
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-spotify-negative/10">
+            <AlertCircle className="w-10 h-10 text-spotify-negative" />
           </div>
-          <h2 className="text-[24px] font-extrabold tracking-[-1px] text-[#191F28] mb-2">
+          <h2 className="text-[24px] font-extrabold tracking-[-1px] text-white mb-2">
             생성에 실패했습니다
           </h2>
-          <p className="text-[15px] text-gray-500 leading-[1.7] mb-8">
-            {data?.error || (isTimedOut ? "시간이 오래 걸리고 있어요. 다시 시도해주세요." : "예기치 않은 오류가 발생했습니다.")}
+          <p className="text-[15px] text-spotify-silver leading-[1.7] mb-8 font-normal">
+            {data?.error ||
+              (isTimedOut
+                ? "시간이 오래 걸리고 있어요. 다시 시도해주세요."
+                : "예기치 않은 오류가 발생했습니다.")}
           </p>
           <button
-            onClick={() => { timeoutsCount.current = 0; setIsTimedOut(false); refetch(); }}
+            onClick={() => {
+              timeoutsCount.current = 0;
+              setIsTimedOut(false);
+              refetch();
+            }}
             className="
               inline-flex items-center gap-2
-              rounded-full border border-black/10
-              bg-white px-8 py-4
-              text-[15px] font-semibold text-[#4B5563]
+              rounded-full border border-spotify-silver/30
+              bg-transparent px-8 py-4
+              text-[15px] font-bold text-white uppercase tracking-spotify
               transition-all duration-200
-              hover:bg-[#F8F9FA] hover:border-black/15
-              active:scale-95
+              hover:border-white hover:scale-105 active:scale-95
+              cursor-pointer
             "
           >
             <RotateCcw className="w-4 h-4" />
@@ -119,27 +140,34 @@ export default function GenerateStep({
     }
 
     if (isActuallyFinished) {
-      const pubUrl = data?.published_url || dbCheck?.published_url || `/${portfolioId}`;
-      const fullUrl = pubUrl.startsWith("http") ? pubUrl : `${typeof window !== "undefined" ? window.location.origin : ""}${pubUrl.startsWith("/") ? pubUrl : `/${pubUrl}`}`;
+      const pubUrl =
+        data?.published_url || dbCheck?.published_url || `/${portfolioId}`;
+      const fullUrl = pubUrl.startsWith("http")
+        ? pubUrl
+        : `${typeof window !== "undefined" ? window.location.origin : ""}${pubUrl.startsWith("/") ? pubUrl : `/${pubUrl}`}`;
       const missingFields = data?.missing_optional_fields || [];
-      const shareText = encodeURIComponent(`GitHub으로 포트폴리오를 5분 만에 만들었어요! 👉 ${fullUrl}`);
+      const shareText = encodeURIComponent(
+        `GitHub으로 포트폴리오를 5분 만에 만들었어요! 👉 ${fullUrl}`,
+      );
 
       return (
-        <div className="flex flex-col items-center gap-8 w-full max-w-[520px]">
+        <div className="flex flex-col items-center gap-8 w-full max-w-[520px] text-white">
           {/* Main Success Card */}
           <div
             className="
               w-full rounded-[32px]
-              border border-black/5 bg-white
+              border border-white/5 bg-spotify-dark-surface
               overflow-hidden
-              shadow-[0_20px_60px_rgba(49,130,246,0.12)]
+              shadow-spotify
               transition-all duration-500
             "
           >
             {/* Gradient header strip */}
             <div
-              className="h-2"
-              style={{ background: `linear-gradient(90deg, ${TOSS_BLUE}, #8B5CF6, #F59E0B)` }}
+              className="h-2.5"
+              style={{
+                background: "linear-gradient(90deg, #1ed760, #1db954, #8b5cf6)",
+              }}
             />
 
             <div className="flex flex-col items-center gap-8 px-10 py-12 text-center">
@@ -147,19 +175,23 @@ export default function GenerateStep({
               <div
                 className="flex h-24 w-24 items-center justify-center rounded-[32px]"
                 style={{
-                  background: 'linear-gradient(135deg, #20C997, #10B981)',
-                  boxShadow: '0 12px 32px rgba(32,201,151,0.3)',
-                  transform: 'rotate(-4deg)'
+                  background: "linear-gradient(135deg, #1ed760, #1db954)",
+                  boxShadow: "0 12px 32px rgba(30,215,96,0.3)",
+                  transform: "rotate(-4deg)",
                 }}
               >
-                <Sparkles className="w-12 h-12 text-white" />
+                <Sparkles className="w-12 h-12 text-black fill-black" />
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-[32px] font-extrabold tracking-[-1.5px] text-[#191F28] leading-[1.2]">
-                  포트폴리오가<br />배포되었습니다! 🎉
+                <h2 className="text-[32px] font-extrabold tracking-[-1.5px] text-white leading-[1.2]">
+                  포트폴리오가
+                  <br />
+                  배포되었습니다! 🎉
                 </h2>
-                <p className="text-[16px] text-gray-500 font-medium">아래 URL에서 지금 바로 확인해보세요.</p>
+                <p className="text-[16px] text-spotify-silver font-medium">
+                  아래 URL에서 지금 바로 확인해보세요.
+                </p>
               </div>
 
               {/* Published URL Box */}
@@ -172,24 +204,26 @@ export default function GenerateStep({
                 }}
                 className="
                   group relative flex w-full items-center justify-between gap-4
-                  rounded-[24px] border border-black/5 bg-[#F8F9FA]
+                  rounded-[24px] border border-white/5 bg-spotify-mid-dark
                   px-6 py-5 text-left
                   transition-all duration-300
-                  hover:bg-[rgba(49,130,246,0.04)] hover:border-[rgba(49,130,246,0.2)]
+                  hover:bg-spotify-mid-dark/80 hover:border-spotify-green/20
                   hover:-translate-y-0.5
                 "
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">배포 주소</p>
-                  <span className="font-mono text-[15px] font-medium text-[#191F28] select-all truncate block">
+                  <p className="text-[12px] font-bold text-spotify-silver uppercase tracking-wider mb-0.5">
+                    배포 주소
+                  </p>
+                  <span className="font-mono text-[15px] font-medium text-white select-all truncate block">
                     {fullUrl}
                   </span>
                 </div>
-                <div className="shrink-0 bg-white p-2.5 rounded-xl shadow-sm border border-black/5">
+                <div className="shrink-0 bg-spotify-dark-surface p-2.5 rounded-xl border border-white/5 shadow-sm">
                   {copied ? (
-                    <Check className="w-5 h-5 text-[#20C997]" />
+                    <Check className="w-5 h-5 text-spotify-green stroke-[3px]" />
                   ) : (
-                    <Copy className="w-5 h-5 text-gray-400 group-hover:text-[#3182F6] transition-colors" />
+                    <Copy className="w-5 h-5 text-spotify-silver group-hover:text-spotify-green transition-colors" />
                   )}
                 </div>
               </button>
@@ -202,27 +236,25 @@ export default function GenerateStep({
                   rel="noreferrer"
                   className="
                     flex h-[60px] items-center justify-center gap-2
-                    rounded-[20px] text-[16px] font-bold text-white
-                    transition-all duration-300
-                    hover:-translate-y-1 hover:brightness-110 active:scale-95
+                    rounded-full text-[16px] font-bold text-black
+                    bg-spotify-green hover:scale-105 active:scale-95 transition-all
+                    shadow-[0_8px_24px_rgba(30,215,96,0.25)]
                   "
-                  style={{
-                    background: TOSS_BLUE,
-                    boxShadow: '0 8px 24px rgba(49,130,246,0.3)',
-                  }}
                 >
-                  <ExternalLink className="w-5 h-5" />
+                  <ExternalLink className="w-5 h-5 stroke-[2.5px]" />
                   보러가기
                 </a>
                 <button
-                  onClick={() => router.push(`/generate/${portfolioId}?step=adjust`)}
+                  onClick={() =>
+                    router.push(`/generate/${portfolioId}?step=adjust`)
+                  }
                   className="
                     flex h-[60px] items-center justify-center gap-2
-                    rounded-[20px] border border-black/10 bg-white
-                    text-[16px] font-bold text-[#4B5563]
-                    transition-all duration-300
-                    hover:bg-[#F8F9FA] hover:border-black/20
-                    hover:-translate-y-1 active:scale-95
+                    rounded-full border border-spotify-silver/40 bg-transparent
+                    text-[16px] font-bold text-white
+                    hover:scale-105 active:scale-95 transition-all
+                    hover:border-white
+                    cursor-pointer
                   "
                 >
                   <Settings2 className="w-5 h-5" />
@@ -238,27 +270,35 @@ export default function GenerateStep({
               className="
                 flex w-full items-start gap-4
                 rounded-[28px] px-6 py-5
-                bg-white/50 backdrop-blur-sm border border-black/5
-                shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700
+                bg-spotify-dark-surface border border-white/5
+                shadow-spotify animate-in fade-in slide-in-from-bottom-4 duration-700
               "
             >
-              <div className="p-2.5 rounded-2xl bg-[rgba(49,130,246,0.1)] shrink-0">
-                <Sparkles className="w-6 h-6" style={{ color: TOSS_BLUE }} />
+              <div className="p-2.5 rounded-2xl bg-spotify-green/10 text-spotify-green shrink-0">
+                <Sparkles className="w-6 h-6 fill-current" />
               </div>
-              <div className="text-[14px] text-gray-600 leading-[1.7]">
-                <span className="font-bold block mb-0.5" style={{ color: TOSS_BLUE }}>전문가처럼 보이려면?</span>
-                <p>
+              <div className="text-[14px] text-spotify-silver leading-[1.7] text-left">
+                <span className="font-bold block mb-0.5 text-spotify-green">
+                  전문가처럼 보이려면?
+                </span>
+                <p className="font-normal">
                   {missingFields.includes("email") && "이메일"}
-                  {missingFields.includes("email") && missingFields.includes("linkedin_url") && ", "}
+                  {missingFields.includes("email") &&
+                    missingFields.includes("linkedin_url") &&
+                    ", "}
                   {missingFields.includes("linkedin_url") && "LinkedIn"}
-                  {(missingFields.includes("email") || missingFields.includes("linkedin_url")) && missingFields.includes("website_url") && ", "}
-                  {missingFields.includes("website_url") && "개인 웹사이트"}
-                  를 추가해 신뢰도를 높여보세요.
+                  {(missingFields.includes("email") ||
+                    missingFields.includes("linkedin_url")) &&
+                    missingFields.includes("website_url") &&
+                    ", "}
+                  {missingFields.includes("website_url") && "개인 웹사이트"}를
+                  추가해 신뢰도를 높여보세요.
                 </p>
                 <button
-                  onClick={() => router.push(`/generate/${portfolioId}?step=adjust`)}
-                  className="mt-2 font-bold flex items-center gap-1 transition-all hover:gap-2"
-                  style={{ color: TOSS_BLUE }}
+                  onClick={() =>
+                    router.push(`/generate/${portfolioId}?step=adjust`)
+                  }
+                  className="mt-2 font-bold flex items-center gap-1 transition-all hover:gap-2 text-spotify-green cursor-pointer"
                 >
                   지금 추가하러 가기 <ArrowRight className="w-4 h-4" />
                 </button>
@@ -268,7 +308,9 @@ export default function GenerateStep({
 
           {/* Social Share Buttons */}
           <div className="flex items-center gap-4 pt-2">
-            <span className="text-[14px] font-bold text-gray-400">공유하기</span>
+            <span className="text-[14px] font-bold text-spotify-silver">
+              공유하기
+            </span>
             <div className="flex items-center gap-3">
               <a
                 href={`https://twitter.com/intent/tweet?text=${shareText}`}
@@ -276,9 +318,9 @@ export default function GenerateStep({
                 rel="noreferrer"
                 className="
                   flex h-12 w-12 items-center justify-center
-                  rounded-2xl bg-[#191F28] text-white
+                  rounded-full bg-spotify-mid-dark border border-white/5 text-white
                   transition-all duration-300
-                  hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)]
+                  hover:-translate-y-1 hover:text-spotify-green hover:shadow-spotify
                   active:scale-90
                 "
               >
@@ -290,9 +332,9 @@ export default function GenerateStep({
                 rel="noreferrer"
                 className="
                   flex h-12 w-12 items-center justify-center
-                  rounded-2xl bg-[#0A66C2] text-white
+                  rounded-full bg-spotify-mid-dark border border-white/5 text-white
                   transition-all duration-300
-                  hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(10,102,194,0.25)]
+                  hover:-translate-y-1 hover:text-spotify-green hover:shadow-spotify
                   active:scale-90
                 "
               >
@@ -317,40 +359,45 @@ export default function GenerateStep({
       <div
         className="
           w-full max-w-[460px] rounded-[32px]
-          border border-black/5 bg-white
+          border border-white/5 bg-spotify-dark-surface
           px-10 py-12 text-center
-          shadow-[0_8px_40px_rgba(0,0,0,0.04)]
+          shadow-spotify
         "
       >
         <div className="flex flex-col items-center gap-8">
-          <div
-            className="flex h-20 w-20 items-center justify-center rounded-[28px] shadow-sm ring-1 ring-black/5"
-            style={{ background: 'white' }}
-          >
-            <Loader2 className="w-10 h-10 animate-spin" style={{ color: TOSS_BLUE }} />
+          <div className="flex h-20 w-20 items-center justify-center rounded-[28px] shadow-sm border border-white/5 bg-spotify-mid-dark">
+            <Loader2 className="w-10 h-10 animate-spin text-spotify-green" />
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-[22px] font-extrabold tracking-[-0.7px] text-[#191F28]">{statusLabel}</h2>
-            <p className="text-[15px] text-gray-500 font-medium whitespace-pre-wrap leading-[1.6]">
-              잠시만 기다려주세요.<br />AI가 최적의 포트폴리오를 구성하고 있습니다.
+            <h2 className="text-[22px] font-extrabold tracking-[-0.7px] text-white">
+              {statusLabel}
+            </h2>
+            <p className="text-[15px] text-spotify-silver font-medium whitespace-pre-wrap leading-[1.6]">
+              잠시만 기다려주세요.
+              <br />
+              AI가 최적의 포트폴리오를 구성하고 있습니다.
             </p>
           </div>
 
           <div className="w-full space-y-4">
-            <div className="w-full h-3 bg-[#F0F4F8] rounded-full overflow-hidden p-[3px]">
+            <div className="w-full h-3 bg-spotify-mid-dark rounded-full overflow-hidden p-[3px] border border-white/5">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
                 style={{
                   width: `${Math.max(progress, 5)}%`,
-                  background: `linear-gradient(90deg, ${TOSS_BLUE}, #8B5CF6)`,
-                  boxShadow: '0 0 12px rgba(49,130,246,0.4)'
+                  background: "linear-gradient(90deg, #1ed760, #1db954)",
+                  boxShadow: "0 0 12px rgba(30,215,96,0.4)",
                 }}
               />
             </div>
             <div className="flex justify-center flex-col items-center gap-1">
-              <span className="text-[13px] font-bold font-mono" style={{ color: TOSS_BLUE }}>{progress}%</span>
-              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-widest">Generating Your Site</span>
+              <span className="text-[13px] font-bold font-mono text-spotify-green">
+                {progress}%
+              </span>
+              <span className="text-[11px] font-bold text-spotify-silver uppercase tracking-widest">
+                Generating Your Site
+              </span>
             </div>
           </div>
         </div>
@@ -359,23 +406,23 @@ export default function GenerateStep({
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#FAFAFA] px-6 py-12">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-spotify-near-black px-6 py-12">
       {/* Subtle grid background */}
       <div
         className="
           pointer-events-none absolute inset-0
-          bg-[linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px)]
+          bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)]
           bg-size-[40px_40px]
           mask-[radial-gradient(ellipse_80%_60%_at_50%_50%,black_30%,transparent_100%)]
         "
       />
 
-      {/* Blue glow */}
+      {/* Green glow */}
       <div
         className="
           pointer-events-none absolute left-1/2 top-1/2
           h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full
-          bg-[radial-gradient(circle,rgba(49,130,246,0.08)_0%,transparent_70%)]
+          bg-[radial-gradient(circle,rgba(30,215,96,0.04)_0%,transparent_70%)]
         "
       />
 
@@ -385,4 +432,3 @@ export default function GenerateStep({
     </div>
   );
 }
-
