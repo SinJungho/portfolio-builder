@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { type RawProject } from "@/types/project";
 
 import DesignEditor from "@/components/features/editor/DesignEditor";
 import MarkdownEditor from "@/components/ui/MarkdownEditor";
@@ -67,16 +68,6 @@ const blockTypeLabels: Record<string, string> = {
   contact: "연락처",
   blog_feed: "블로그",
 };
-
-interface RawProject {
-  id: string;
-  name: string;
-  description: string | null;
-  language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  pushed_at: string | null;
-}
 
 // 모바일 탭 타입
 type MobileTab = "blocks" | "settings";

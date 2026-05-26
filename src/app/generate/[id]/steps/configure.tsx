@@ -21,17 +21,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
-interface RawProject {
-  id: string;
-  name: string;
-  description: string | null;
-  language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  pushed_at: string | null;
-  is_featured: boolean;
-}
+import { type RawProject } from "@/types/project";
 
 export default function ConfigureStep({
   portfolioId,
@@ -51,15 +41,13 @@ export default function ConfigureStep({
       const data = await res.json();
       // Initialize selectedIds with featured projects or top 4
       if (selectedIds.length === 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const featured = data
-          .filter((p: any) => p.is_featured)
-          .map((p: any) => p.id);
+        const featured = (data as RawProject[])
+          .filter((p: RawProject) => p.is_featured)
+          .map((p: RawProject) => p.id);
         if (featured.length > 0) {
           setSelectedIds(featured);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setSelectedIds(data.slice(0, 4).map((p: any) => p.id));
+          setSelectedIds((data as RawProject[]).slice(0, 4).map((p: RawProject) => p.id));
         }
       }
       return data;
