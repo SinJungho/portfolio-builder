@@ -17,9 +17,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-const TOSS_BLUE = "#3182F6";
-
-// Twitter / LinkedIn SVG icons
+// 공유하기 기능에 쓰일 트위터(X)랑 링크드인 로고 아이콘들
 function XIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -60,7 +58,7 @@ export default function GenerateStep({
       if (
         query.state.data?.status === "completed" ||
         query.state.data?.status === "failed" ||
-        timeoutsCount.current >= 60 // 3s * 60 = 180s (3 minutes)
+        timeoutsCount.current >= 60 // 3초마다 재요청하고 최대 3분(60번)까지만 기다림
       ) {
         return false;
       }
@@ -74,7 +72,7 @@ export default function GenerateStep({
     enabled: !!generateJobId,
   });
 
-  // DB Fallback check
+  // 혹시 API 호출이 실패하거나 타임아웃 났을 때를 대비해서, DB에 이미 완료 처리된 데이터가 있는지 백업용으로 체크하는 로직
   const { data: dbCheck } = useQuery({
     queryKey: ["portfolio-status", portfolioId],
     queryFn: async () => {
@@ -89,7 +87,7 @@ export default function GenerateStep({
   const isActuallyFinished =
     dbCheck?.is_published || data?.status === "completed";
 
-  // --- Content Rendering ---
+  // --- 상황에 따라 다르게 보여줄 화면들 ---
   const renderContent = () => {
     if (
       !isActuallyFinished &&
@@ -108,13 +106,13 @@ export default function GenerateStep({
             <AlertCircle className="w-10 h-10 text-spotify-negative" />
           </div>
           <h2 className="text-[24px] font-extrabold tracking-[-1px] text-white mb-2">
-            생성에 실패했습니다
+            포트폴리오 생성에 실패했습니다
           </h2>
           <p className="text-[15px] text-spotify-silver leading-[1.7] mb-8 font-normal">
             {data?.error ||
               (isTimedOut
-                ? "시간이 오래 걸리고 있어요. 다시 시도해주세요."
-                : "예기치 않은 오류가 발생했습니다.")}
+                ? "생성 작업이 다소 지연되고 있습니다. 잠시 후 다시 한 번 시도해 주세요."
+                : "일시적인 시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")}
           </p>
           <button
             onClick={() => {
@@ -133,7 +131,7 @@ export default function GenerateStep({
             "
           >
             <RotateCcw className="w-4 h-4" />
-            다시 시도
+            다시 시도하기
           </button>
         </div>
       );
@@ -152,7 +150,7 @@ export default function GenerateStep({
 
       return (
         <div className="flex flex-col items-center gap-8 w-full max-w-[520px] text-white">
-          {/* Main Success Card */}
+          {/* 배포가 완료되었을 때 보여줄 카드 */}
           <div
             className="
               w-full rounded-[32px]
@@ -162,7 +160,7 @@ export default function GenerateStep({
               transition-all duration-500
             "
           >
-            {/* Gradient header strip */}
+            {/* 카드 맨 위에 들어갈 포인트 그라데이션 한 줄 */}
             <div
               className="h-2.5"
               style={{
@@ -171,7 +169,7 @@ export default function GenerateStep({
             />
 
             <div className="flex flex-col items-center gap-8 px-10 py-12 text-center">
-              {/* Success Icon */}
+              {/* 배포 성공했을 때 축하용으로 보여줄 반짝이 아이콘 */}
               <div
                 className="flex h-24 w-24 items-center justify-center rounded-[32px]"
                 style={{
@@ -187,14 +185,14 @@ export default function GenerateStep({
                 <h2 className="text-[32px] font-extrabold tracking-[-1.5px] text-white leading-[1.2]">
                   포트폴리오가
                   <br />
-                  배포되었습니다! 🎉
+                  멋지게 완성되었습니다! 🎉
                 </h2>
                 <p className="text-[16px] text-spotify-silver font-medium">
-                  아래 URL에서 지금 바로 확인해보세요.
+                  아래 주소에서 지금 바로 결과물을 확인해 보세요.
                 </p>
               </div>
 
-              {/* Published URL Box */}
+              {/* 완성된 포트폴리오 주소 (클릭하면 바로 주소가 복사됨) */}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(fullUrl);
@@ -213,7 +211,7 @@ export default function GenerateStep({
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-bold text-spotify-silver uppercase tracking-wider mb-0.5">
-                    배포 주소
+                    포트폴리오 링크 주소
                   </p>
                   <span className="font-mono text-[15px] font-medium text-white select-all truncate block">
                     {fullUrl}
@@ -228,7 +226,7 @@ export default function GenerateStep({
                 </div>
               </button>
 
-              {/* Action Buttons */}
+              {/* 보러가기 버튼 & 미세 조정하러 가기 버튼 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-4 pt-2">
                 <a
                   href={fullUrl}
@@ -241,8 +239,8 @@ export default function GenerateStep({
                     shadow-[0_8px_24px_rgba(30,215,96,0.25)]
                   "
                 >
-                  <ExternalLink className="w-5 h-5 stroke-[2.5px]" />
-                  보러가기
+                  <ExternalLink className="w-5 h-5 stroke-[2.5px]" />내
+                  포트폴리오 보러 가기
                 </a>
                 <button
                   onClick={() =>
@@ -258,13 +256,13 @@ export default function GenerateStep({
                   "
                 >
                   <Settings2 className="w-5 h-5" />
-                  미세 조정
+                  블록 직접 수정하기
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Missing Optional Fields Hint */}
+          {/* 이메일이나 링크드인 주소 빠져있으면 더 채워넣으라고 알려주는 가이드 카드 */}
           {missingFields.length > 0 && (
             <div
               className="
@@ -279,7 +277,7 @@ export default function GenerateStep({
               </div>
               <div className="text-[14px] text-spotify-silver leading-[1.7] text-left">
                 <span className="font-bold block mb-0.5 text-spotify-green">
-                  전문가처럼 보이려면?
+                  더 신뢰감 높은 포트폴리오를 만들려면?
                 </span>
                 <p className="font-normal">
                   {missingFields.includes("email") && "이메일"}
@@ -292,7 +290,7 @@ export default function GenerateStep({
                     missingFields.includes("website_url") &&
                     ", "}
                   {missingFields.includes("website_url") && "개인 웹사이트"}를
-                  추가해 신뢰도를 높여보세요.
+                  추가하면 방문자(인사담당자)에게 한층 더 신뢰를 줄 수 있어요.
                 </p>
                 <button
                   onClick={() =>
@@ -300,16 +298,16 @@ export default function GenerateStep({
                   }
                   className="mt-2 font-bold flex items-center gap-1 transition-all hover:gap-2 text-spotify-green cursor-pointer"
                 >
-                  지금 추가하러 가기 <ArrowRight className="w-4 h-4" />
+                  지금 바로 보완하기 <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* Social Share Buttons */}
+          {/* SNS 공유 버튼들 */}
           <div className="flex items-center gap-4 pt-2">
             <span className="text-[14px] font-bold text-spotify-silver">
-              공유하기
+              멋진 성과를 동료들에게 공유해 보세요
             </span>
             <div className="flex items-center gap-3">
               <a
@@ -346,14 +344,14 @@ export default function GenerateStep({
       );
     }
 
-    // --- Loading / In-Progress State ---
+    // --- 생성 진행 중일 때 보여줄 로딩 화면 (프로그레스바랑 멘트가 같이 나옴) ---
     const progress = data?.progress || 0;
     const statusLabel =
       progress >= 80
-        ? "마지막 단계를 완료하고 있어요..."
+        ? "마지막 단장 중이에요. 거의 다 되었어요!"
         : progress >= 40
-          ? "블록을 예쁘게 구성하고 있어요..."
-          : "GitHub 데이터를 분석하고 있어요...";
+          ? "프로젝트를 바탕으로 멋진 블록을 다듬고 있어요..."
+          : "GitHub 저장소 데이터를 꼼꼼히 분석하고 있어요...";
 
     return (
       <div
@@ -374,9 +372,9 @@ export default function GenerateStep({
               {statusLabel}
             </h2>
             <p className="text-[15px] text-spotify-silver font-medium whitespace-pre-wrap leading-[1.6]">
-              잠시만 기다려주세요.
+              잠시만 기다려 주세요.
               <br />
-              AI가 최적의 포트폴리오를 구성하고 있습니다.
+              AI가 당신만을 위한 맞춤형 포트폴리오를 제작하고 있습니다.
             </p>
           </div>
 
@@ -407,7 +405,7 @@ export default function GenerateStep({
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-spotify-near-black px-6 py-12">
-      {/* Subtle grid background */}
+      {/* 배경에 깔아줄 은은한 모눈 격자 무늬 */}
       <div
         className="
           pointer-events-none absolute inset-0
@@ -417,7 +415,7 @@ export default function GenerateStep({
         "
       />
 
-      {/* Green glow */}
+      {/* 가운데 부분에 초록색 불빛 은은하게 비춰주는 조명 효과 */}
       <div
         className="
           pointer-events-none absolute left-1/2 top-1/2

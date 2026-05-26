@@ -29,7 +29,7 @@ const blockTypeLabels: Record<string, string> = {
   blog_feed: "블로그",
 };
 
-interface SortableBlockItemProps<T = any> {
+interface SortableBlockItemProps<T = unknown> {
   block: T & {
     id: string;
     block_type: string;
@@ -47,7 +47,7 @@ interface SortableBlockItemProps<T = any> {
   onOpenProjectEditor: (block: T) => void;
 }
 
-export function SortableBlockItem<T = any>({
+export function SortableBlockItem<T = unknown>({
   block,
   index,
   totalBlocks,
