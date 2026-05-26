@@ -33,6 +33,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type RawProject } from "@/types/project";
+import { type PortfolioInitialData } from "@/types/portfolio";
 
 import DesignEditor from "@/components/features/editor/DesignEditor";
 import MarkdownEditor from "@/components/ui/MarkdownEditor";
@@ -75,22 +76,7 @@ type MobileTab = "blocks" | "settings";
 export default function AdjustStep({
   initialData,
 }: {
-  initialData?: {
-    portfolioId: string;
-    slug: string | null;
-    customDomain: string | null;
-    blocks: Array<{
-      id: string;
-      block_type: string;
-      position: number;
-      config: Record<string, unknown>;
-      is_visible: boolean;
-      is_ai_generated: boolean;
-    }>;
-    theme: string;
-    isPublished: boolean;
-    publishedUrl: string | null;
-  };
+  initialData?: PortfolioInitialData;
 }) {
   const {
     blocks,

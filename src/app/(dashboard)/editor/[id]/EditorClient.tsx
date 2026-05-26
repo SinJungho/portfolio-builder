@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import CustomDomainSection from "./components/CustomDomainSection";
 import ProjectSelectionModal from "./components/ProjectSelectionModal";
 import { type RawProject } from "@/types/project";
+import { type PortfolioInitialData } from "@/types/portfolio";
 
 import { SortableBlockItem } from "@/app/generate/[id]/steps/components/SortableBlockItem";
 import DesignEditor from "@/components/features/editor/DesignEditor";
@@ -64,20 +65,10 @@ const blockTypeLabels: Record<string, string> = {
 
 type SidebarTab = "blocks" | "settings";
 
-export interface EditorInitialData {
-  portfolioId: string;
-  slug: string | null;
-  customDomain: string | null;
-  blocks: Block[];
-  theme: string;
-  isPublished: boolean;
-  publishedUrl: string | null;
-}
-
 export default function EditorClient({
   initialData,
 }: {
-  initialData: EditorInitialData;
+  initialData: PortfolioInitialData;
 }) {
   const {
     blocks,
@@ -480,7 +471,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
 });
 
 interface SettingsPanelProps {
-  initialData: EditorInitialData;
+  initialData: PortfolioInitialData;
   contactBlock: Block | undefined;
   handleOptionalChange: (field: string, value: string) => void;
 }
