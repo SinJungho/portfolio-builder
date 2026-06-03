@@ -87,7 +87,6 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
       `}
     >
       <div className="flex items-center gap-4 w-full min-w-0">
-        {/* 드래그 핸들 */}
         <div
           {...attributes}
           {...listeners}
