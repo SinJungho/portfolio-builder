@@ -244,8 +244,9 @@ Phase 3는 플랫폼의 핵심 역량을 강화하고 안정성을 확보하는 
 |   **Step 3**    | **다국어 지원**       | i18next 기반 다국어(KO/EN) 전환 엔진 및 UI 적용                    | `src/lib/i18n.ts`                                          |  **[완료]**  |
 |   **Step 4**    | **SEO 고도화**        | JSON-LD 구조화 데이터 및 동적 sitemap.xml 자동 생성                | `app/sitemap.ts`                                           |  **[완료]**  |
 | **Polishing 1** | **에러/예외 처리**    | 로그인 세션 만료 자동 로그아웃 처리 및 NextAuth 타입 정비          | `src/auth.ts`, `src/components/providers/AuthProvider.tsx` |  **[완료]**  |
-| **Polishing 2** | **렌더링 최적화**     | dnd-kit 블록 에디터 렌더링 지연 최소화 및 상태 동기화 완벽화       | `generate/[id]/steps/adjust.tsx`                           | **[대기중]** |
-| **Polishing 3** | **반응형/PDF 완벽화** | 모바일 기기별 레이아웃 깨짐 수정 및 PDF 출력 뷰의 픽셀 퍼펙트 대응 | `preview/PortfolioPreview.tsx`                             | **[대기중]** |
+| **Polishing 2** | **렌더링 최적화**     | dnd-kit 블록 에디터 렌더링 지연 최소화 및 상태 동기화 완벽화       | `generate/[id]/steps/adjust.tsx`                           |  **[완료]**  |
+| **Polishing 3** | **반응형/PDF 완벽화** | 모바일 기기별 레이아웃 깨짐 수정 및 PDF 출력 뷰의 픽셀 퍼펙트 대응 | `preview/PortfolioPreview.tsx`                             |  **[완료]**  |
+| **Polishing 3.5**| **리팩토링 & 타입**  | PortfolioPreview / BlocksPanel 가독성 개선, any 및 중복 타입 제거  | `preview/PortfolioPreview.tsx`, `components/BlocksPanel.tsx` |  **[완료]**  |
 | **Polishing 4** | **데이터 정합성**     | AI 프롬프트 파싱 실패 시 fallback 로직 및 DB 무결성 강화           | `api/portfolios/generate/route.ts`                         | **[대기중]** |
 
 > 앞으로의 요청은 '새로운 기능 추가'를 멈추고, 현재 기능들의 완성도를 100%로 끌어올리는 **Polishing(안정화 및 고도화)** 스텝에 집중하여 전개합니다.
