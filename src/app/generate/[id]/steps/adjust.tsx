@@ -50,14 +50,12 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
   const [init, setInit] = useState<boolean>(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("blocks");
 
-  // 대표 프로젝트 편집 오버레이 모달용 상태 관리
   const [isEditingProjects, setIsEditingProjects] = useState<boolean>(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // 대표 프로젝트 선택 모달 오픈 시 동기 패칭
   const { data: rawProjects } = useQuery<RawProject[]>({
     queryKey: ["raw-projects"],
     queryFn: async () => {
@@ -68,7 +66,7 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     enabled: init,
   });
 
-  // 1회성 데이터 마이그레이션 및 스토어 바인딩 (리액트 공식 렌더링 도중 초기화 패턴 활용)
+  // 렌더링 시점 최초 1회 스토어 상태 데이터 동기화
   if (initialData && !init) {
     initialize({
       ...initialData,
@@ -80,7 +78,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     setInit(true);
   }
 
-  // 순서 위로 이동
   const moveUp = useCallback((index: number) => {
     if (index === 0) return;
     const newBlocks = [...blocks];
@@ -92,7 +89,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     reorderBlocks(newBlocks);
   }, [blocks, reorderBlocks]);
 
-  // 순서 아래로 이동
   const moveDown = useCallback((index: number) => {
     if (index === blocks.length - 1) return;
     const newBlocks = [...blocks];
@@ -104,7 +100,7 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     reorderBlocks(newBlocks);
   }, [blocks, reorderBlocks]);
 
-  // Dnd-kit 센서 정비 (마찰 활성 거리 5px 제공)
+  // 클릭과 드래그의 오동작 방지를 위해 5px 이상 움직일 때만 드래그 시작
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
@@ -112,7 +108,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     }),
   );
 
-  // 드래그 앤 드롭 이동 완료 핸들러
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -126,7 +121,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
 
   const contactBlock = blocks.find((b) => b.block_type === "contact");
 
-  // 연락처 보완 blur 동기화 핸들러
   const handleOptionalChange = useCallback((field: string, value: string) => {
     if (!contactBlock) return;
     updateOptionalField(contactBlock.id, { [field]: value }).then(() => {
@@ -134,7 +128,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     });
   }, [contactBlock, updateOptionalField]);
 
-  // 대표 프로젝트 편집 모달 활성화
   const openProjectEditor = useCallback((block: Block) => {
     setEditingBlockId(block.id);
     setTempSelectedIds((block.config.project_ids as string[]) || []);
@@ -144,7 +137,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     setIsEditingProjects(true);
   }, []);
 
-  // 대표 프로젝트 설정값 영구 동기화
   const saveProjectChanges = useCallback(() => {
     if (!editingBlockId) return;
     const block = blocks.find((b) => b.id === editingBlockId);
@@ -161,14 +153,12 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     }
   }, [editingBlockId, blocks, tempSelectedIds, tempCustomDescriptions, updateBlockConfig]);
 
-  // 대표 리포지토리 토글 선택
   const toggleTempProject = useCallback((id: string) => {
     setTempSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   }, []);
 
-  // 마크다운 소개 타이핑 동기화 핸들러
   const handleDescriptionChange = useCallback((id: string, value: string): void => {
     setTempCustomDescriptions((prev) => ({
       ...prev,
@@ -190,7 +180,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     );
   }
 
-  // 1. 블록 목록 패널 렌더링
   const BlocksPanelComponent = (
     <BlocksPanel
       blocks={blocks}
@@ -206,7 +195,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     />
   );
 
-  // 2. 설정 패널 렌더링
   const SettingsPanelComponent = (
     <div className="space-y-6">
       <div className="bg-spotify-dark-surface border border-white/5 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-spotify text-white">
@@ -226,7 +214,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
 
   return (
     <div className="relative min-h-screen bg-spotify-near-black pb-24 text-white">
-      {/* 은은한 모눈 격자 조명 배경 */}
       <div
         className="
           pointer-events-none absolute inset-0
@@ -237,7 +224,6 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
       />
 
       <div className="relative z-10 flex flex-col flex-1 w-full max-w-7xl pt-4 px-4 gap-6 md:gap-10 mx-auto">
-        {/* 모바일 탭 스위처 (lg 미만 화면 전용) */}
         <div className="lg:hidden flex bg-spotify-mid-dark rounded-full p-1.5 gap-1.5 shadow-inner border border-white/5">
           <button
             onClick={() => setMobileTab("blocks")}
@@ -261,19 +247,16 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
           </button>
         </div>
 
-        {/* 데스크톱: 2열 대칭 레이아웃 */}
         <div className="hidden lg:grid lg:grid-cols-2 gap-10">
           <div className="space-y-6">{BlocksPanelComponent}</div>
           <div className="space-y-6">{SettingsPanelComponent}</div>
         </div>
 
-        {/* 모바일: 탭 기반 스위치 레이아웃 */}
         <div className="lg:hidden">
           {mobileTab === "blocks" ? BlocksPanelComponent : SettingsPanelComponent}
         </div>
       </div>
 
-      {/* 대표 리포지토리 선택 전체화면 오버레이 모달 (물리적 컴포넌트 격리) */}
       <ProjectSelectionModal
         isOpen={isEditingProjects}
         onClose={() => setIsEditingProjects(false)}
