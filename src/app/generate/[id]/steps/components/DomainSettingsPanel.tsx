@@ -100,7 +100,6 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
       </div>
 
       <div className="space-y-5">
-        {/* 기본 제공 무료 도메인 카드 */}
         <div className="space-y-2">
           <Label className="text-xs font-black uppercase text-spotify-silver tracking-wider">
             기본 무료 제공 주소
@@ -143,7 +142,6 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
             </div>
           </div>
 
-          {/* SNS 배포 공유 유틸리티 */}
           <div className="flex flex-wrap items-center gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-bold text-spotify-silver">
             <span>🚀 SNS에 내 포트폴리오 자랑하기:</span>
             <Button
@@ -167,7 +165,6 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
           </div>
         </div>
 
-        {/* 커스텀 도메인 설정 */}
         <div className="space-y-2.5 pt-2">
           <div className="flex items-center justify-between">
             <Label
@@ -201,7 +198,6 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
           </p>
         </div>
 
-        {/* DNS 레코드 설정 가이드 아코디언 */}
         <div className="border border-white/5 rounded-2xl overflow-hidden bg-white/[0.02]">
           <button
             onClick={() => setShowDnsManual(!showDnsManual)}
@@ -304,7 +300,6 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
           )}
         </div>
 
-        {/* 연결 상태 확인 카드 */}
         {customDomain && (
           <div className="p-5 bg-spotify-green/5 border border-spotify-green/20 rounded-2xl space-y-3 animate-in fade-in duration-300">
             <div className="flex items-center justify-between">

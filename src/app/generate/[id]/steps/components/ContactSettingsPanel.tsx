@@ -29,7 +29,6 @@ export const ContactSettingsPanel = React.memo(function ContactSettingsPanel({
 
       {contactBlock ? (
         <div className="space-y-4">
-          {/* 이메일 입력 폼 */}
           <div className="space-y-1.5 font-normal">
             <Label htmlFor="email" className="text-sm font-bold text-spotify-silver">
               이메일
@@ -46,7 +45,6 @@ export const ContactSettingsPanel = React.memo(function ContactSettingsPanel({
             />
           </div>
 
-          {/* 링크드인 주소 입력 폼 */}
           <div className="space-y-1.5 font-normal">
             <Label htmlFor="linkedin" className="text-sm font-bold text-spotify-silver">
               LinkedIn URL
@@ -63,7 +61,6 @@ export const ContactSettingsPanel = React.memo(function ContactSettingsPanel({
             />
           </div>
 
-          {/* 개인 홈페이지/웹사이트 주소 입력 폼 */}
           <div className="space-y-1.5 font-normal">
             <Label htmlFor="website" className="text-sm font-bold text-spotify-silver">
               개인 웹사이트
