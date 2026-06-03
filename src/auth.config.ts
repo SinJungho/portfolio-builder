@@ -1,5 +1,5 @@
-import type { NextAuthConfig } from 'next-auth'
-import GitHub from 'next-auth/providers/github'
+import type { NextAuthConfig } from "next-auth";
+import GitHub from "next-auth/providers/github";
 
 export default {
   providers: [
@@ -15,11 +15,12 @@ export default {
           github_login: profile.login,
           github_id: profile.id,
           github_bio: profile.bio ?? null,
-        }
+          github_bio_verified: false,
+        };
       },
     }),
   ],
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
-} satisfies NextAuthConfig
+} satisfies NextAuthConfig;

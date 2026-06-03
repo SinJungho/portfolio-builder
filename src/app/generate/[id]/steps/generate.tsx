@@ -98,7 +98,7 @@ export default function GenerateStep({
           className="
             w-full max-w-[480px] rounded-[32px]
             border border-white/5 bg-spotify-dark-surface
-            px-8 py-12 text-center
+            px-6 sm:px-8 py-10 sm:py-12 text-center
             shadow-spotify
           "
         >
@@ -168,26 +168,26 @@ export default function GenerateStep({
               }}
             />
 
-            <div className="flex flex-col items-center gap-8 px-10 py-12 text-center">
-              {/* 배포 성공했을 때 축하용으로 보여줄 반짝이 아이콘 */}
+            <div className="flex flex-col items-center gap-8 px-6 sm:px-10 py-10 sm:py-12 text-center">
+              {/* 배포 성공했을 때 축하용으로 보여줄 반짝이 아이콘 (모바일 대응 크기 스케일링) */}
               <div
-                className="flex h-24 w-24 items-center justify-center rounded-[32px]"
+                className="flex h-20 sm:h-24 w-20 sm:w-24 items-center justify-center rounded-[24px] sm:rounded-[32px]"
                 style={{
                   background: "linear-gradient(135deg, #1ed760, #1db954)",
                   boxShadow: "0 12px 32px rgba(30,215,96,0.3)",
                   transform: "rotate(-4deg)",
                 }}
               >
-                <Sparkles className="w-12 h-12 text-black fill-black" />
+                <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 text-black fill-black" />
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-[32px] font-extrabold tracking-[-1.5px] text-white leading-[1.2]">
+                <h2 className="text-[26px] sm:text-[32px] font-extrabold tracking-[-1px] sm:tracking-[-1.5px] text-white leading-[1.2]">
                   포트폴리오가
                   <br />
                   멋지게 완성되었습니다! 🎉
                 </h2>
-                <p className="text-[16px] text-spotify-silver font-medium">
+                <p className="text-sm sm:text-[16px] text-spotify-silver font-medium">
                   아래 주소에서 지금 바로 결과물을 확인해 보세요.
                 </p>
               </div>
@@ -203,25 +203,25 @@ export default function GenerateStep({
                 className="
                   group relative flex w-full items-center justify-between gap-4
                   rounded-[24px] border border-white/5 bg-spotify-mid-dark
-                  px-6 py-5 text-left
+                  px-5 sm:px-6 py-4 sm:py-5 text-left
                   transition-all duration-300
                   hover:bg-spotify-mid-dark/80 hover:border-spotify-green/20
                   hover:-translate-y-0.5
                 "
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-bold text-spotify-silver uppercase tracking-wider mb-0.5">
+                  <p className="text-[11px] sm:text-[12px] font-bold text-spotify-silver uppercase tracking-wider mb-0.5">
                     포트폴리오 링크 주소
                   </p>
-                  <span className="font-mono text-[15px] font-medium text-white select-all truncate block">
+                  <span className="font-mono text-sm sm:text-[15px] font-medium text-white select-all truncate block">
                     {fullUrl}
                   </span>
                 </div>
-                <div className="shrink-0 bg-spotify-dark-surface p-2.5 rounded-xl border border-white/5 shadow-sm">
+                <div className="shrink-0 bg-spotify-dark-surface p-2 sm:p-2.5 rounded-xl border border-white/5 shadow-sm">
                   {copied ? (
-                    <Check className="w-5 h-5 text-spotify-green stroke-[3px]" />
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-spotify-green stroke-[3px]" />
                   ) : (
-                    <Copy className="w-5 h-5 text-spotify-silver group-hover:text-spotify-green transition-colors" />
+                    <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-spotify-silver group-hover:text-spotify-green transition-colors" />
                   )}
                 </div>
               </button>
@@ -233,13 +233,13 @@ export default function GenerateStep({
                   target="_blank"
                   rel="noreferrer"
                   className="
-                    flex h-[60px] items-center justify-center gap-2
-                    rounded-full text-[16px] font-bold text-black
+                    flex h-14 sm:h-[60px] items-center justify-center gap-2
+                    rounded-full text-sm sm:text-[16px] font-bold text-black
                     bg-spotify-green hover:scale-105 active:scale-95 transition-all
                     shadow-[0_8px_24px_rgba(30,215,96,0.25)]
                   "
                 >
-                  <ExternalLink className="w-5 h-5 stroke-[2.5px]" />내
+                  <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5px]" />내
                   포트폴리오 보러 가기
                 </a>
                 <button
@@ -247,15 +247,15 @@ export default function GenerateStep({
                     router.push(`/generate/${portfolioId}?step=adjust`)
                   }
                   className="
-                    flex h-[60px] items-center justify-center gap-2
+                    flex h-14 sm:h-[60px] items-center justify-center gap-2
                     rounded-full border border-spotify-silver/40 bg-transparent
-                    text-[16px] font-bold text-white
+                    text-sm sm:text-[16px] font-bold text-white
                     hover:scale-105 active:scale-95 transition-all
                     hover:border-white
                     cursor-pointer
                   "
                 >
-                  <Settings2 className="w-5 h-5" />
+                  <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                   블록 직접 수정하기
                 </button>
               </div>

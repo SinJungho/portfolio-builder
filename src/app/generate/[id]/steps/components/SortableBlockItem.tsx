@@ -47,7 +47,9 @@ interface SortableBlockItemProps<T = unknown> {
   onOpenProjectEditor: (block: T) => void;
 }
 
-export function SortableBlockItem<T = unknown>({
+export const SortableBlockItem = React.memo(function SortableBlockItem<
+  T = unknown,
+>({
   block,
   index,
   totalBlocks,
@@ -187,4 +189,4 @@ export function SortableBlockItem<T = unknown>({
       </div>
     </div>
   );
-}
+}) as <T = unknown>(props: SortableBlockItemProps<T>) => React.ReactElement;

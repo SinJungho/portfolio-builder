@@ -27,7 +27,6 @@
 - [ ] **소유권 검증 필요 여부**: portfolio/block을 수정하는 API인가?
   - 해당한다면 → `portfolio.user_id !== session.user.id` 검증 + `403 forbidden` 반환 코드 포함
 
-
 - [ ] **소유권 검증 필요 여부**: portfolio/block을 수정하는 API인가?
 
 - [ ] **OpenAI 호출 포함 여부**: AI 분석/요약 코드가 포함되는가?
@@ -56,7 +55,7 @@ Pre-flight 통과 후 아래 규칙 안에서만 코드를 작성한다.
 | 검증      | Zod                                   | Yup, class-validator  |
 | UI        | Tailwind + shadcn/ui                  | Inline style, MUI     |
 | 캐시      | Upstash Redis                         | node-cache, in-memory |
-| 스토리지  | Supabase Storage (S3 API)           | AWS S3 직접           |
+| 스토리지  | Supabase Storage (S3 API)             | AWS S3 직접           |
 | 미리보기  | PortfolioPreview 컴포넌트 직접 렌더링 | **iFrame 금지**       |
 
 ### 파일 생성 위치 규칙
@@ -209,6 +208,7 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 **현재**: Phase 2 (완료) 🎉 → **Phase 3 (확장 고도화) 진입 단계**
 
 ### ✅ Phase 1 & 2 주요 달성 사항 (최신화)
+
 - **GitHub Oauth & Webhook**: [완료] Push 시 캐시 무효화 및 자동 재배포 완성
 - **AI 분석 엔진**: [완료] `gpt-4o-mini` 기반 README 요약 및 `ai_score` 큐레이션
 - **디자인 토큰 커스텀**: [완료] 테마를 넘어 색상, 폰트, 여백, 라운드처리 세부 제어 엔진 구축
@@ -220,33 +220,33 @@ GET  /api/analytics/:portfolioId/summary?period=7d|30d|90d   ← 본인만 조�
 
 ### 🚀 Phase 2: 개발 선형 플로우 (예정 목록)
 
-Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, Pro 플랜 수익 모델을 도입하여 비즈니스 가치를 창출하는 단계입니다. 다음 **Step 단위**로 선형적(Linear) 구현을 진행해야 합니다. 
+Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, Pro 플랜 수익 모델을 도입하여 비즈니스 가치를 창출하는 단계입니다. 다음 **Step 단위**로 선형적(Linear) 구현을 진행해야 합니다.
 
-| 순서 | 카테고리 | 핵심 작업 (개발 선형 플로우) | 관련 예상 컴포넌트 / API |
-| :---: | :--- | :--- | :--- |
-| **Step 1** | **외부 데이터 확장** | [완료] 블로그 RSS 피드 연동 (Tistory, Velog, Medium 지원) 및 `feed_items` DB 수집 파이프라인 | `api/integrations/rss/route.ts` |
-| **Step 2** | **에디터 고도화 1** | [완료] `dnd-kit` 기반 WYSIWYG 블록 에디터 도입 및 생성 타임아웃/상태 동기화 이슈 해결 | `generate/[id]/steps/adjust.tsx` |
-| **Step 3** | **에디터 고도화 2** | [완료] 디자인 토큰 편집기 구현 (색상, 폰트, Spacing 세부 커스텀 개방) | `components/DesignEditor.tsx` |
-| **Step 4** | **품질 보증 (QA)** | [완료] 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI) | `utils/accessibility.ts` |
-| **Step 5** | **분석 대시보드** | [완료] `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
-| **Step 6** | **커스텀 도메인 및 인프라** | [완료] Hobby 와일드카드 지원 및 Next.js 16 proxy.ts 전환 | `api/domains/route.ts` |
+|    순서    | 카테고리                    | 핵심 작업 (개발 선형 플로우)                                                                          | 관련 예상 컴포넌트 / API             |
+| :--------: | :-------------------------- | :---------------------------------------------------------------------------------------------------- | :----------------------------------- |
+| **Step 1** | **외부 데이터 확장**        | [완료] 블로그 RSS 피드 연동 (Tistory, Velog, Medium 지원) 및 `feed_items` DB 수집 파이프라인          | `api/integrations/rss/route.ts`      |
+| **Step 2** | **에디터 고도화 1**         | [완료] `dnd-kit` 기반 WYSIWYG 블록 에디터 도입 및 생성 타임아웃/상태 동기화 이슈 해결                 | `generate/[id]/steps/adjust.tsx`     |
+| **Step 3** | **에디터 고도화 2**         | [완료] 디자인 토큰 편집기 구현 (색상, 폰트, Spacing 세부 커스텀 개방)                                 | `components/DesignEditor.tsx`        |
+| **Step 4** | **품질 보증 (QA)**          | [완료] 런타임 접근성 판단 로직 (사용자가 선택한 색상, 텍스트 대비도 자동 계산 및 경고 알림 UI)        | `utils/accessibility.ts`             |
+| **Step 5** | **분석 대시보드**           | [완료] `analytics_events` 테이블 기반 포트폴리오 방문자 통계 UI 개발 (조회수 차트, 인게이지먼트 비율) | `app/(dashboard)/analytics/page.tsx` |
+| **Step 6** | **커스텀 도메인 및 인프라** | [완료] Hobby 와일드카드 지원 및 Next.js 16 proxy.ts 전환                                              | `api/domains/route.ts`               |
 
 ---
 
-### 🚀 Phase 3: 확장 고도화 (예정 목록)
+### 🚀 Phase 3: 확장 고도화 및 안정화 (최신화)
 
-Phase 3는 플랫폼의 생태계를 확장하고 고급 기능들을 추가하는 단계입니다. 다음 **Step 단위**로 전개합니다.
+Phase 3는 플랫폼의 핵심 역량을 강화하고 안정성을 확보하는 단계입니다. 취소된 무거운 스펙들을 제외하고 핵심 가치에 온전히 집중하여 완수한 내역과 예정된 폴리싱 목록입니다.
 
-| 순서 | 카테고리 | 핵심 작업 (개발 선형 플로우) | 관련 예상 컴포넌트 / API |
-| :---: | :--- | :--- | :--- |
-| **Step 1** | **PDF 내보내기** | CV/이력서 PDF 내보내기 (Puppeteer 기반) 지원 | `api/export/pdf/route.ts` |
-| **Step 2** | **채용 담당자 뷰** | 채용 담당자 최적화 뷰 모드 (`?view=recruiter`) 추가 | `[slug]/page.tsx` |
-| **Step 3** | **협업 편집** | 실시간 협업 편집 (Yjs/CRDT 기반) 도입 | `components/CollaborativeEditor.tsx` |
-| **Step 4** | **마켓플레이스** | 템플릿 마켓플레이스 (커뮤니티 공유) 구축 | `app/(marketing)/templates/page.tsx` |
-| **Step 5** | **Pro 커스텀** | 고급 CSS 편집 (Pro) 기능 추가 | `components/AdvancedCSSEditor.tsx` |
-| **Step 6** | **CLI 도구** | CLI 도구 (포트폴리오 로컬 관리, GitHub Actions 연동) | `packages/cli/index.ts` |
-| **Step 7** | **다국어 지원** | i18next 기반 다국어(KO/EN) 전환 엔진 및 UI 적용 | `src/lib/i18n.ts` |
-| **Step 8** | **SEO 고도화** | JSON-LD 구조화 데이터 및 동적 sitemap.xml 자동 생성 | `app/sitemap.ts` |
+|      순서       | 카테고리              | 핵심 작업 (개발 선형 플로우)                                       | 관련 예상 컴포넌트 / API                                   |     상태     |
+| :-------------: | :-------------------- | :----------------------------------------------------------------- | :--------------------------------------------------------- | :----------: |
+|   **Step 1**    | **PDF 내보내기**      | CV/이력서 PDF 내보내기 (Puppeteer 기반) 지원                       | `api/export/pdf/route.ts`                                  |  **[완료]**  |
+|   **Step 2**    | **Pro 커스텀**        | 고급 CSS 편집 (Pro) 기능 추가                                      | `components/AdvancedCSSEditor.tsx`                         |  **[완료]**  |
+|   **Step 3**    | **다국어 지원**       | i18next 기반 다국어(KO/EN) 전환 엔진 및 UI 적용                    | `src/lib/i18n.ts`                                          |  **[완료]**  |
+|   **Step 4**    | **SEO 고도화**        | JSON-LD 구조화 데이터 및 동적 sitemap.xml 자동 생성                | `app/sitemap.ts`                                           |  **[완료]**  |
+| **Polishing 1** | **에러/예외 처리**    | 로그인 세션 만료 자동 로그아웃 처리 및 NextAuth 타입 정비          | `src/auth.ts`, `src/components/providers/AuthProvider.tsx` |  **[완료]**  |
+| **Polishing 2** | **렌더링 최적화**     | dnd-kit 블록 에디터 렌더링 지연 최소화 및 상태 동기화 완벽화       | `generate/[id]/steps/adjust.tsx`                           | **[대기중]** |
+| **Polishing 3** | **반응형/PDF 완벽화** | 모바일 기기별 레이아웃 깨짐 수정 및 PDF 출력 뷰의 픽셀 퍼펙트 대응 | `preview/PortfolioPreview.tsx`                             | **[대기중]** |
+| **Polishing 4** | **데이터 정합성**     | AI 프롬프트 파싱 실패 시 fallback 로직 및 DB 무결성 강화           | `api/portfolios/generate/route.ts`                         | **[대기중]** |
 
-> 앞으로의 요청은 위 Phase 3의 **Step 1 ~ Step 8** 순서에 입각하여 하나씩 전개합니다.
-> 각 Step을 시작할 때는 반드시 기존과 동일하게 **Pre-flight 검증**을 먼저 거치고 구현을 시작합니다.
+> 앞으로의 요청은 '새로운 기능 추가'를 멈추고, 현재 기능들의 완성도를 100%로 끌어올리는 **Polishing(안정화 및 고도화)** 스텝에 집중하여 전개합니다.
+> 각 작업을 시작할 때는 반드시 기존 코드를 정밀 진단하고 **Pre-flight 검증**을 거쳐 결함을 찾고 수정합니다.
