@@ -123,9 +123,13 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
 
   const handleOptionalChange = useCallback((field: string, value: string) => {
     if (!contactBlock) return;
-    updateOptionalField(contactBlock.id, { [field]: value }).then(() => {
-      toast.success("저장되었습니다");
-    });
+    updateOptionalField(contactBlock.id, { [field]: value })
+      .then(() => {
+        toast.success("저장되었습니다");
+      })
+      .catch((err: Error) => {
+        toast.error(err.message || "설정 저장 중 오류가 발생했습니다.");
+      });
   }, [contactBlock, updateOptionalField]);
 
   const openProjectEditor = useCallback((block: Block) => {
@@ -145,11 +149,15 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
         ...block.config,
         project_ids: tempSelectedIds,
         custom_descriptions: tempCustomDescriptions,
-      }).then(() => {
-        setIsEditingProjects(false);
-        setEditingBlockId(null);
-        toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
-      });
+      })
+        .then(() => {
+          setIsEditingProjects(false);
+          setEditingBlockId(null);
+          toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
+        })
+        .catch((err: Error) => {
+          toast.error(err.message || "프로젝트 설정 저장 중 오류가 발생했습니다.");
+        });
     }
   }, [editingBlockId, blocks, tempSelectedIds, tempCustomDescriptions, updateBlockConfig]);
 
