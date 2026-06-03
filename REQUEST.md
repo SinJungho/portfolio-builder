@@ -247,6 +247,8 @@ Phase 3는 플랫폼의 핵심 역량을 강화하고 안정성을 확보하는 
 | **Polishing 2** | **렌더링 최적화**     | dnd-kit 블록 에디터 렌더링 지연 최소화 및 상태 동기화 완벽화       | `generate/[id]/steps/adjust.tsx`                           |  **[완료]**  |
 | **Polishing 3** | **반응형/PDF 완벽화** | 모바일 기기별 레이아웃 깨짐 수정 및 PDF 출력 뷰의 픽셀 퍼펙트 대응 | `preview/PortfolioPreview.tsx`                             |  **[완료]**  |
 | **Polishing 3.5**| **리팩토링 & 타입**  | PortfolioPreview / BlocksPanel 가독성 개선, any 및 중복 타입 제거  | `preview/PortfolioPreview.tsx`, `components/BlocksPanel.tsx` |  **[완료]**  |
+| **Polishing 3.7**| **주석 다이어트 (1)** | `generate.tsx` 가독성 개선, 1차원 마크업 주석 소거 및 핵심 비즈니스 룰 보존 | `generate.tsx` |  **[완료]**  |
+| **Polishing 3.9**| **주석 다이어트 (2)** | `steps` 폴더 내 컴포넌트 전반의 주석 다이어트 및 실무형 주석 정제 완료 | `steps/` 디렉토리 전반 |  **[완료]**  |
 | **Polishing 4** | **데이터 정합성**     | AI 프롬프트 파싱 실패 시 fallback 로직 및 DB 무결성 강화           | `api/portfolios/generate/route.ts`                         | **[대기중]** |
 
 > 앞으로의 요청은 '새로운 기능 추가'를 멈추고, 현재 기능들의 완성도를 100%로 끌어올리는 **Polishing(안정화 및 고도화)** 스텝에 집중하여 전개합니다.
