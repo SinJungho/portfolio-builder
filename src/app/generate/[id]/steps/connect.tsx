@@ -9,6 +9,7 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 컴포넌트 언마운트 시점에 비동기 처리가 완료되어 발생할 수 있는 메모리 누수 및 예기치 않은 라우팅(경쟁 상태)을 방지하기 위해 active 플래그를 활용한 취소 패턴을 적용합니다.
     let active = true;
     async function run() {
       try {
