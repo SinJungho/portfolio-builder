@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-// 공유하기 기능에 쓰일 트위터(X)랑 링크드인 로고 아이콘들
 function XIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -58,7 +57,7 @@ export default function GenerateStep({
       if (
         query.state.data?.status === "completed" ||
         query.state.data?.status === "failed" ||
-        timeoutsCount.current >= 60 // 3초마다 재요청하고 최대 3분(60번)까지만 기다림
+        timeoutsCount.current >= 60 // 3초 간격 폴링, 최대 3분(60회) 대기 후 타임아웃 처리
       ) {
         return false;
       }
@@ -72,7 +71,7 @@ export default function GenerateStep({
     enabled: !!generateJobId,
   });
 
-  // 혹시 API 호출이 실패하거나 타임아웃 났을 때를 대비해서, DB에 이미 완료 처리된 데이터가 있는지 백업용으로 체크하는 로직
+  // API 에러 또는 타임아웃 발생 시 DB에 최종 반영된 published_url 보조 체크
   const { data: dbCheck } = useQuery({
     queryKey: ["portfolio-status", portfolioId],
     queryFn: async () => {
@@ -87,7 +86,6 @@ export default function GenerateStep({
   const isActuallyFinished =
     dbCheck?.is_published || data?.status === "completed";
 
-  // --- 상황에 따라 다르게 보여줄 화면들 ---
   const renderContent = () => {
     if (
       !isActuallyFinished &&
@@ -150,7 +148,6 @@ export default function GenerateStep({
 
       return (
         <div className="flex flex-col items-center gap-8 w-full max-w-[520px] text-white">
-          {/* 배포가 완료되었을 때 보여줄 카드 */}
           <div
             className="
               w-full rounded-[32px]
@@ -160,7 +157,6 @@ export default function GenerateStep({
               transition-all duration-500
             "
           >
-            {/* 카드 맨 위에 들어갈 포인트 그라데이션 한 줄 */}
             <div
               className="h-2.5"
               style={{
@@ -169,7 +165,6 @@ export default function GenerateStep({
             />
 
             <div className="flex flex-col items-center gap-8 px-6 sm:px-10 py-10 sm:py-12 text-center">
-              {/* 배포 성공했을 때 축하용으로 보여줄 반짝이 아이콘 (모바일 대응 크기 스케일링) */}
               <div
                 className="flex h-20 sm:h-24 w-20 sm:w-24 items-center justify-center rounded-[24px] sm:rounded-[32px]"
                 style={{
@@ -192,7 +187,6 @@ export default function GenerateStep({
                 </p>
               </div>
 
-              {/* 완성된 포트폴리오 주소 (클릭하면 바로 주소가 복사됨) */}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(fullUrl);
@@ -226,7 +220,6 @@ export default function GenerateStep({
                 </div>
               </button>
 
-              {/* 보러가기 버튼 & 미세 조정하러 가기 버튼 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-4 pt-2">
                 <a
                   href={fullUrl}
@@ -262,7 +255,6 @@ export default function GenerateStep({
             </div>
           </div>
 
-          {/* 이메일이나 링크드인 주소 빠져있으면 더 채워넣으라고 알려주는 가이드 카드 */}
           {missingFields.length > 0 && (
             <div
               className="
@@ -304,7 +296,6 @@ export default function GenerateStep({
             </div>
           )}
 
-          {/* SNS 공유 버튼들 */}
           <div className="flex items-center gap-4 pt-2">
             <span className="text-[14px] font-bold text-spotify-silver">
               멋진 성과를 동료들에게 공유해 보세요
@@ -344,7 +335,6 @@ export default function GenerateStep({
       );
     }
 
-    // --- 생성 진행 중일 때 보여줄 로딩 화면 (프로그레스바랑 멘트가 같이 나옴) ---
     const progress = data?.progress || 0;
     const statusLabel =
       progress >= 80
@@ -405,7 +395,6 @@ export default function GenerateStep({
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-spotify-near-black px-6 py-12">
-      {/* 배경에 깔아줄 은은한 모눈 격자 무늬 */}
       <div
         className="
           pointer-events-none absolute inset-0
@@ -415,7 +404,6 @@ export default function GenerateStep({
         "
       />
 
-      {/* 가운데 부분에 초록색 불빛 은은하게 비춰주는 조명 효과 */}
       <div
         className="
           pointer-events-none absolute left-1/2 top-1/2
