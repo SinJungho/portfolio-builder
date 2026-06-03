@@ -237,19 +237,19 @@ Phase 2는 사용자 개입 권한(커스터마이징)을 대폭 위임하고, P
 
 Phase 3는 플랫폼의 핵심 역량을 강화하고 안정성을 확보하는 단계입니다. 취소된 무거운 스펙들을 제외하고 핵심 가치에 온전히 집중하여 완수한 내역과 예정된 폴리싱 목록입니다.
 
-|      순서       | 카테고리              | 핵심 작업 (개발 선형 플로우)                                       | 관련 예상 컴포넌트 / API                                   |     상태     |
-| :-------------: | :-------------------- | :----------------------------------------------------------------- | :--------------------------------------------------------- | :----------: |
-|   **Step 1**    | **PDF 내보내기**      | CV/이력서 PDF 내보내기 (Puppeteer 기반) 지원                       | `api/export/pdf/route.ts`                                  |  **[완료]**  |
-|   **Step 2**    | **Pro 커스텀**        | 고급 CSS 편집 (Pro) 기능 추가                                      | `components/AdvancedCSSEditor.tsx`                         |  **[완료]**  |
-|   **Step 3**    | **다국어 지원**       | i18next 기반 다국어(KO/EN) 전환 엔진 및 UI 적용                    | `src/lib/i18n.ts`                                          |  **[완료]**  |
-|   **Step 4**    | **SEO 고도화**        | JSON-LD 구조화 데이터 및 동적 sitemap.xml 자동 생성                | `app/sitemap.ts`                                           |  **[완료]**  |
-| **Polishing 1** | **에러/예외 처리**    | 로그인 세션 만료 자동 로그아웃 처리 및 NextAuth 타입 정비          | `src/auth.ts`, `src/components/providers/AuthProvider.tsx` |  **[완료]**  |
-| **Polishing 2** | **렌더링 최적화**     | dnd-kit 블록 에디터 렌더링 지연 최소화 및 상태 동기화 완벽화       | `generate/[id]/steps/adjust.tsx`                           |  **[완료]**  |
-| **Polishing 3** | **반응형/PDF 완벽화** | 모바일 기기별 레이아웃 깨짐 수정 및 PDF 출력 뷰의 픽셀 퍼펙트 대응 | `preview/PortfolioPreview.tsx`                             |  **[완료]**  |
-| **Polishing 3.5**| **리팩토링 & 타입**  | PortfolioPreview / BlocksPanel 가독성 개선, any 및 중복 타입 제거  | `preview/PortfolioPreview.tsx`, `components/BlocksPanel.tsx` |  **[완료]**  |
-| **Polishing 3.7**| **주석 다이어트 (1)** | `generate.tsx` 가독성 개선, 1차원 마크업 주석 소거 및 핵심 비즈니스 룰 보존 | `generate.tsx` |  **[완료]**  |
-| **Polishing 3.9**| **주석 다이어트 (2)** | `steps` 폴더 내 컴포넌트 전반의 주석 다이어트 및 실무형 주석 정제 완료 | `steps/` 디렉토리 전반 |  **[완료]**  |
-| **Polishing 4** | **데이터 정합성**     | AI 프롬프트 파싱 실패 시 fallback 로직 및 DB 무결성 강화           | `api/portfolios/generate/route.ts`                         | **[대기중]** |
+|       순서        | 카테고리              | 핵심 작업 (개발 선형 플로우)                                                | 관련 예상 컴포넌트 / API                                     |     상태     |
+| :---------------: | :-------------------- | :-------------------------------------------------------------------------- | :----------------------------------------------------------- | :----------: |
+|    **Step 1**     | **PDF 내보내기**      | CV/이력서 PDF 내보내기 (Puppeteer 기반) 지원                                | `api/export/pdf/route.ts`                                    |  **[완료]**  |
+|    **Step 2**     | **Pro 커스텀**        | 고급 CSS 편집 (Pro) 기능 추가                                               | `components/AdvancedCSSEditor.tsx`                           |  **[완료]**  |
+|    **Step 3**     | **다국어 지원**       | i18next 기반 다국어(KO/EN) 전환 엔진 및 UI 적용                             | `src/lib/i18n.ts`                                            |  **[완료]**  |
+|    **Step 4**     | **SEO 고도화**        | JSON-LD 구조화 데이터 및 동적 sitemap.xml 자동 생성                         | `app/sitemap.ts`                                             |  **[완료]**  |
+|  **Polishing 1**  | **에러/예외 처리**    | 로그인 세션 만료 자동 로그아웃 처리 및 NextAuth 타입 정비                   | `src/auth.ts`, `src/components/providers/AuthProvider.tsx`   |  **[완료]**  |
+|  **Polishing 2**  | **렌더링 최적화**     | dnd-kit 블록 에디터 렌더링 지연 최소화 및 상태 동기화 완벽화                | `generate/[id]/steps/adjust.tsx`                             |  **[완료]**  |
+|  **Polishing 3**  | **반응형/PDF 완벽화** | 모바일 기기별 레이아웃 깨짐 수정 및 PDF 출력 뷰의 픽셀 퍼펙트 대응          | `preview/PortfolioPreview.tsx`                               |  **[완료]**  |
+| **Polishing 3.5** | **리팩토링 & 타입**   | PortfolioPreview / BlocksPanel 가독성 개선, any 및 중복 타입 제거           | `preview/PortfolioPreview.tsx`, `components/BlocksPanel.tsx` |  **[완료]**  |
+| **Polishing 3.7** | **주석 다이어트 (1)** | `generate.tsx` 가독성 개선, 1차원 마크업 주석 소거 및 핵심 비즈니스 룰 보존 | `generate.tsx`                                               |  **[완료]**  |
+| **Polishing 3.9** | **주석 다이어트 (2)** | `steps` 폴더 내 컴포넌트 전반의 주석 다이어트 및 실무형 주석 정제 완료      | `steps/` 디렉토리 전반                                       |  **[완료]**  |
+|  **Polishing 4**  | **데이터 정합성**     | AI 프롬프트 파싱 실패 시 fallback 로직 및 DB 무결성 강화                    | `api/portfolios/generate/route.ts`                           | **[대기중]** |
 
 > 앞으로의 요청은 '새로운 기능 추가'를 멈추고, 현재 기능들의 완성도를 100%로 끌어올리는 **Polishing(안정화 및 고도화)** 스텝에 집중하여 전개합니다.
 > 각 작업을 시작할 때는 반드시 기존 코드를 정밀 진단하고 **Pre-flight 검증**을 거쳐 결함을 찾고 수정합니다.
