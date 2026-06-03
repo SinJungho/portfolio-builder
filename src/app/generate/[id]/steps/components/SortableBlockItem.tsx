@@ -108,7 +108,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
           <div className="flex flex-wrap items-center gap-2 mt-1">
             {block.is_ai_generated && (
               <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 bg-spotify-green/10 text-spotify-green rounded-md tracking-wider">
-                AI Generated
+                AI 생성
               </span>
             )}
             {block.block_type === "project_grid" && block.is_visible && (
