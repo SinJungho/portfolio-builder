@@ -232,8 +232,8 @@ export default function GenerateStep({
                     shadow-[0_8px_24px_rgba(30,215,96,0.25)]
                   "
                 >
-                  <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5px]" />내
-                  포트폴리오 보러 가기
+                  <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5px]" />
+                  내 포트폴리오 보러 가기
                 </a>
                 <button
                   onClick={() =>
@@ -384,7 +384,7 @@ export default function GenerateStep({
                 {progress}%
               </span>
               <span className="text-[11px] font-bold text-spotify-silver uppercase tracking-widest">
-                Generating Your Site
+                포트폴리오 생성 중
               </span>
             </div>
           </div>
