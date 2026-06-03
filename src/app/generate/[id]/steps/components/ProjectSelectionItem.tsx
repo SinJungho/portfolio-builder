@@ -25,12 +25,12 @@ export const ProjectSelectionItem = React.memo(function ProjectSelectionItem({
   const [localText, setLocalText] = useState<string>(customDescription);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 외부(부모)에서 새로운 설명글이 내려오면 로컬 편집기 상태를 맞춰줍니다.
+  // 부모 컴포넌트의 설명글 변경 시 로컬 에디터 상태 동기화
   useEffect(() => {
     setLocalText(customDescription);
   }, [customDescription]);
 
-  // 컴포넌트가 화면에서 사라질 때 혹시 작동 중일 수 있는 디바운스 타이머를 안전하게 정리합니다.
+  // 컴포넌트 언마운트 시 디바운스 타이머 클리어
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -42,7 +42,7 @@ export const ProjectSelectionItem = React.memo(function ProjectSelectionItem({
   const handleTextChange = (value: string): void => {
     setLocalText(value);
 
-    // 0.2초 동안 입력이 멈췄을 때만 부모 상태로 올려서 글자 밀림(랙)을 원천 차단합니다.
+    // 타이핑 성능 저하를 방지하기 위해 200ms 디바운스 적용
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }

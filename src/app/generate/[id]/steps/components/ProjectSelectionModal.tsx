@@ -38,7 +38,6 @@ export const ProjectSelectionModal = React.memo(function ProjectSelectionModal({
 
   return (
     <div className="fixed inset-0 z-100 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
-      {/* 헤더 바 영역 */}
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button
@@ -60,7 +59,6 @@ export const ProjectSelectionModal = React.memo(function ProjectSelectionModal({
         </Button>
       </div>
 
-      {/* 프로젝트 필터 및 목록 영역 */}
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
         <div className="mb-8 space-y-4">
           <div className="relative">
@@ -74,7 +72,6 @@ export const ProjectSelectionModal = React.memo(function ProjectSelectionModal({
           </div>
         </div>
 
-        {/* 프로젝트 카드 리스트 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredProjects?.map((project: RawProject) => (
             <ProjectSelectionItem
