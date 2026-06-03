@@ -1,5 +1,3 @@
-import React from "react";
-
 export function XIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
