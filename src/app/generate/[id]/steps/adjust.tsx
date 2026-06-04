@@ -60,13 +60,13 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("Failed to fetch projects");
+      if (!res.ok) throw new Error("프로젝트 목록을 불러오지 못했습니다.");
       return res.json();
     },
     enabled: init,
   });
 
-  // 렌더링 시점 최초 1회 스토어 상태 데이터 동기화
+  // 컴포넌트 마운트 시 스토어 상태를 최초 1회 동기화합니다.
   if (initialData && !init) {
     initialize({
       ...initialData,
@@ -100,7 +100,7 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     reorderBlocks(newBlocks);
   }, [blocks, reorderBlocks]);
 
-  // 클릭과 드래그의 오동작 방지를 위해 5px 이상 움직일 때만 드래그 시작
+  // 일반 클릭 이벤트와의 오동작을 방지하기 위해, 5px 이상 드래그가 감지되었을 때만 dnd 동작을 시작합니다.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
@@ -125,10 +125,10 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     if (!contactBlock) return;
     updateOptionalField(contactBlock.id, { [field]: value })
       .then(() => {
-        toast.success("저장되었습니다");
+        toast.success("연락처 정보가 저장되었습니다.");
       })
       .catch((err: Error) => {
-        toast.error(err.message || "설정 저장 중 오류가 발생했습니다.");
+        toast.error(err.message || "연락처 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
       });
   }, [contactBlock, updateOptionalField]);
 
@@ -153,10 +153,10 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
         .then(() => {
           setIsEditingProjects(false);
           setEditingBlockId(null);
-          toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
+          toast.success("대표 프로젝트 설정이 저장되었습니다.");
         })
         .catch((err: Error) => {
-          toast.error(err.message || "프로젝트 설정 저장 중 오류가 발생했습니다.");
+          toast.error(err.message || "프로젝트 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
         });
     }
   }, [editingBlockId, blocks, tempSelectedIds, tempCustomDescriptions, updateBlockConfig]);
