@@ -5,6 +5,7 @@ import AnalyticsTracker from '@/components/AnalyticsTracker'
 import { resolveTheme } from '@/preview/themes'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import type { Block } from '@/stores/portfolioStore'
 
 export const revalidate = 60;
 
@@ -128,7 +129,7 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
 
       <main className="flex-1 w-full">
         <PortfolioPreview 
-          blocks={populatedBlocks} 
+          blocks={populatedBlocks as unknown as Block[]} 
           theme={portfolio.theme} 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           designTokens={portfolio.design_tokens as any}

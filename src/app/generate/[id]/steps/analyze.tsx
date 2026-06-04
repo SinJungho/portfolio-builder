@@ -32,6 +32,7 @@ export default function AnalyzeStep({
       if (!res.ok) throw new Error("sync_failed");
       return res.json();
     },
+    // 비동기로 실행되는 GitHub 분석 작업의 완료 상태를 감지하기 위해 최대 2분(3초 간격, 40회) 동안 폴링을 수행하며, 초과 시 타임아웃으로 처리합니다.
     refetchInterval: (query) => {
       if (
         query.state.data?.status === "completed" ||
@@ -58,7 +59,6 @@ export default function AnalyzeStep({
     }
   }, [data?.status, portfolioId, router, data?.error]);
 
-  // Step 2: Handle GitHub Session Expired (Auth Error)
   const isAuthError =
     errorMsg?.includes("인증 세션") ||
     error?.message.includes("Bad credentials");

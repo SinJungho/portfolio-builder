@@ -29,7 +29,7 @@ const blockTypeLabels: Record<string, string> = {
   blog_feed: "블로그",
 };
 
-interface SortableBlockItemProps<T = any> {
+interface SortableBlockItemProps<T = unknown> {
   block: T & {
     id: string;
     block_type: string;
@@ -47,7 +47,9 @@ interface SortableBlockItemProps<T = any> {
   onOpenProjectEditor: (block: T) => void;
 }
 
-export function SortableBlockItem<T = any>({
+export const SortableBlockItem = React.memo(function SortableBlockItem<
+  T = unknown,
+>({
   block,
   index,
   totalBlocks,
@@ -85,7 +87,6 @@ export function SortableBlockItem<T = any>({
       `}
     >
       <div className="flex items-center gap-4 w-full min-w-0">
-        {/* 드래그 핸들 */}
         <div
           {...attributes}
           {...listeners}
@@ -107,7 +108,7 @@ export function SortableBlockItem<T = any>({
           <div className="flex flex-wrap items-center gap-2 mt-1">
             {block.is_ai_generated && (
               <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 bg-spotify-green/10 text-spotify-green rounded-md tracking-wider">
-                AI Generated
+                AI 생성
               </span>
             )}
             {block.block_type === "project_grid" && block.is_visible && (
@@ -187,4 +188,4 @@ export function SortableBlockItem<T = any>({
       </div>
     </div>
   );
-}
+}) as <T = unknown>(props: SortableBlockItemProps<T>) => React.ReactElement;

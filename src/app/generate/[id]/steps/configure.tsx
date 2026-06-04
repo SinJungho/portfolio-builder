@@ -21,17 +21,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
-interface RawProject {
-  id: string;
-  name: string;
-  description: string | null;
-  language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  pushed_at: string | null;
-  is_featured: boolean;
-}
+import { type RawProject } from "@/types/project";
 
 export default function ConfigureStep({
   portfolioId,
@@ -49,17 +39,16 @@ export default function ConfigureStep({
       const res = await fetch("/api/projects/raw");
       if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
-      // Initialize selectedIds with featured projects or top 4
+      
+      // 지정된 대표 프로젝트가 없는 경우, featured 프로젝트 우선 혹은 상위 4개 프로젝트 자동 매핑
       if (selectedIds.length === 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const featured = data
-          .filter((p: any) => p.is_featured)
-          .map((p: any) => p.id);
+        const featured = (data as RawProject[])
+          .filter((p: RawProject) => p.is_featured)
+          .map((p: RawProject) => p.id);
         if (featured.length > 0) {
           setSelectedIds(featured);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setSelectedIds(data.slice(0, 4).map((p: any) => p.id));
+          setSelectedIds((data as RawProject[]).slice(0, 4).map((p: RawProject) => p.id));
         }
       }
       return data;
@@ -121,7 +110,6 @@ export default function ConfigureStep({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Project Selection */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-[19px] font-bold text-white">
@@ -209,7 +197,6 @@ export default function ConfigureStep({
           </div>
         </div>
 
-        {/* AI Focus & CTA */}
         <div className="space-y-6 lg:sticky lg:top-24">
           <div className="space-y-4 rounded-3xl border border-white/5 bg-spotify-dark-surface p-6 shadow-spotify">
             <div className="flex items-center gap-2 text-spotify-green mb-1">

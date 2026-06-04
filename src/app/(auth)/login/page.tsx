@@ -1,12 +1,17 @@
 import { signIn } from "@/auth";
+import LoginSessionAlert from "@/components/auth/LoginSessionAlert";
 import { Button } from "@/components/ui/button";
 import { Github, Sparkles } from "lucide-react";
+import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-spotify-near-black px-6">
+      <Suspense fallback={null}>
+        <LoginSessionAlert />
+      </Suspense>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(30,215,96,0.1)_0%,transparent_70%)] pointer-events-none" />
-      
+
       <div className="relative flex flex-col items-center max-w-[400px] w-full text-center">
         {/* Logo */}
         <div className="mb-10 flex h-16 w-16 items-center justify-center rounded-full bg-spotify-green text-black shadow-spotify transition-transform hover:scale-105 duration-500">
@@ -28,7 +33,10 @@ export default function LoginPage() {
             await signIn("github", { redirectTo: "/dashboard" });
           }}
         >
-          <Button type="submit" className="w-full h-14 btn-pill-primary text-[16px]">
+          <Button
+            type="submit"
+            className="w-full h-14 btn-pill-primary text-[16px]"
+          >
             <Github size={22} className="mr-3" />
             GitHub으로 시작하기
           </Button>
