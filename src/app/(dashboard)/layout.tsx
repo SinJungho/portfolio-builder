@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { DashboardHeader } from "@/components/layouts/DashboardHeader";
 import { Sidebar } from "@/components/layouts/Sidebar";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
@@ -14,8 +14,9 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (!(session.user as any).github_bio_verified) {
+  if (
+    !(session.user as { github_bio_verified?: boolean }).github_bio_verified
+  ) {
     redirect("/onboarding/bio");
   }
 

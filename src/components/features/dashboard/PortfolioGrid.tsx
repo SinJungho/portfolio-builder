@@ -79,8 +79,7 @@ export function PortfolioGrid() {
       toast.success("포트폴리오가 생성되었습니다. AI 분석을 시작합니다.");
       router.push(`/generate/${data.portfolio_id}`);
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
       setIsCreating(false);
     },
@@ -100,8 +99,7 @@ export function PortfolioGrid() {
       toast.success("포트폴리오가 삭제되었습니다");
       setDeleteId(null);
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -123,8 +121,12 @@ export function PortfolioGrid() {
     <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-black tracking-tight text-gray-900">내 포트폴리오</h2>
-          <p className="text-sm text-gray-400 font-medium">관리 중인 포트폴리오 목록입니다.</p>
+          <h2 className="text-2xl font-black tracking-tight text-gray-900">
+            내 포트폴리오
+          </h2>
+          <p className="text-sm text-gray-400 font-medium">
+            관리 중인 포트폴리오 목록입니다.
+          </p>
         </div>
         {portfolios.length > 0 && (
           <Button
@@ -154,8 +156,8 @@ export function PortfolioGrid() {
           >
             <div className="aspect-[16/10] bg-gray-50 relative flex items-center justify-center overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 group-hover:scale-110 transition-transform duration-700" />
-              
-              <motion.div 
+
+              <motion.div
                 whileHover={{ rotate: 12, scale: 1.1 }}
                 className="relative z-10 w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center border border-gray-50"
               >
@@ -163,11 +165,13 @@ export function PortfolioGrid() {
               </motion.div>
 
               <div className="absolute top-6 left-6 z-20">
-                <div className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${
-                  portfolio.is_published 
-                    ? "bg-green-500/10 text-green-600 border border-green-200/50" 
-                    : "bg-orange-500/10 text-orange-600 border border-orange-200/50"
-                }`}>
+                <div
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${
+                    portfolio.is_published
+                      ? "bg-green-500/10 text-green-600 border border-green-200/50"
+                      : "bg-orange-500/10 text-orange-600 border border-orange-200/50"
+                  }`}
+                >
                   {portfolio.is_published ? "● 배포됨" : "○ 준비 중"}
                 </div>
               </div>
@@ -179,7 +183,10 @@ export function PortfolioGrid() {
                       <MoreVertical className="h-5 w-5" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 rounded-[20px] p-2 border-gray-100 shadow-xl">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 rounded-[20px] p-2 border-gray-100 shadow-xl"
+                  >
                     <DropdownMenuItem asChild>
                       <Link
                         href={`/${portfolio.slug}`}
@@ -204,12 +211,15 @@ export function PortfolioGrid() {
                 </DropdownMenu>
               </div>
 
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 whileHover={{ opacity: 1 }}
                 className="absolute inset-0 bg-black/5 flex items-center justify-center z-10 backdrop-blur-[2px]"
               >
-                <Link href={`/generate/${portfolio.id}?step=adjust`} className="bg-white text-gray-900 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                <Link
+                  href={`/generate/${portfolio.id}?step=adjust`}
+                  className="bg-white text-gray-900 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                >
                   <Edit2 className="h-4 w-4" />
                   편집하기
                 </Link>
@@ -228,16 +238,18 @@ export function PortfolioGrid() {
 
               <div className="flex items-center justify-between pt-6 border-t border-gray-50">
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1">Last Update</span>
+                  <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1">
+                    Last Update
+                  </span>
                   <span className="text-[13px] font-bold text-gray-600">
                     {new Date(portfolio.updated_at).toLocaleDateString()}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
-                   <div className="w-8 h-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
                     <Globe className="w-4 h-4 text-gray-400" />
-                   </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -283,14 +295,18 @@ export function PortfolioGrid() {
       >
         <AlertDialogContent className="rounded-[32px] p-8 border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-gray-900">포트폴리오를 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-black text-gray-900">
+              포트폴리오를 삭제하시겠습니까?
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-500 font-medium pt-2">
               이 작업은 되돌릴 수 없습니다. 프로젝트 및 설정 데이터가 영구적으로
               삭제됩니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-6">
-            <AlertDialogCancel className="rounded-2xl border-gray-100 font-bold h-12 px-6">취소</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-2xl border-gray-100 font-bold h-12 px-6">
+              취소
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-red-500 hover:bg-red-600 rounded-2xl font-bold h-12 px-6"
