@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import { BlockConfig, DesignTokens } from "../schemas/portfolio";
+import { Block } from "../stores/portfolioStore";
+import BlogFeedBlock from "./blocks/BlogFeedBlock";
+import ContactBlock from "./blocks/ContactBlock";
 import HeroBlock from "./blocks/HeroBlock";
 import ProjectGridBlock from "./blocks/ProjectGridBlock";
 import SkillsBlock from "./blocks/SkillsBlock";
-import ContactBlock from "./blocks/ContactBlock";
-import BlogFeedBlock from "./blocks/BlogFeedBlock";
-import { DesignTokens, BlockConfig } from "../schemas/portfolio";
 import { resolveTheme } from "./themes";
-import { Block } from "../stores/portfolioStore";
 
-import { useSearchParams } from "next/navigation";
-import { FileDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FileDown, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 const FONT_FAMILY_MAP: Record<string, string> = {
   inter: "'Inter', sans-serif",
@@ -21,8 +21,9 @@ const FONT_FAMILY_MAP: Record<string, string> = {
   playfair: "'Playfair Display', serif",
 };
 
-const EXPORT_BUTTON_CONTAINER_CLASS = "fixed bottom-8 right-8 z-50 print:hidden";
-const EXPORT_BUTTON_CLASS = 
+const EXPORT_BUTTON_CONTAINER_CLASS =
+  "fixed bottom-8 right-8 z-50 print:hidden";
+const EXPORT_BUTTON_CLASS =
   "flex items-center gap-2 px-5 py-3 rounded-full bg-white/80 backdrop-blur-md " +
   "border border-black/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all " +
   "active:scale-95 text-[#191F28] font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed";
@@ -30,7 +31,7 @@ const EXPORT_BUTTON_CLASS =
 function getBlockWrapperClass(isHero: boolean): string {
   return cn(
     "max-w-[1100px] mx-auto px-6 md:px-8 pdf-block",
-    isHero ? "pb-16 md:pb-24" : "py-16 md:py-24 border-t border-ink-100/10"
+    isHero ? "pb-16 md:pb-24" : "py-16 md:py-24 border-t border-ink-100/10",
   );
 }
 
@@ -61,7 +62,7 @@ export default function PortfolioPreview({
 
   const baseTheme = resolveTheme(theme);
   const primaryColor = designTokens?.primaryColor || baseTheme.accent;
-  
+
   const mt = {
     ...baseTheme,
     accent: primaryColor,
@@ -69,17 +70,26 @@ export default function PortfolioPreview({
     progressFill: primaryColor,
     decorBar: primaryColor,
     accentGradient: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`,
-    accentSoft: `${primaryColor}15`, 
+    accentSoft: `${primaryColor}15`,
     glowColor: `${primaryColor}20`,
     heroGlow: `${primaryColor}10`,
-    cardRadius: designTokens?.borderRadius === "none" ? "0px" :
-                designTokens?.borderRadius === "sm" ? "8px" :
-                designTokens?.borderRadius === "md" ? "16px" :
-                designTokens?.borderRadius === "lg" ? "24px" :
-                designTokens?.borderRadius === "full" ? "9999px" : baseTheme.cardRadius
+    cardRadius:
+      designTokens?.borderRadius === "none"
+        ? "0px"
+        : designTokens?.borderRadius === "sm"
+          ? "8px"
+          : designTokens?.borderRadius === "md"
+            ? "16px"
+            : designTokens?.borderRadius === "lg"
+              ? "24px"
+              : designTokens?.borderRadius === "full"
+                ? "9999px"
+                : baseTheme.cardRadius,
   };
 
-  const fontFamily = FONT_FAMILY_MAP[designTokens?.fontFamily || "inter"] || FONT_FAMILY_MAP.inter;
+  const fontFamily =
+    FONT_FAMILY_MAP[designTokens?.fontFamily || "inter"] ||
+    FONT_FAMILY_MAP.inter;
 
   const visibleBlocks = blocks
     .filter((block: Block) => block.is_visible)
@@ -96,7 +106,7 @@ export default function PortfolioPreview({
   const handlePdfExport = (targetSlug: string): void => {
     setIsExportPending(true);
     window.location.href = `/api/export/pdf?slug=${targetSlug}`;
-    
+
     // PDF 다운로드 완료 전 UI 중복 제출 방지 지연
     setTimeout(() => {
       setIsExportPending(false);
@@ -106,7 +116,11 @@ export default function PortfolioPreview({
   return (
     <div className="w-full" style={containerStyle}>
       {isExporting && (
-        <style dangerouslySetInnerHTML={{ __html: getExportStyles(mt.accent, mt.cardBg) }} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: getExportStyles(mt.accent, mt.cardBg),
+          }}
+        />
       )}
 
       {designTokens?.customCss && (
@@ -115,41 +129,66 @@ export default function PortfolioPreview({
 
       {visibleBlocks.map((block: Block) => {
         const isHero = block.block_type === "hero";
-        
+
         return (
           <div key={block.id} className={getBlockWrapperClass(isHero)}>
             {block.block_type === "hero" && (
-              <HeroBlock 
-                config={block.config as Extract<BlockConfig, { block_type: "hero" }>["config"]} 
-                theme={mt} 
+              <HeroBlock
+                config={
+                  block.config as Extract<
+                    BlockConfig,
+                    { block_type: "hero" }
+                  >["config"]
+                }
+                theme={mt}
               />
             )}
             {block.block_type === "project_grid" && (
-              <ProjectGridBlock 
-                config={block.config as Extract<BlockConfig, { block_type: "project_grid" }>["config"]} 
-                theme={mt} 
-                portfolioId={portfolioId} 
-                blockId={block.id} 
+              <ProjectGridBlock
+                config={
+                  block.config as Extract<
+                    BlockConfig,
+                    { block_type: "project_grid" }
+                  >["config"]
+                }
+                theme={mt}
+                portfolioId={portfolioId}
+                blockId={block.id}
               />
             )}
             {block.block_type === "skills" && (
-              <SkillsBlock 
-                config={block.config as Extract<BlockConfig, { block_type: "skills" }>["config"]} 
-                theme={mt} 
+              <SkillsBlock
+                config={
+                  block.config as Extract<
+                    BlockConfig,
+                    { block_type: "skills" }
+                  >["config"]
+                }
+                theme={mt}
               />
             )}
             {block.block_type === "blog_feed" && (
-              <BlogFeedBlock 
-                config={block.config as Extract<BlockConfig, { block_type: "blog_feed" }>["config"]} 
-                theme={mt} 
+              <BlogFeedBlock
+                config={
+                  block.config as Extract<
+                    BlockConfig,
+                    { block_type: "blog_feed" }
+                  >["config"]
+                }
+                theme={mt}
               />
             )}
             {block.block_type === "contact" && (
-              <ContactBlock 
-                config={block.config as Extract<BlockConfig, { block_type: "contact" }>["config"]} 
-                theme={mt} 
-                portfolioId={portfolioId} 
-                blockId={block.id} 
+              <ContactBlock
+                config={
+                  block.config as Extract<
+                    BlockConfig,
+                    { block_type: "contact" }
+                  >["config"]
+                }
+                theme={mt}
+                portfolioId={portfolioId}
+                blockId={block.id}
               />
             )}
           </div>

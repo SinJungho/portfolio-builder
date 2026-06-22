@@ -1,11 +1,11 @@
-import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
-import PortfolioPreview from '@/preview/PortfolioPreview'
-import AnalyticsTracker from '@/components/AnalyticsTracker'
-import { resolveTheme } from '@/preview/themes'
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import type { Block } from '@/stores/portfolioStore'
+import AnalyticsTracker from "@/components/AnalyticsTracker";
+import { prisma } from "@/lib/prisma";
+import PortfolioPreview from "@/preview/PortfolioPreview";
+import { resolveTheme } from "@/preview/themes";
+import { portfolioService } from "@/services/portfolio";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export const revalidate = 60;
 
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
+  const { slug } = await params;
   const portfolio = await prisma.portfolio.findFirst({
     where: { slug },
     select: {
@@ -26,23 +26,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       seo_description: true,
       og_image_url: true,
       user: {
-        select: { name: true }
-      }
-    }
-  })
+        select: { name: true },
+      },
+    },
+  });
 
-  if (!portfolio || !portfolio.is_published) return {}
+  if (!portfolio || !portfolio.is_published) return {};
 
   return {
-    title: portfolio.seo_title || portfolio.title || `${portfolio.user?.name || slug}'s Portfolio`,
-    description: portfolio.seo_description || 'PortfolioForge로 생성된 프리미엄 포트폴리오입니다.',
+    title:
+      portfolio.seo_title ||
+      portfolio.title ||
+      `${portfolio.user?.name || slug}'s Portfolio`,
+    description:
+      portfolio.seo_description ||
+      "PortfolioForge로 생성된 프리미엄 포트폴리오입니다.",
     openGraph: {
       images: portfolio.og_image_url ? [portfolio.og_image_url] : [],
     },
     twitter: {
       card: "summary_large_image",
-    }
-  }
+    },
+  };
 }
 
 export default async function PortfolioPage({ params, searchParams }: Props) {
@@ -50,55 +55,14 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
   const { export: isExport } = await searchParams;
   const isExportMode = isExport === "true";
 
-  const portfolio = await prisma.portfolio.findUnique({
-    where: { slug },
-    include: {
-      user: {
-        select: { name: true }
-      }
-    }
-  })
+  // 포트폴리오 데이터와 모든 블록 구성 요소를 한 번에 가공하여 조회합니다. (N+1 쿼리 최적화 내장)
+  const data = await portfolioService.getPopulatedPortfolioBySlug(slug);
 
-  if (!portfolio || !portfolio.is_published) {
-    notFound()
+  if (!data) {
+    notFound();
   }
 
-  const blocks = await prisma.portfolioBlock.findMany({
-    where: { 
-      portfolio_id: portfolio.id,
-      is_visible: true,
-    },
-    orderBy: { position: 'asc' }
-  });
-
-  const populatedBlocks = await Promise.all(blocks.map(async (block) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config = block.config as any;
-    if (block.block_type === 'project_grid' && config.project_ids?.length) {
-      const projectsData = await prisma.rawProject.findMany({
-        where: { id: { in: config.project_ids } }
-      });
-      config.projectsData = config.project_ids.map((id: string) => projectsData.find(p => p.id === id)).filter(Boolean);
-    }
-    
-    if (block.block_type === 'blog_feed') {
-      const feedItems = await prisma.feedItem.findMany({
-         where: { 
-            user_id: portfolio.user_id, 
-            integration: { provider: config.integration_provider } 
-         },
-         orderBy: { published_at: 'desc' },
-         take: config.max_items || 4
-      });
-      config.feed_items = feedItems;
-    }
-
-    return {
-      ...block,
-      config
-    };
-  }));
-
+  const { portfolio, blocks } = data;
   const t = resolveTheme(portfolio.theme);
 
   return (
@@ -111,28 +75,27 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
       }}
     >
       <AnalyticsTracker portfolioId={portfolio.id} />
-      
-      {/* SEO JSON-LD */}
+
+      {/* 포트폴리오 검색 엔진 및 크롤러용 JSON-LD 구조화 데이터 */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Person",
-            "name": portfolio.user?.name || slug,
-            "url": `https://${portfolio.slug}.portfolioforge.app`,
-            "description": portfolio.seo_description || portfolio.title,
-            "image": portfolio.og_image_url || undefined,
-          })
+            name: portfolio.user?.name || slug,
+            url: `https://${portfolio.slug}.portfolioforge.app`,
+            description: portfolio.seo_description || portfolio.title,
+            image: portfolio.og_image_url || undefined,
+          }),
         }}
       />
 
       <main className="flex-1 w-full">
-        <PortfolioPreview 
-          blocks={populatedBlocks as unknown as Block[]} 
-          theme={portfolio.theme} 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          designTokens={portfolio.design_tokens as any}
+        <PortfolioPreview
+          blocks={blocks}
+          theme={portfolio.theme}
+          designTokens={portfolio.design_tokens as Record<string, unknown>}
           slug={portfolio.slug}
           portfolioId={portfolio.id}
         />
@@ -161,5 +124,6 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
         </footer>
       )}
     </div>
-  )
+  );
 }
+
