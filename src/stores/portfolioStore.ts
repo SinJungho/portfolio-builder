@@ -17,8 +17,7 @@ export type PortfolioStore = {
   theme: string;
   isPublished: boolean;
   publishedUrl: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  designTokens: any;
+  designTokens: Record<string, unknown>;
   customDomain: string | null;
   slug: string | null;
   isSaving: boolean; // API 호출 중 여부
@@ -30,14 +29,12 @@ export type PortfolioStore = {
     theme: string;
     isPublished: boolean;
     publishedUrl: string | null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    designTokens?: any;
+    designTokens?: Record<string, unknown>;
     customDomain?: string | null;
     slug?: string | null;
   }) => void;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setDesignTokens: (tokens: any) => Promise<void>;
+  setDesignTokens: (tokens: Record<string, unknown>) => Promise<void>;
 
   // 액션
   toggleBlock: (blockId: string) => Promise<void>;
@@ -81,8 +78,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
       });
     },
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setDesignTokens: async (tokens: any) => {
+    setDesignTokens: async (tokens: Record<string, unknown>) => {
       const { portfolioId, designTokens: prevTokens } = get();
       if (!portfolioId) return;
 
@@ -280,7 +276,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
       }
     },
 
-    updateBlockConfig: async (blockId: string, config: Record<string, unknown>) => {
+    updateBlockConfig: async (
+      blockId: string,
+      config: Record<string, unknown>,
+    ) => {
       const { portfolioId, blocks: previousBlocks } = get();
       if (!portfolioId) return;
 
@@ -327,11 +326,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ block_type }),
         });
-        
+
         if (!res.ok) throw new Error("Add block failed");
-        
+
         const newBlock = await res.json();
-        
+
         set((state) => {
           state.blocks.push(newBlock);
         });

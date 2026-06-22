@@ -40,8 +40,7 @@ export async function PATCH(
       return new NextResponse(null, { status: 404 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (data.is_visible !== undefined) updateData.is_visible = data.is_visible;
     if (data.config !== undefined) updateData.config = data.config;
 

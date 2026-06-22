@@ -1,34 +1,33 @@
-'use client'
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ExternalLink, Star, GitFork, BookOpen } from 'lucide-react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { BookOpen, ExternalLink, GitFork, Star } from "lucide-react";
+import Link from "next/link";
 
-interface Project {
-  id: string
-  name: string
-  description: string | null
-  html_url: string | null
-  language: string | null
-  stargazers_count: number
-  forks_count: number
-  ai_summary: string | null
+import { type RawProject } from "@/types/project";
+
+export interface ProjectGridProject extends RawProject {
+  html_url?: string | null;
+  ai_summary?: string | null;
 }
 
 interface ProjectGridBlockProps {
   config: {
-    layout: 'grid' | 'list'
-    columns: number
-    project_ids: string[]
-    show_tech_stack: boolean
-  }
-  projects: Project[]
+    layout: "grid" | "list";
+    columns: number;
+    project_ids: string[];
+    show_tech_stack: boolean;
+  };
+  projects: ProjectGridProject[];
 }
 
-export default function ProjectGridBlock({ config, projects }: ProjectGridBlockProps) {
-  const { columns = 2 } = config
+export default function ProjectGridBlock({
+  config,
+  projects,
+}: ProjectGridBlockProps) {
+  const { columns = 2 } = config;
 
   return (
     <section className="w-full py-16 px-6 max-w-6xl mx-auto">
@@ -37,9 +36,11 @@ export default function ProjectGridBlock({ config, projects }: ProjectGridBlockP
         <h2 className="text-3xl font-bold tracking-tight">Featured Projects</h2>
       </div>
 
-      <div 
+      <div
         className={`grid gap-6 ${
-          columns === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'
+          columns === 3
+            ? "grid-cols-1 md:grid-cols-3"
+            : "grid-cols-1 md:grid-cols-2"
         }`}
       >
         {projects.map((project, idx) => (
@@ -57,8 +58,8 @@ export default function ProjectGridBlock({ config, projects }: ProjectGridBlockP
                     <BookOpen className="h-5 w-5" />
                   </div>
                   {project.html_url && (
-                    <Link 
-                      href={project.html_url} 
+                    <Link
+                      href={project.html_url}
                       target="_blank"
                       className="text-muted-foreground hover:text-primary transition-colors"
                     >
@@ -87,7 +88,9 @@ export default function ProjectGridBlock({ config, projects }: ProjectGridBlockP
               </CardHeader>
               <CardContent className="p-6 pt-0 flex-1">
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {project.ai_summary || project.description || "이 프로젝트에 대한 설명이 없습니다."}
+                  {project.ai_summary ||
+                    project.description ||
+                    "이 프로젝트에 대한 설명이 없습니다."}
                 </p>
               </CardContent>
             </Card>
@@ -95,5 +98,5 @@ export default function ProjectGridBlock({ config, projects }: ProjectGridBlockP
         ))}
       </div>
     </section>
-  )
+  );
 }

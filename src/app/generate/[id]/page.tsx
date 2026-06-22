@@ -5,6 +5,7 @@ import AnalyzeStep from "./steps/analyze";
 import ConfigureStep from "./steps/configure";
 import ConnectStep from "./steps/connect";
 import GenerateStep from "./steps/generate";
+import { type Block } from "@/stores/portfolioStore";
 
 export default async function GeneratePage(props: {
   params: Promise<{ id: string }>;
@@ -35,8 +36,7 @@ export default async function GeneratePage(props: {
       portfolioId: portfolio.id,
       slug: portfolio.slug,
       customDomain: portfolio.custom_domain,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      blocks: blocks as any[],
+      blocks: blocks as unknown as Block[],
       theme: portfolio.theme,
       isPublished: portfolio.is_published,
       publishedUrl: portfolio.slug

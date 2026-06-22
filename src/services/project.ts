@@ -38,14 +38,12 @@ export class ProjectService {
         forks_count: data.forks_count,
         is_fork: data.is_fork,
         pushed_at: data.pushed_at,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        raw_data: data.raw_data as any,
+        raw_data: data.raw_data as Prisma.InputJsonValue,
         updated_at: new Date(),
       },
       create: {
         ...data,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        raw_data: data.raw_data as any,
+        raw_data: data.raw_data as Prisma.InputJsonValue,
       },
     });
   }

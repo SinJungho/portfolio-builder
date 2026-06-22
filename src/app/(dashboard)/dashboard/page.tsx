@@ -79,11 +79,18 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 w-full text-center">
-        <Loader2 className="animate-spin w-10 h-10 text-spotify-green" />
-        <p className="text-spotify-silver text-sm font-bold animate-pulse tracking-spotify uppercase">
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex flex-col items-center justify-center min-h-[50vh] gap-4 w-full text-center"
+      >
+        <Loader2
+          aria-hidden="true"
+          className="animate-spin w-10 h-10 text-spotify-green"
+        />
+        <span className="text-spotify-silver text-sm font-bold animate-pulse tracking-spotify uppercase">
           포트폴리오 목록을 불러오는 중...
-        </p>
+        </span>
       </div>
     );
   }
@@ -95,7 +102,7 @@ export default function DashboardPage() {
           variant="destructive"
           className="bg-spotify-negative/10 border-spotify-negative/20 text-spotify-negative rounded-2xl"
         >
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle aria-hidden="true" className="h-4 w-4" />
           <AlertDescription className="font-bold">
             데이터를 불러올 수 없습니다.{" "}
             {(error as Error)?.message || "잠시 후 다시 시도해주세요."}
@@ -118,12 +125,22 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* GitHub Sync Status Bar */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* GitHub 동기화 상태 바 영역 */}
+      <section
+        aria-label="GitHub 연동 상태 알림"
+        className="flex flex-wrap items-center gap-3"
+      >
         {!github_synced_at ? (
-          <div className="w-full p-6 bg-spotify-warning/10 border border-spotify-warning/20 rounded-2xl text-spotify-warning flex flex-col sm:flex-row items-center justify-between gap-4 shadow-spotify-md">
+          <div
+            role="region"
+            aria-label="GitHub 연동 상태 경고"
+            className="w-full p-6 bg-spotify-warning/10 border border-spotify-warning/20 rounded-2xl text-spotify-warning flex flex-col sm:flex-row items-center justify-between gap-4 shadow-spotify-md"
+          >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-spotify-warning/20 rounded-full">
+              <div
+                className="p-2.5 bg-spotify-warning/20 rounded-full"
+                aria-hidden="true"
+              >
                 <AlertTriangle className="w-6 h-6 shrink-0" />
               </div>
               <span className="font-bold text-[16px]">
@@ -137,9 +154,16 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : !data.user?.github_bio_verified ? (
-          <div className="w-full p-6 bg-spotify-announcement/10 border border-spotify-announcement/20 rounded-2xl text-spotify-announcement flex flex-col sm:flex-row items-center justify-between gap-4 shadow-spotify-md">
+          <div
+            role="region"
+            aria-label="GitHub Bio 등록 안내"
+            className="w-full p-6 bg-spotify-announcement/10 border border-spotify-announcement/20 rounded-2xl text-spotify-announcement flex flex-col sm:flex-row items-center justify-between gap-4 shadow-spotify-md"
+          >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-spotify-announcement/20 rounded-full">
+              <div
+                className="p-2.5 bg-spotify-announcement/20 rounded-full"
+                aria-hidden="true"
+              >
                 <AlertTriangle className="w-6 h-6 shrink-0" />
               </div>
               <span className="font-bold text-[16px]">
@@ -150,6 +174,7 @@ export default function DashboardPage() {
               href="https://github.com/settings/profile"
               target="_blank"
               rel="noreferrer"
+              aria-label="GitHub 프로필 설정 페이지로 이동 (새 창)"
             >
               <Button className="btn-pill px-8 h-12 bg-spotify-announcement text-white hover:brightness-110">
                 GitHub 설정 가기
@@ -157,29 +182,44 @@ export default function DashboardPage() {
             </a>
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-[13px] font-bold text-spotify-silver bg-spotify-mid-dark px-5 py-2.5 rounded-full border border-white/5 shadow-spotify-md">
-            <div className="h-2 w-2 rounded-full bg-spotify-green animate-pulse shadow-[0_0_8px_rgba(30,215,96,0.5)]" />
-            <Github className="w-4 h-4" />
-            마지막 동기화:{" "}
-            {formatDistanceToNow(new Date(github_synced_at), {
-              addSuffix: true,
-              locale: ko,
-            })}
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-3 text-[13px] font-bold text-spotify-silver bg-spotify-mid-dark px-5 py-2.5 rounded-full border border-white/5 shadow-spotify-md"
+          >
+            <div
+              className="h-2 w-2 rounded-full bg-spotify-green animate-pulse shadow-[0_0_8px_rgba(30,215,96,0.5)]"
+              aria-hidden="true"
+            />
+            <Github className="w-4 h-4" aria-hidden="true" />
+            <span>
+              마지막 동기화:{" "}
+              {formatDistanceToNow(new Date(github_synced_at), {
+                addSuffix: true,
+                locale: ko,
+              })}
+            </span>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Portfolios Section */}
-      <div className="space-y-8">
+      {/* 포트폴리오 목록 섹션 */}
+      <section aria-labelledby="portfolio-section-title" className="space-y-8">
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
-          <h2 className="text-[24px] font-bold tracking-tight text-white">
+          <h2
+            id="portfolio-section-title"
+            className="text-[24px] font-bold tracking-tight text-white"
+          >
             내 포트폴리오
           </h2>
         </div>
 
         {portfolios.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 md:p-32 bg-spotify-dark-surface border border-white/5 rounded-[40px] gap-8 text-center shadow-spotify">
-            <div className="p-8 bg-spotify-mid-dark rounded-full text-spotify-green shadow-spotify-md">
+            <div
+              className="p-8 bg-spotify-mid-dark rounded-full text-spotify-green shadow-spotify-md"
+              aria-hidden="true"
+            >
               <Plus className="w-12 h-12" />
             </div>
             <div className="space-y-3">
@@ -196,131 +236,182 @@ export default function DashboardPage() {
               className="btn-pill-primary h-14 px-12 text-[17px]"
               disabled={createMutation.isPending}
               onClick={() => createMutation.mutate()}
+              aria-label="첫 포트폴리오 생성하기"
             >
               지금 시작하기
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {/* Create New Card */}
-            <button
-              disabled={createMutation.isPending}
-              onClick={() => createMutation.mutate()}
-              className="group relative flex flex-col items-center justify-center border border-white/10 rounded-xl p-8 min-h-[300px] bg-spotify-dark-surface hover:bg-spotify-mid-dark hover:border-white/20 transition-all duration-300 shadow-spotify-md"
-            >
-              <div className="p-5 bg-spotify-near-black text-white rounded-full mb-6 transition-all group-hover:scale-110 group-hover:bg-spotify-green group-hover:text-black duration-500 shadow-spotify-md">
-                <Plus className="w-10 h-10" />
-              </div>
-              <span className="text-[18px] font-bold text-white tracking-tight">
-                새 포트폴리오 만들기
-              </span>
-            </button>
-
-            {/* Portfolio Cards */}
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {portfolios.map((p: any) => (
-              <div
-                key={p.id}
-                className="group relative flex flex-col bg-spotify-dark-surface rounded-xl overflow-hidden shadow-spotify-md hover:bg-spotify-mid-dark transition-all duration-500 min-h-[300px] border border-white/5 hover:border-white/10"
+          <ul
+            aria-label="내 포트폴리오 카드 목록"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-0 m-0"
+          >
+            {/* 새 포트폴리오 만들기 카드 */}
+            <li className="list-none">
+              <button
+                type="button"
+                disabled={createMutation.isPending}
+                onClick={() => createMutation.mutate()}
+                className="group w-full relative flex flex-col items-center justify-center border border-white/10 rounded-xl p-8 min-h-[300px] bg-spotify-dark-surface hover:bg-spotify-mid-dark hover:border-white/20 transition-all duration-300 shadow-spotify-md"
+                aria-label="새 포트폴리오 만들기"
               >
-                <div className="p-8 flex-1 flex flex-col items-start gap-5">
-                  <div className="flex w-full items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-[22px] text-white truncate mb-2 group-hover:text-spotify-green transition-colors">
-                        {p.title || p.slug}
-                      </h3>
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-[12px] font-bold text-spotify-silver uppercase tracking-spotify">
-                          {p.theme}
-                        </span>
-                        <div className="h-1 w-1 rounded-full bg-white/20" />
-                        <span className="text-[12px] font-medium text-spotify-silver truncate tracking-tight">
-                          {p.slug}.portfolioforge.app
-                        </span>
-                      </div>
-                    </div>
-                    {p.is_published ? (
-                      <div className="shrink-0 px-3 py-1 text-[10px] font-bold bg-spotify-green text-black rounded-full flex items-center gap-1.5 shadow-[0_0_12px_rgba(30,215,96,0.2)]">
-                        <div className="h-1.5 w-1.5 rounded-full bg-black animate-pulse" />
-                        LIVE
-                      </div>
-                    ) : (
-                      <div className="shrink-0 px-3 py-1 text-[10px] font-bold bg-white/10 text-spotify-silver rounded-full">
-                        DRAFT
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-auto flex w-full items-center justify-between">
-                    <div className="flex items-center gap-2 text-[12px] font-bold text-spotify-silver">
-                      <Clock className="w-3.5 h-3.5" />
-                      {formatDistanceToNow(new Date(p.created_at), {
-                        addSuffix: true,
-                        locale: ko,
-                      })}
-                    </div>
-                  </div>
+                <div
+                  className="p-5 bg-spotify-near-black text-white rounded-full mb-6 transition-all group-hover:scale-110 group-hover:bg-spotify-green group-hover:text-black duration-500 shadow-spotify-md"
+                  aria-hidden="true"
+                >
+                  <Plus className="w-10 h-10" />
                 </div>
+                <span className="text-[18px] font-bold text-white tracking-tight">
+                  새 포트폴리오 만들기
+                </span>
+              </button>
+            </li>
 
-                <div className="p-4 pt-0">
-                  <div className="flex h-14 bg-spotify-near-black rounded-full border border-white/5 overflow-hidden p-1 shadow-spotify-md">
-                    <a
-                      href={p.slug ? `/${p.slug}` : "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 text-[13px] font-bold text-spotify-silver hover:text-white transition-all rounded-full"
-                    >
-                      <ExternalLink className="w-4 h-4 opacity-70" />
-                      보기
-                    </a>
-                    <Link
-                      href={`/editor/${p.id}`}
-                      prefetch={false}
-                      className="flex-[1.5] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-white hover:bg-spotify-near-white transition-all rounded-full shadow-spotify-md"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      편집하기
-                    </Link>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          disabled={deleteMutation.isPending}
-                          className="w-12 flex items-center justify-center text-spotify-silver hover:text-spotify-negative transition-all rounded-full"
+            {/* 기존 포트폴리오 카드 리스트 */}
+            {portfolios.map(
+              (p: {
+                id: string;
+                title: string | null;
+                slug: string | null;
+                theme: string;
+                is_published: boolean;
+                created_at: string | Date;
+              }) => (
+                <li
+                  key={p.id}
+                  className="group relative flex flex-col bg-spotify-dark-surface rounded-xl overflow-hidden shadow-spotify-md hover:bg-spotify-mid-dark transition-all duration-500 min-h-[300px] border border-white/5 hover:border-white/10 list-none"
+                >
+                  <div className="p-8 flex-1 flex flex-col items-start gap-5">
+                    <div className="flex w-full items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-[22px] text-white truncate mb-2 group-hover:text-spotify-green transition-colors">
+                          {p.title || p.slug}
+                        </h3>
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-[12px] font-bold text-spotify-silver uppercase tracking-spotify">
+                            <span className="sr-only">테마: </span>
+                            {p.theme}
+                          </span>
+                          <div
+                            className="h-1 w-1 rounded-full bg-white/20"
+                            aria-hidden="true"
+                          />
+                          <span className="text-[12px] font-medium text-spotify-silver truncate tracking-tight">
+                            <span className="sr-only">주소: </span>
+                            {p.slug}.portfolioforge.app
+                          </span>
+                        </div>
+                      </div>
+                      {p.is_published ? (
+                        <div
+                          role="status"
+                          aria-label="배포 상태: 라이브"
+                          className="shrink-0 px-3 py-1 text-[10px] font-bold bg-spotify-green text-black rounded-full flex items-center gap-1.5 shadow-[0_0_12px_rgba(30,215,96,0.2)]"
                         >
-                          <Trash2 className="w-4.5 h-4.5" />
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-[24px] shadow-spotify">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="text-[22px] font-bold text-white">
-                            포트폴리오를 삭제할까요?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
-                            이 작업은 되돌릴 수 없습니다. 포트폴리오와 관련된
-                            모든 데이터가 영구적으로 삭제됩니다.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className="pt-4">
-                          <AlertDialogCancel className="bg-transparent border border-white/10 text-white rounded-full h-12 font-bold px-8 hover:bg-white/5 transition-colors">
-                            취소
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteMutation.mutate(p.id)}
-                            variant="destructive"
-                            className="!bg-[#e91429] hover:!bg-[#c31022] active:scale-95 transition-all text-white rounded-full h-12 font-bold px-8 shadow-spotify-md border-none cursor-pointer"
-                          >
-                            삭제
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          <div
+                            className="h-1.5 w-1.5 rounded-full bg-black animate-pulse"
+                            aria-hidden="true"
+                          />
+                          LIVE
+                        </div>
+                      ) : (
+                        <div
+                          role="status"
+                          aria-label="배포 상태: 초안"
+                          className="shrink-0 px-3 py-1 text-[10px] font-bold bg-white/10 text-spotify-silver rounded-full"
+                        >
+                          DRAFT
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-auto flex w-full items-center justify-between">
+                      <div className="flex items-center gap-2 text-[12px] font-bold text-spotify-silver">
+                        <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span className="sr-only">생성 일자: </span>
+                        <span>
+                          {formatDistanceToNow(new Date(p.created_at), {
+                            addSuffix: true,
+                            locale: ko,
+                          })}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+
+                  <div className="p-4 pt-0">
+                    <nav
+                      aria-label={`${p.title || p.slug} 포트폴리오 제어 도구`}
+                      className="flex h-14 bg-spotify-near-black rounded-full border border-white/5 overflow-hidden p-1 shadow-spotify-md"
+                    >
+                      <a
+                        href={p.slug ? `/${p.slug}` : "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 text-[13px] font-bold text-spotify-silver hover:text-white transition-all rounded-full"
+                        aria-label={`${p.title || p.slug} 포트폴리오 새 창에서 보기`}
+                      >
+                        <ExternalLink
+                          className="w-4 h-4 opacity-70"
+                          aria-hidden="true"
+                        />
+                        보기
+                      </a>
+                      <Link
+                        href={`/editor/${p.id}`}
+                        prefetch={false}
+                        className="flex-[1.5] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-white hover:bg-spotify-near-white transition-all rounded-full shadow-spotify-md"
+                        aria-label={`${p.title || p.slug} 포트폴리오 편집하기`}
+                      >
+                        <Edit2 className="w-4 h-4" aria-hidden="true" />
+                        편집하기
+                      </Link>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            type="button"
+                            disabled={deleteMutation.isPending}
+                            className="w-12 flex items-center justify-center text-spotify-silver hover:text-spotify-negative transition-all rounded-full"
+                            aria-label={`${p.title || p.slug} 포트폴리오 삭제`}
+                          >
+                            <Trash2
+                              className="w-4.5 h-4.5"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-[24px] shadow-spotify">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-[22px] font-bold text-white">
+                              포트폴리오를 삭제할까요?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
+                              이 작업은 되돌릴 수 없습니다. 포트폴리오와 관련된
+                              모든 데이터가 영구적으로 삭제됩니다.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="pt-4">
+                            <AlertDialogCancel className="bg-transparent border border-white/10 text-white rounded-full h-12 font-bold px-8 hover:bg-white/5 transition-colors">
+                              취소
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteMutation.mutate(p.id)}
+                              variant="destructive"
+                              className="!bg-[#e91429] hover:!bg-[#c31022] active:scale-95 transition-all text-white rounded-full h-12 font-bold px-8 shadow-spotify-md border-none cursor-pointer"
+                            >
+                              삭제
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </nav>
+                  </div>
+                </li>
+              ),
+            )}
+          </ul>
         )}
-      </div>
+      </section>
     </div>
   );
 }

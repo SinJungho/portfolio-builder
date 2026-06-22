@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { 
-  FileText, 
-  Eye, 
-  Upload, 
-  Image as ImageIcon, 
-  Loader2, 
+import { Button } from "@/components/ui/button";
+import {
+  Eye,
+  FileText,
+  Image as ImageIcon,
   Info,
+  Loader2,
+  Upload,
 } from "lucide-react";
+import React, { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 interface MarkdownEditorProps {
   value: string;
@@ -21,11 +21,11 @@ interface MarkdownEditorProps {
   className?: string;
 }
 
-export default function MarkdownEditor({ 
-  value, 
-  onChange, 
+export default function MarkdownEditor({
+  value,
+  onChange,
   placeholder = "프로젝트의 핵심 성과나 기술적인 도전 과제를 마크다운으로 적어주세요.",
-  className = "" 
+  className = "",
 }: MarkdownEditorProps) {
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const [isUploading, setIsUploading] = useState(false);
@@ -48,7 +48,7 @@ export default function MarkdownEditor({
       toast.success("마크다운 파일 내용을 불러왔습니다.");
     };
     reader.readAsText(file);
-    
+
     // Reset input
     e.target.value = "";
   };
@@ -80,11 +80,11 @@ export default function MarkdownEditor({
       const { url, isLocal, message } = await res.json();
       const imageMarkdown = `\n![${file.name}](${url})\n`;
       onChange(value + imageMarkdown);
-      
+
       if (isLocal) {
-        toast.info(message, { 
+        toast.info(message, {
           duration: 6000,
-          description: "실제 배포 전에는 Supabase Storage 설정이 필요합니다."
+          description: "실제 배포 전에는 Supabase Storage 설정이 필요합니다.",
         });
       } else {
         toast.success("이미지가 업로드되었습니다.");
@@ -107,22 +107,25 @@ export default function MarkdownEditor({
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         input.files = dataTransfer.files;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        handleImageUpload({ target: input } as any);
+        handleImageUpload({
+          target: input,
+        } as unknown as React.ChangeEvent<HTMLInputElement>);
       }
     }
   };
 
   return (
-    <div className={`flex flex-col border border-black/5 rounded-[24px] overflow-hidden bg-white shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-100 ${className}`}>
+    <div
+      className={`flex flex-col border border-black/5 rounded-[24px] overflow-hidden bg-white shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-100 ${className}`}
+    >
       {/* Header Tabs */}
       <div className="flex items-center justify-between px-2 py-1.5 border-b border-black/5 bg-gray-50/50">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveTab("write")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
-              activeTab === "write" 
-                ? "bg-white text-[#3182F6] shadow-sm" 
+              activeTab === "write"
+                ? "bg-white text-[#3182F6] shadow-sm"
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -132,8 +135,8 @@ export default function MarkdownEditor({
           <button
             onClick={() => setActiveTab("preview")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
-              activeTab === "preview" 
-                ? "bg-white text-[#3182F6] shadow-sm" 
+              activeTab === "preview"
+                ? "bg-white text-[#3182F6] shadow-sm"
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -153,11 +156,11 @@ export default function MarkdownEditor({
             <Upload className="w-3.5 h-3.5" />
             파일 가져오기
           </Button>
-          <input 
-            type="file" 
-            ref={mdInputRef} 
-            className="hidden" 
-            accept=".md" 
+          <input
+            type="file"
+            ref={mdInputRef}
+            className="hidden"
+            accept=".md"
             onChange={handleFileImport}
           />
 
@@ -169,14 +172,18 @@ export default function MarkdownEditor({
             className="flex items-center gap-1.5 rounded-xl text-gray-500 hover:text-[#3182F6] hover:bg-blue-50 text-[12px] font-bold"
             onClick={() => fileInputRef.current?.click()}
           >
-            {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+            {isUploading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <ImageIcon className="w-3.5 h-3.5" />
+            )}
             이미지
           </Button>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
             onChange={handleImageUpload}
           />
         </div>
@@ -196,9 +203,7 @@ export default function MarkdownEditor({
         ) : (
           <div className="w-full flex-1 p-5 prose prose-sm max-w-none prose-blue overflow-y-auto">
             {value ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {value}
-              </ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
             ) : (
               <p className="text-gray-300 italic">미리볼 내용이 없습니다.</p>
             )}

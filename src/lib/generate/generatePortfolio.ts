@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { type RawProject, type Prisma } from "@prisma/client";
 import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
+import { type AISummary } from "@/types/project";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -39,8 +41,7 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 10 });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let topProjects: any[] = [];
+    let topProjects: (RawProject & { calculatedScore: number })[] = [];
 
     if (projectIds && projectIds.length > 0) {
       // Use manually selected projects
@@ -61,9 +62,8 @@ export async function generatePortfolio(params: {
         if (score === null) {
           let readme_quality = 0.0;
           if (p.raw_data) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
-            const readme = rawData?.readme || "";
+            const rawData = (typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data) as Record<string, unknown>;
+            const readme = (rawData?.readme as string) || "";
             if (!readme) {
               readme_quality = 0.0;
             } else if (readme.length < 300) {
@@ -109,35 +109,81 @@ export async function generatePortfolio(params: {
       if (!p.ai_summary) {
         try {
           let readme = "";
+          let rawData: Record<string, unknown> | null = null;
           if (p.raw_data) {
-             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-             const rawData: any = typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data;
-             readme = rawData?.readme || "";
+             rawData = (typeof p.raw_data === 'string' ? JSON.parse(p.raw_data) : p.raw_data) as Record<string, unknown>;
+             readme = (rawData?.readme as string) || "";
           }
-          if (readme && readme.length > 50) {
-            const completion = await openai.chat.completions.create({
-              model: "gpt-4o-mini",
-              messages: [
-                { 
-                  role: "system", 
-                  content: "당신은 IT 채용 담당자이자 포트폴리오 전문가입니다. 프로젝트 README를 분석하여 채용에 도움이 되는 핵심 정보를 추출해주세요. 반드시 JSON 형식으로만 응답해야 합니다." 
-                },
-                { 
-                  role: "user", 
-                  content: `프로젝트 이름: ${p.name}\n설명: ${p.description || ""}\nREADME: ${readme.substring(0, 3000)}\n\n위 정보를 바탕으로 다음 필드를 포함한 JSON으로 응답해주세요:\n- headline: 프로젝트를 한 줄로 설명하는 매력적인 문구\n- highlights: 주요 기능이나 기술적 성취 (2~3개 불렛 포인트)\n- demo_url: 라이브 데모 URL (README에서 찾을 수 있으면 포함, 없으면 null)\n- role: 개발자로서의 역할 (유추 가능하면 작성, 아니면 null)` 
-                }
+
+          // README 파일이 부실하거나 없는 경우에 대한 기본 플레이스홀더 텍스트 고도화
+          if (!readme || readme.length <= 50) {
+            const placeholderSummary = {
+              headline: p.description || `${p.name} - 개발자의 신뢰도 높은 프로젝트입니다.`,
+              highlights: [
+                `${p.language || "주요 개발"} 언어를 활용하여 구현된 레포지토리입니다.`,
+                p.pushed_at ? `${new Date(p.pushed_at).toLocaleDateString("ko-KR")}에 마지막으로 업데이트되었습니다.` : "신뢰할 수 있는 개발 히스토리가 기록되어 있습니다.",
+                "상세 기능과 스펙은 프로젝트 저장소 코드를 통해 확인하실 수 있습니다."
               ],
-              response_format: { type: "json_object" }
-            });
-            const summaryData = completion.choices[0]?.message?.content || "{}";
-            p.ai_summary = summaryData;
+              demo_url: (rawData?.homepage as string) || null,
+              role: "주요 개발자"
+            };
+            const placeholderStr = JSON.stringify(placeholderSummary);
+            p.ai_summary = placeholderStr;
             
-            // Cache the result to DB
             await prisma.rawProject.update({
               where: { id: p.id },
-              data: { ai_summary: summaryData }
+              data: { ai_summary: placeholderStr }
             });
+            continue;
           }
+
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { 
+                role: "system", 
+                content: "당신은 IT 채용 담당자이자 포트폴리오 전문가입니다. 프로젝트 README를 분석하여 채용에 도움이 되는 핵심 정보를 추출해주세요. 반드시 JSON 형식으로만 응답해야 합니다." 
+              },
+              { 
+                role: "user", 
+                content: `프로젝트 이름: ${p.name}\n설명: ${p.description || ""}\nREADME: ${readme.substring(0, 3000)}\n\n위 정보를 바탕으로 다음 필드를 포함한 JSON으로 응답해주세요:\n- headline: 프로젝트를 한 줄로 설명하는 매력적인 문구\n- highlights: 주요 기능이나 기술적 성취 (2~3개 불렛 포인트)\n- demo_url: 라이브 데모 URL (README에서 찾을 수 있으면 포함, 없으면 null)\n- role: 개발자로서의 역할 (유추 가능하면 작성, 아니면 null)` 
+              }
+            ],
+            response_format: { type: "json_object" }
+          });
+          const summaryData = completion.choices[0]?.message?.content || "{}";
+          
+          // JSON 파싱 검증 및 핵심 필드 fallback 안전 보정
+          let parsedSummary: AISummary = {};
+          try {
+            parsedSummary = JSON.parse(summaryData) as AISummary;
+          } catch (parseError) {
+            console.warn("AI summary JSON parsing failed:", parseError);
+            parsedSummary = {};
+          }
+
+          const defaultHeadline = p.description || `${p.name} - 개발자의 신뢰도 높은 프로젝트입니다.`;
+          const defaultHighlights = p.description 
+            ? [p.description.substring(0, 100)] 
+            : ["상세 기능과 스펙은 프로젝트 저장소 코드를 통해 확인하실 수 있습니다."];
+
+          const finalSummary = {
+            headline: parsedSummary.headline || defaultHeadline,
+            highlights: (Array.isArray(parsedSummary.highlights) && parsedSummary.highlights.length > 0)
+              ? parsedSummary.highlights
+              : defaultHighlights,
+            demo_url: parsedSummary.demo_url || (rawData?.homepage as string) || null,
+            role: parsedSummary.role || null
+          };
+
+          const summaryString = JSON.stringify(finalSummary);
+          p.ai_summary = summaryString;
+          
+          // Cache the result to DB
+          await prisma.rawProject.update({
+            where: { id: p.id },
+            data: { ai_summary: summaryString }
+          });
         } catch (e) {
           console.error("OpenAI summary error for project:", p.name, e);
         }
@@ -178,8 +224,7 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 30 });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const portfolioBlocksData: any[] = [];
+    const portfolioBlocksData: Prisma.PortfolioBlockCreateManyInput[] = [];
 
     // Hero Block
     portfolioBlocksData.push({
@@ -229,8 +274,7 @@ export async function generatePortfolio(params: {
     await updateJobProgress(jobId, { progress: 70 });
 
     // Contact Block
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contactConfig: any = {
+    const contactConfig: Record<string, unknown> = {
       github_url: `https://github.com/${user.github_login}`,
     };
     if (user.email) {
@@ -241,7 +285,7 @@ export async function generatePortfolio(params: {
       portfolio_id: portfolioId,
       block_type: "contact",
       position: 3,
-      config: contactConfig,
+      config: contactConfig as Prisma.InputJsonValue,
       is_visible: true,
       is_ai_generated: true,
     });

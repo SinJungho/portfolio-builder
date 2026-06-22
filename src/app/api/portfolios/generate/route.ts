@@ -12,18 +12,17 @@ export async function POST(req: Request) {
 
     const { user } = session;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let json: any = {};
+    let json: Record<string, unknown> = {};
     try {
       json = await req.json();
     } catch {
       // ignore
     }
 
-    const portfolio_id = json.portfolio_id;
-    const auto_publish = json.auto_publish ?? true;
-    const project_ids = json.project_ids;
-    const ai_focus = json.ai_focus;
+    const portfolio_id = json.portfolio_id as string;
+    const auto_publish = (json.auto_publish as boolean) ?? true;
+    const project_ids = json.project_ids as string[] | undefined;
+    const ai_focus = json.ai_focus as string | undefined;
 
     if (!portfolio_id) {
       return NextResponse.json({ error: "portfolio_id is required" }, { status: 400 });

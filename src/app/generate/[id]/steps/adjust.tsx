@@ -1,29 +1,26 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { Block, usePortfolioStore } from "@/stores/portfolioStore";
-import { type RawProject } from "@/types/project";
 import { type PortfolioInitialData } from "@/types/portfolio";
+import { type RawProject } from "@/types/project";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import DesignEditor from "@/components/features/editor/DesignEditor";
 import {
-  PointerSensor,
+  DragEndEvent,
   KeyboardSensor,
+  PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
 import { BlocksPanel } from "./components/BlocksPanel";
-import { DomainSettingsPanel } from "./components/DomainSettingsPanel";
 import { ContactSettingsPanel } from "./components/ContactSettingsPanel";
+import { DomainSettingsPanel } from "./components/DomainSettingsPanel";
 import { ProjectSelectionModal } from "./components/ProjectSelectionModal";
 
 type MobileTab = "blocks" | "settings";
@@ -32,7 +29,9 @@ interface AdjustStepProps {
   initialData?: PortfolioInitialData;
 }
 
-export default function AdjustStep({ initialData }: AdjustStepProps): React.ReactElement {
+export default function AdjustStep({
+  initialData,
+}: AdjustStepProps): React.ReactElement {
   const {
     blocks,
     isSaving,
@@ -53,20 +52,22 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
   const [isEditingProjects, setIsEditingProjects] = useState<boolean>(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
-  const [tempCustomDescriptions, setTempCustomDescriptions] = useState<Record<string, string>>({});
+  const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
+    Record<string, string>
+  >({});
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: rawProjects } = useQuery<RawProject[]>({
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("Failed to fetch projects");
+      if (!res.ok) throw new Error("프로젝트 목록을 불러오지 못했습니다.");
       return res.json();
     },
     enabled: init,
   });
 
-  // 렌더링 시점 최초 1회 스토어 상태 데이터 동기화
+  // 컴포넌트 마운트 시 스토어 상태를 최초 1회 동기화합니다.
   if (initialData && !init) {
     initialize({
       ...initialData,
@@ -78,29 +79,35 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     setInit(true);
   }
 
-  const moveUp = useCallback((index: number) => {
-    if (index === 0) return;
-    const newBlocks = [...blocks];
-    [newBlocks[index - 1], newBlocks[index]] = [
-      newBlocks[index],
-      newBlocks[index - 1],
-    ];
-    newBlocks.forEach((b, i) => (b.position = i));
-    reorderBlocks(newBlocks);
-  }, [blocks, reorderBlocks]);
+  const moveUp = useCallback(
+    (index: number) => {
+      if (index === 0) return;
+      const newBlocks = [...blocks];
+      [newBlocks[index - 1], newBlocks[index]] = [
+        newBlocks[index],
+        newBlocks[index - 1],
+      ];
+      newBlocks.forEach((b, i) => (b.position = i));
+      reorderBlocks(newBlocks);
+    },
+    [blocks, reorderBlocks],
+  );
 
-  const moveDown = useCallback((index: number) => {
-    if (index === blocks.length - 1) return;
-    const newBlocks = [...blocks];
-    [newBlocks[index + 1], newBlocks[index]] = [
-      newBlocks[index],
-      newBlocks[index + 1],
-    ];
-    newBlocks.forEach((b, i) => (b.position = i));
-    reorderBlocks(newBlocks);
-  }, [blocks, reorderBlocks]);
+  const moveDown = useCallback(
+    (index: number) => {
+      if (index === blocks.length - 1) return;
+      const newBlocks = [...blocks];
+      [newBlocks[index + 1], newBlocks[index]] = [
+        newBlocks[index],
+        newBlocks[index + 1],
+      ];
+      newBlocks.forEach((b, i) => (b.position = i));
+      reorderBlocks(newBlocks);
+    },
+    [blocks, reorderBlocks],
+  );
 
-  // 클릭과 드래그의 오동작 방지를 위해 5px 이상 움직일 때만 드래그 시작
+  // 일반 클릭 이벤트와의 오동작을 방지하기 위해, 5px 이상 드래그가 감지되었을 때만 dnd 동작을 시작합니다.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
@@ -108,29 +115,38 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     }),
   );
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = blocks.findIndex((b) => b.id === active.id);
-      const newIndex = blocks.findIndex((b) => b.id === over.id);
-      const newBlocks = arrayMove(blocks, oldIndex, newIndex);
-      newBlocks.forEach((b, i) => (b.position = i));
-      reorderBlocks(newBlocks);
-    }
-  }, [blocks, reorderBlocks]);
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (over && active.id !== over.id) {
+        const oldIndex = blocks.findIndex((b) => b.id === active.id);
+        const newIndex = blocks.findIndex((b) => b.id === over.id);
+        const newBlocks = arrayMove(blocks, oldIndex, newIndex);
+        newBlocks.forEach((b, i) => (b.position = i));
+        reorderBlocks(newBlocks);
+      }
+    },
+    [blocks, reorderBlocks],
+  );
 
   const contactBlock = blocks.find((b) => b.block_type === "contact");
 
-  const handleOptionalChange = useCallback((field: string, value: string) => {
-    if (!contactBlock) return;
-    updateOptionalField(contactBlock.id, { [field]: value })
-      .then(() => {
-        toast.success("저장되었습니다");
-      })
-      .catch((err: Error) => {
-        toast.error(err.message || "설정 저장 중 오류가 발생했습니다.");
-      });
-  }, [contactBlock, updateOptionalField]);
+  const handleOptionalChange = useCallback(
+    (field: string, value: string) => {
+      if (!contactBlock) return;
+      updateOptionalField(contactBlock.id, { [field]: value })
+        .then(() => {
+          toast.success("연락처 정보가 저장되었습니다.");
+        })
+        .catch((err: Error) => {
+          toast.error(
+            err.message ||
+              "연락처 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          );
+        });
+    },
+    [contactBlock, updateOptionalField],
+  );
 
   const openProjectEditor = useCallback((block: Block) => {
     setEditingBlockId(block.id);
@@ -153,13 +169,22 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
         .then(() => {
           setIsEditingProjects(false);
           setEditingBlockId(null);
-          toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
+          toast.success("대표 프로젝트 설정이 저장되었습니다.");
         })
         .catch((err: Error) => {
-          toast.error(err.message || "프로젝트 설정 저장 중 오류가 발생했습니다.");
+          toast.error(
+            err.message ||
+              "프로젝트 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          );
         });
     }
-  }, [editingBlockId, blocks, tempSelectedIds, tempCustomDescriptions, updateBlockConfig]);
+  }, [
+    editingBlockId,
+    blocks,
+    tempSelectedIds,
+    tempCustomDescriptions,
+    updateBlockConfig,
+  ]);
 
   const toggleTempProject = useCallback((id: string) => {
     setTempSelectedIds((prev) =>
@@ -167,12 +192,15 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
     );
   }, []);
 
-  const handleDescriptionChange = useCallback((id: string, value: string): void => {
-    setTempCustomDescriptions((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
-  }, []);
+  const handleDescriptionChange = useCallback(
+    (id: string, value: string): void => {
+      setTempCustomDescriptions((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    },
+    [],
+  );
 
   const filteredProjects = rawProjects?.filter(
     (p) =>
@@ -261,7 +289,9 @@ export default function AdjustStep({ initialData }: AdjustStepProps): React.Reac
         </div>
 
         <div className="lg:hidden">
-          {mobileTab === "blocks" ? BlocksPanelComponent : SettingsPanelComponent}
+          {mobileTab === "blocks"
+            ? BlocksPanelComponent
+            : SettingsPanelComponent}
         </div>
       </div>
 

@@ -68,6 +68,7 @@ export default function ProjectGridBlock({ config, theme: t, portfolioId, blockI
           html_url: "#",
           language: "TypeScript",
           stargazers_count: 0,
+          pushed_at: null,
         }));
 
   const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
@@ -123,8 +124,7 @@ function FeaturedCard({
   portfolioId,
   blockId,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  project: any;
+  project: NonNullable<ProjectGridBlockProps["config"]["projectsData"]>[0];
   theme: ThemeTokens;
   showTech: boolean;
   customDescription?: string;
