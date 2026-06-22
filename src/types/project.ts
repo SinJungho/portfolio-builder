@@ -8,3 +8,10 @@ export interface RawProject {
   pushed_at: string | null;
   is_featured?: boolean;
 }
+
+export interface AISummary {
+  headline?: string;
+  highlights?: string[];
+  demo_url?: string | null;
+  role?: string | null;
+}
