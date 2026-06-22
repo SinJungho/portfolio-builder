@@ -20,8 +20,7 @@ export async function GET(
       return NextResponse.json({ error: "job_not_found" }, { status: 404 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const job: any = typeof jobStr === "string" ? JSON.parse(jobStr) : jobStr;
+    const job = (typeof jobStr === "string" ? JSON.parse(jobStr) : jobStr) as GenerateJobResponse & { user_id: string };
 
     if (job.user_id !== session.user.id) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });

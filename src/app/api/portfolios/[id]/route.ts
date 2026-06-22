@@ -39,8 +39,7 @@ export async function PATCH(
       return NextResponse.json({ error: zError.message }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (data.theme !== undefined) updateData.theme = data.theme;
     if (data.title !== undefined) updateData.title = data.title;
     if (data.design_tokens !== undefined) updateData.design_tokens = data.design_tokens;
