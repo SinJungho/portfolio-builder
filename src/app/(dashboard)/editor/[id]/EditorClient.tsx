@@ -25,6 +25,8 @@ import React, { useDeferredValue, useState, useTransition } from "react";
 import { toast } from "sonner";
 import CustomDomainSection from "./components/CustomDomainSection";
 import ProjectSelectionModal from "./components/ProjectSelectionModal";
+import HeroEditorModal from "./components/HeroEditorModal";
+import SkillsEditorModal from "./components/SkillsEditorModal";
 import { type RawProject } from "@/types/project";
 import { type PortfolioInitialData } from "@/types/portfolio";
 
@@ -106,6 +108,8 @@ export default function EditorClient({
 
   // 대표 프로젝트 편집 관련 모달 상태 관리
   const [isEditingProjects, setIsEditingProjects] = useState<boolean>(false);
+  const [isEditingHero, setIsEditingHero] = useState<boolean>(false);
+  const [isEditingSkills, setIsEditingSkills] = useState<boolean>(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
@@ -179,11 +183,17 @@ export default function EditorClient({
 
   const openProjectEditor = (block: Block) => {
     setEditingBlockId(block.id);
-    setTempSelectedIds((block.config.project_ids as string[]) || []);
-    setTempCustomDescriptions(
-      (block.config.custom_descriptions as Record<string, string>) || {},
-    );
-    setIsEditingProjects(true);
+    if (block.block_type === "project_grid") {
+      setTempSelectedIds((block.config.project_ids as string[]) || []);
+      setTempCustomDescriptions(
+        (block.config.custom_descriptions as Record<string, string>) || {},
+      );
+      setIsEditingProjects(true);
+    } else if (block.block_type === "hero") {
+      setIsEditingHero(true);
+    } else if (block.block_type === "skills") {
+      setIsEditingSkills(true);
+    }
   };
 
   const handleSaveProjects = (
@@ -203,6 +213,16 @@ export default function EditorClient({
         toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
       });
     }
+  };
+
+  const handleSaveBlockConfig = (config: Record<string, unknown>) => {
+    if (!editingBlockId) return;
+    updateBlockConfig(editingBlockId, config).then(() => {
+      setIsEditingHero(false);
+      setIsEditingSkills(false);
+      setEditingBlockId(null);
+      toast.success("블록 설정이 업데이트되었습니다.");
+    });
   };
 
   if (!init) {
@@ -343,6 +363,28 @@ export default function EditorClient({
         initialSelectedIds={tempSelectedIds}
         initialCustomDescriptions={tempCustomDescriptions}
         rawProjects={rawProjects || []}
+        isSaving={isSaving}
+      />
+
+      <HeroEditorModal
+        isOpen={isEditingHero}
+        onClose={() => {
+          setIsEditingHero(false);
+          setEditingBlockId(null);
+        }}
+        onSave={handleSaveBlockConfig}
+        initialConfig={blocks.find((b: Block) => b.id === editingBlockId)?.config || {}}
+        isSaving={isSaving}
+      />
+
+      <SkillsEditorModal
+        isOpen={isEditingSkills}
+        onClose={() => {
+          setIsEditingSkills(false);
+          setEditingBlockId(null);
+        }}
+        onSave={handleSaveBlockConfig}
+        initialConfig={blocks.find((b: Block) => b.id === editingBlockId)?.config || {}}
         isSaving={isSaving}
       />
     </div>

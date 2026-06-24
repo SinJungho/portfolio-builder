@@ -3,6 +3,7 @@ import { verifyGitHubWebhook } from '@/lib/utils/security';
 import { prisma } from '@/lib/prisma';
 import { projectService } from '@/services/project';
 import { env } from '@/lib/env';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -35,14 +36,11 @@ export async function POST(req: NextRequest) {
           
           // on-demand revalidation 실행 (포트폴리오 페이지 즉시 반영)
           try {
-            await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/revalidate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-internal-secret': env.INTERNAL_API_SECRET,
-              },
-              body: JSON.stringify({ userId: user.id }),
-            });
+            const portfolios = await prisma.portfolio.findMany({ where: { user_id: user.id } });
+            for (const p of portfolios) {
+              revalidatePath(`/${p.slug}`);
+            }
+            revalidatePath(`/dashboard`);
             console.log(`[GitHub Webhook] Revalidation triggered for User: ${user.id}`);
           } catch (revalidateError) {
             console.error('[GitHub Webhook] Revalidation failed:', revalidateError);

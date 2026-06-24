@@ -3,6 +3,7 @@ import { type RawProject, type Prisma } from "@prisma/client";
 import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { type AISummary } from "@/types/project";
 import OpenAI from "openai";
+import { revalidatePath } from "next/cache";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -340,15 +341,8 @@ export async function generatePortfolio(params: {
         },
       });
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
-      fetch(`${appUrl}/api/revalidate`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-internal-secret": process.env.INTERNAL_API_SECRET || ""
-        },
-        body: JSON.stringify({ slug: finalSlug }),
-      }).catch(console.error);
+      revalidatePath(`/${finalSlug}`);
+      revalidatePath("/dashboard");
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";

@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
+import { generatePortfolio } from "@/lib/generate/generatePortfolio";
+
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -52,23 +55,16 @@ export async function POST(req: Request) {
     } catch (e) {
       throw e;
     }
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
-    
-    fetch(`${appUrl}/api/portfolios/generate/run`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
-      },
-      body: JSON.stringify({
-        job_id,
-        portfolio_id,
-        user_id: user.id,
-        auto_publish,
-        project_ids,
-        ai_focus,
-      }),
-    }).catch(console.error); // Fire and forget
+    after(async () => {
+      await generatePortfolio({
+        jobId: job_id,
+        portfolioId: portfolio_id,
+        userId: user.id,
+        autoPublish: auto_publish,
+        projectIds: project_ids,
+        goal: ai_focus,
+      }).catch(console.error);
+    });
 
     return NextResponse.json({ job_id, estimated_seconds: 30 }, { status: 202 });
   } catch (error: unknown) {

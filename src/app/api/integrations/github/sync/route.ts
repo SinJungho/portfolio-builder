@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { auth } from '@/auth'
 import { redis, JOB_KEY, JOB_TTL, type JobStatus } from '@/lib/redis'
+import { syncGithubData } from '@/lib/sync/syncGithub'
+
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -23,23 +26,14 @@ export async function POST(req: Request) {
 
     await redis.setex(JOB_KEY(jobId), JOB_TTL, JSON.stringify(initialStatus))
 
-    // Trigger background sync via internal API call
-    const runApiUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/integrations/github/sync/run`
-    
-    fetch(runApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
-      },
-      body: JSON.stringify({
-        job_id: jobId,
-        user_id: userId,
+    // Launch background work via next/server after()
+    after(async () => {
+      await syncGithubData({
+        jobId: jobId,
+        userId: userId,
         force,
-      }),
-    }).catch((err) => {
-      console.error('Failed to trigger sync run API:', err)
-    })
+      }).catch(console.error);
+    });
 
     return NextResponse.json(
       { job_id: jobId, estimated_seconds: 60 },

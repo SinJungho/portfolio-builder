@@ -111,13 +111,13 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
                 AI 생성
               </span>
             )}
-            {block.block_type === "project_grid" && block.is_visible && (
+            {["project_grid", "hero", "skills"].includes(block.block_type) && block.is_visible && (
               <button
                 onClick={() => onOpenProjectEditor(block)}
                 className="group/edit inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-spotify-green/10 hover:bg-spotify-green text-spotify-green hover:text-black rounded-full text-[12px] font-bold transition-all duration-300 active:scale-95 whitespace-nowrap cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5 transition-transform group-hover/edit:rotate-45" />
-                <span>프로젝트 설정</span>
+                <span>{block.block_type === "project_grid" ? "프로젝트 설정" : "블록 편집"}</span>
               </button>
             )}
           </div>
