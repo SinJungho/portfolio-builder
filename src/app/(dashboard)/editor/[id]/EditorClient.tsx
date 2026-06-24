@@ -27,6 +27,7 @@ import CustomDomainSection from "./components/CustomDomainSection";
 import ProjectSelectionModal from "./components/ProjectSelectionModal";
 import HeroEditorModal from "./components/HeroEditorModal";
 import SkillsEditorModal from "./components/SkillsEditorModal";
+import BlogFeedEditorModal from "./components/BlogFeedEditorModal";
 import { type RawProject } from "@/types/project";
 import { type PortfolioInitialData } from "@/types/portfolio";
 
@@ -110,6 +111,7 @@ export default function EditorClient({
   const [isEditingProjects, setIsEditingProjects] = useState<boolean>(false);
   const [isEditingHero, setIsEditingHero] = useState<boolean>(false);
   const [isEditingSkills, setIsEditingSkills] = useState<boolean>(false);
+  const [isEditingBlogFeed, setIsEditingBlogFeed] = useState<boolean>(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
@@ -193,6 +195,8 @@ export default function EditorClient({
       setIsEditingHero(true);
     } else if (block.block_type === "skills") {
       setIsEditingSkills(true);
+    } else if (block.block_type === "blog_feed") {
+      setIsEditingBlogFeed(true);
     }
   };
 
@@ -220,6 +224,7 @@ export default function EditorClient({
     updateBlockConfig(editingBlockId, config).then(() => {
       setIsEditingHero(false);
       setIsEditingSkills(false);
+      setIsEditingBlogFeed(false);
       setEditingBlockId(null);
       toast.success("블록 설정이 업데이트되었습니다.");
     });
@@ -381,6 +386,17 @@ export default function EditorClient({
         isOpen={isEditingSkills}
         onClose={() => {
           setIsEditingSkills(false);
+          setEditingBlockId(null);
+        }}
+        onSave={handleSaveBlockConfig}
+        initialConfig={blocks.find((b: Block) => b.id === editingBlockId)?.config || {}}
+        isSaving={isSaving}
+      />
+
+      <BlogFeedEditorModal
+        isOpen={isEditingBlogFeed}
+        onClose={() => {
+          setIsEditingBlogFeed(false);
           setEditingBlockId(null);
         }}
         onSave={handleSaveBlockConfig}
