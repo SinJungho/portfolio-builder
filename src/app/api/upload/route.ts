@@ -37,16 +37,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url });
     } catch (err: unknown) {
       if ((err as Error).message === "STORAGE_NOT_CONFIGURED") {
-        // [Zero-Config Fallback] Supabase 설정이 없는 경우 Base64 데이터 스트림으로 반환
-        // 이를 통해 로컬 환경에서 설정 없이도 UI 및 미리보기 기능을 즉시 테스트할 수 있습니다.
-        const base64 = buffer.toString("base64");
-        const dataUrl = `data:${file.type};base64,${base64}`;
-        
-        return NextResponse.json({ 
-          url: dataUrl, 
-          isLocal: true,
-          message: "⚠️ Supabase 설정이 없어 로컬 미리보기(Base64)용으로 처리되었습니다." 
-        });
+        return NextResponse.json(
+          { error: "스토리지 설정이 구성되지 않았습니다. 관리자에게 문의하세요." },
+          { status: 503 }
+        );
       }
       throw err;
     }

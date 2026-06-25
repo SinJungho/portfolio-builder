@@ -55,6 +55,12 @@ export const redis: Redis = new Proxy(actualRedis, {
             err?.message?.includes("ENOTFOUND");
 
           if (isNetworkError) {
+            // 운영(Production) 환경에서는 인메모리 임시 캐시를 사용하지 않고 명시적으로 예외를 발생시켜 장애를 조기 감지(Fail-fast)합니다.
+            if (process.env.NODE_ENV === "production") {
+              console.error("[Redis Error] 운영 환경에서 Upstash Redis 연결에 실패했습니다.", error);
+              throw error;
+            }
+
             console.warn(
               `ℹ️ [Upstash Redis 오프라인] Upstash 서버와 연결할 수 없어 ${methodName} 작업을 로컬 인메모리 캐시로 대체하여 안전하게 처리했습니다. (정상 작동 중)`,
             );
