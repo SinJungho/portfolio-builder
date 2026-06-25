@@ -1,6 +1,6 @@
 import { NextResponse, after } from 'next/server'
 import { auth } from '@/auth'
-import { redis, JOB_KEY, JOB_TTL, type JobStatus } from '@/lib/redis'
+import { redis, ratelimit, JOB_KEY, JOB_TTL, type JobStatus } from '@/lib/redis'
 import { syncGithubData } from '@/lib/sync/syncGithub'
 
 export const maxDuration = 60;
@@ -11,9 +11,19 @@ export async function POST(req: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    
+    const userId = session.user.id
+    
+    // Rate Limiting 검증
+    const { success } = await ratelimit.limit(`sync_${userId}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' },
+        { status: 429 }
+      )
+    }
 
     const { force = false } = await req.json().catch(() => ({}))
-    const userId = session.user.id
     const jobId = `sync_${crypto.randomUUID()}`
 
     const initialStatus: JobStatus = {

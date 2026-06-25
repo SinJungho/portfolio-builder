@@ -1,7 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
+import { redis, ratelimit, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { generatePortfolio } from "@/lib/generate/generatePortfolio";
 
 export const maxDuration = 60;
@@ -14,6 +14,15 @@ export async function POST(req: Request) {
     }
 
     const { user } = session;
+
+    // Rate Limiting 검증 (AI 자동 생성 비용 및 트래픽 방어)
+    const { success } = await ratelimit.limit(`generate_${user.id}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: "포트폴리오 생성 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
+        { status: 429 }
+      );
+    }
 
     let json: Record<string, unknown> = {};
     try {
