@@ -1,6 +1,7 @@
 import { fetchRepoReadme, fetchUserRepos } from "@/lib/github";
 import { prisma } from "@/lib/prisma";
 import { JOB_KEY, redis, type JobStatus } from "@/lib/redis";
+import { encrypt, safeDecrypt } from "@/lib/utils/security";
 
 export interface SyncJobStatus extends JobStatus {
   synced_count: number;
@@ -38,7 +39,7 @@ export async function syncGithubData({
       current = { ...current, ...updates, progress };
       await redis.set(key, JSON.stringify(current), { ex: 600 });
     } catch (err) {
-      console.error(`Failed to update sync progress for job ${jobId}:`, err);
+      console.error(`작업 ${jobId}의 동기화 진행률 업데이트에 실패했습니다:`, err);
     }
   };
 
@@ -49,23 +50,27 @@ export async function syncGithubData({
       where: { user_id_provider: { user_id: userId, provider: "github" } },
     });
 
-    let accessToken = integration?.access_token;
+    let accessToken = integration?.access_token
+      ? safeDecrypt(integration.access_token)
+      : undefined;
 
-    // Fallback: If not in Integration table, try to get from Account table (NextAuth)
+    // 폴백: Integration 테이블에 없으면 Account 테이블(NextAuth)에서 조회
     if (!accessToken) {
       const account = await prisma.account.findFirst({
         where: { userId, provider: "github" },
       });
-      accessToken = account?.access_token;
+      accessToken = account?.access_token
+        ? safeDecrypt(account.access_token)
+        : undefined;
     }
 
     if (!accessToken) {
       throw new Error(
-        "GitHub access token not found. Please try logging out and in again.",
+        "GitHub 액세스 토큰을 찾을 수 없습니다. 로그아웃 후 다시 로그인해 주세요.",
       );
     }
 
-    // 1. Fetch repositories
+    // 1. 리포지토리 목록 조회
     await updateProgress(10);
     const repos = await fetchUserRepos(accessToken);
     await updateProgress(30, { synced_count: 0 });
@@ -73,10 +78,10 @@ export async function syncGithubData({
     const total = repos.length;
     let synced = 0;
 
-    // 2. Process each repo
+    // 2. 개별 리포지토리 처리
     for (const repo of repos) {
       try {
-        // README fetch - heavy operation, could be optimized
+        // README 조회 — 무거운 연산이므로 캐시 우선 활용
         const existing = await prisma.rawProject.findUnique({
           where: {
             user_id_source_external_id: {
@@ -96,7 +101,7 @@ export async function syncGithubData({
             : null;
         let readme = typeof rawData?.readme === "string" ? rawData.readme : "";
 
-        // Cache hit if not forced and readme already exists
+        // 강제 동기화가 아니고 README 캐시가 존재하면 API 호출 생략
         if (force || !readme) {
           const owner = repo.full_name.split("/")[0];
           readme = await fetchRepoReadme(accessToken, owner, repo.name);
@@ -174,7 +179,7 @@ export async function syncGithubData({
       create: {
         user_id: userId,
         provider: "github",
-        access_token: accessToken,
+        access_token: encrypt(accessToken),
         synced_at: new Date(),
       },
     });

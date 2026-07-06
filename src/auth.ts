@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
+import { encrypt } from "@/lib/utils/security";
+
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -48,13 +50,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
             },
             update: {
-              access_token: account.access_token,
+              access_token: encrypt(account.access_token),
               refresh_token: account.refresh_token as string | null,
             },
             create: {
               user_id: user.id,
               provider: "github",
-              access_token: account.access_token,
+              access_token: encrypt(account.access_token),
               refresh_token: account.refresh_token as string | null,
             },
           })
@@ -77,13 +79,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
             },
             update: {
-              access_token: account.access_token,
+              access_token: encrypt(account.access_token),
               refresh_token: account.refresh_token as string | null,
             },
             create: {
               user_id: user.id,
               provider: "github",
-              access_token: account.access_token,
+              access_token: encrypt(account.access_token),
               refresh_token: account.refresh_token as string | null,
             },
           })

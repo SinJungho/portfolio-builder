@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { safeDecrypt } from '@/lib/utils/security'
+
 
 export async function GET() {
   const session = await auth()
@@ -28,9 +30,10 @@ export async function GET() {
 
     if (integration?.access_token) {
       try {
+        const decryptedToken = safeDecrypt(integration.access_token)
         const response = await fetch('https://api.github.com/user', {
           headers: {
-            Authorization: `Bearer ${integration.access_token}`,
+            Authorization: `Bearer ${decryptedToken}`,
             'User-Agent': 'PortfolioForge',
           },
         })
@@ -52,7 +55,7 @@ export async function GET() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch latest bio from GitHub:', error)
+        console.error('GitHub에서 최신 bio 정보를 조회하는 데 실패했습니다:', error)
       }
     }
   }

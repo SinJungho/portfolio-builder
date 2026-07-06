@@ -2,10 +2,10 @@ import crypto from 'crypto';
 import { env } from '@/lib/env';
 
 const ALGORITHM = 'aes-256-cbc';
-const IV_LENGTH = 16; // For AES
+const IV_LENGTH = 16; // AES 초기화 벡터 길이
 
 /**
- * Encrypt sensitive data (e.g., GitHub access tokens)
+ * 민감 데이터를 AES-256-CBC로 암호화합니다. (예: GitHub access token)
  */
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
@@ -17,7 +17,7 @@ export function encrypt(text: string): string {
 }
 
 /**
- * Decrypt data
+ * 암호화된 데이터를 복호화합니다.
  */
 export function decrypt(text: string): string {
   const textParts = text.split(':');
@@ -33,7 +33,21 @@ export function decrypt(text: string): string {
 }
 
 /**
- * Verify GitHub Webhook signature
+ * 안전한 복호화를 수행합니다. 복호화 실패 또는 평문 형식일 경우 원본 텍스트를 반환합니다.
+ */
+export function safeDecrypt(text: string | null | undefined): string {
+  if (!text) return '';
+  if (!text.includes(':')) return text; // 암호화되지 않은 평문
+  try {
+    return decrypt(text);
+  } catch (err) {
+    console.error('토큰 복호화에 실패하여 원본 텍스트를 반환합니다:', err);
+    return text;
+  }
+}
+
+/**
+ * GitHub Webhook 서명을 HMAC-SHA256으로 검증합니다.
  */
 export function verifyGitHubWebhook(
   signature: string | null,
