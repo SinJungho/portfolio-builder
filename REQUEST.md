@@ -250,6 +250,9 @@ Phase 3는 플랫폼의 핵심 역량을 강화하고 안정성을 확보하는 
 | **Polishing 3.7** | **주석 다이어트 (1)** | `generate.tsx` 가독성 개선, 1차원 마크업 주석 소거 및 핵심 비즈니스 룰 보존 | `generate.tsx`                                               | **[완료]** |
 | **Polishing 3.9** | **주석 다이어트 (2)** | `steps` 폴더 내 컴포넌트 전반의 주석 다이어트 및 실무형 주석 정제 완료      | `steps/` 디렉토리 전반                                       | **[완료]** |
 |  **Polishing 4**  | **데이터 정합성**     | AI 프롬프트 파싱 실패 시 fallback 로직 및 DB 무결성 강화                    | `src/lib/generate/generatePortfolio.ts`                      | **[완료]** |
-
+|  **Polishing 5**  | **자동화 테스트**     | Jest 및 React Testing Library 기반 단위 테스트 초기 환경 구축 및 핵심 유틸 테스트 작성 | `jest.config.ts`, `src/**/__tests__/`                        | **[완료]** |
+|  **Polishing 6**  | **에러 모니터링**     | Sentry 연동을 통한 실시간 에러 트래킹 및 성능 모니터링 구축                 | `sentry.*.config.ts`, `next.config.ts`                       | **[완료]** |
+|  **Polishing 7**  | **CI/CD 파이프라인**  | GitHub Actions 기반 PR 생성 시 Lint, Type Check, Test 자동화 워크플로우     | `.github/workflows/ci.yml`                                   | **[완료]** |
+|  **Polishing 8**  | **성능/SEO 최적화**   | Lighthouse CI 워크플로우 및 lighthouserc.js 설정 구축 (점수 90점 이상 기준) | `lighthouserc.js`, `.github/workflows/lighthouse.yml`        | **[완료]** |
 > 앞으로의 요청은 '새로운 기능 추가'를 멈추고, 현재 기능들의 완성도를 100%로 끌어올리는 **Polishing(안정화 및 고도화)** 스텝에 집중하여 전개합니다.
 > 각 작업을 시작할 때는 반드시 기존 코드를 정밀 진단하고 **Pre-flight 검증**을 거쳐 결함을 찾고 수정합니다.
