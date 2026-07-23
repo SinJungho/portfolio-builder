@@ -1,32 +1,69 @@
+import { Check, ExternalLink, Globe2, Rocket, Zap } from "lucide-react";
+
+const destinations = [
+  { name: "Vercel", mark: "▲" },
+  { name: "Netlify", mark: "◆" },
+  { name: "GitHub Pages", mark: "●" },
+];
+
 export default function StepVisualDeploy() {
   return (
-    <div className="w-full p-6 flex flex-col items-center gap-3">
-      {/* domain */}
-      <div className="bg-white rounded-[10px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.1)] text-xs text-gray-700 font-medium border border-[#F0F4F8]">
-        🌐 yourname.portfolioforge.dev
-      </div>
+    <div className="w-full p-4 sm:p-7">
+      <div className="relative mx-auto max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#0c1110] shadow-[0_20px_48px_rgba(0,0,0,0.38)]">
+        <div aria-hidden="true" className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-spotify-green/15 blur-3xl" />
+        <div aria-hidden="true" className="absolute -bottom-20 -left-10 h-36 w-36 rounded-full bg-[#539df5]/10 blur-3xl" />
 
-      {/* connector line */}
-      <div className="w-0.5 h-4 bg-gray-200" />
-
-      {/* deploy platforms */}
-      <div className="flex gap-2">
-        {["Vercel", "Netlify", "GitHub Pages"].map((v) => (
-          <div
-            key={v}
-            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-gray-200 text-[11px] font-semibold text-gray-500"
-          >
-            {v}
+        <div className="relative flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-spotify-green text-black">
+              <Rocket size={13} strokeWidth={2.8} aria-hidden="true" />
+            </span>
+            <span className="text-[12px] font-bold text-white">배포 센터</span>
           </div>
-        ))}
-      </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-spotify-green/20 bg-spotify-green/10 px-2 py-1 text-[9px] font-bold tracking-[0.08em] text-spotify-green">
+            <span className="h-1.5 w-1.5 rounded-full bg-spotify-green shadow-[0_0_8px_rgba(30,215,96,1)]" />
+            LIVE
+          </span>
+        </div>
 
-      {/* deploy status */}
-      <div className="flex items-center gap-1.5 mt-1">
-        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-        <span className="text-xs text-emerald-500 font-semibold">
-          배포 완료
-        </span>
+        <div className="relative p-4 sm:p-5">
+          <p className="mb-2 text-[10px] font-bold tracking-[0.1em] text-spotify-silver">YOUR PORTFOLIO IS ONLINE</p>
+          <div className="group flex items-center gap-3 rounded-xl border border-spotify-green/30 bg-spotify-green/[0.07] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-spotify-green text-black shadow-[0_0_18px_rgba(30,215,96,0.25)]">
+              <Globe2 size={18} strokeWidth={2.4} aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-bold text-white">yourname.portfolioforge.dev</p>
+              <p className="mt-0.5 text-[10px] font-medium text-spotify-silver">나만의 주소로 공개되었습니다</p>
+            </div>
+            <ExternalLink size={15} className="shrink-0 text-spotify-green transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+          </div>
+
+          <div className="relative my-4 flex items-center gap-2" aria-hidden="true">
+            <span className="h-2 w-2 rounded-full border border-spotify-green/50 bg-[#0c1110]" />
+            <span className="h-px flex-1 bg-gradient-to-r from-spotify-green/60 via-spotify-green/20 to-transparent" />
+            <Zap size={13} className="text-spotify-green" fill="currentColor" />
+            <span className="h-px flex-1 bg-gradient-to-l from-[#539df5]/50 via-white/10 to-transparent" />
+            <span className="h-2 w-2 rounded-full border border-[#539df5]/50 bg-[#0c1110]" />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {destinations.map((destination) => (
+              <div key={destination.name} className="rounded-lg border border-white/8 bg-white/[0.035] px-2 py-2.5 text-center">
+                <span className="block text-[10px] font-black text-spotify-green">{destination.mark}</span>
+                <span className="mt-1 block truncate text-[9px] font-semibold text-spotify-near-white">{destination.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative flex items-center justify-between border-t border-white/10 bg-black/15 px-4 py-2.5">
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-spotify-silver">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-spotify-green text-black"><Check size={10} strokeWidth={4} aria-hidden="true" /></span>
+            전 세계에서 접속 가능
+          </span>
+          <span className="text-[10px] font-bold text-spotify-green">공유할 준비 완료</span>
+        </div>
       </div>
     </div>
   );
