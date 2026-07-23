@@ -134,17 +134,23 @@
 
 @layer utilities {
   .btn-pill {
-    @apply inline-flex items-center justify-center rounded-full font-bold transition-all uppercase tracking-spotify;
+    @apply inline-flex items-center justify-center rounded-full font-bold uppercase tracking-spotify;
   }
   
   .btn-pill-primary {
-    @apply inline-flex items-center justify-center rounded-full font-bold transition-all uppercase tracking-spotify
-           px-8 py-3 bg-spotify-green text-black hover:scale-105 active:scale-95;
+    @apply inline-flex items-center justify-center rounded-full border border-spotify-green/30 bg-spotify-green px-8 py-3 font-bold uppercase tracking-spotify text-black shadow-[0_8px_24px_rgba(30,215,96,0.22)]
+           transition-[transform,background-color,border-color,box-shadow] duration-300 ease-out
+           hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#3be477] hover:shadow-[0_12px_28px_rgba(30,215,96,0.34)]
+           active:translate-y-0 active:scale-[0.98]
+           motion-reduce:transform-none;
   }
   
   .btn-pill-secondary {
-    @apply inline-flex items-center justify-center rounded-full font-bold transition-all uppercase tracking-spotify
-           px-8 py-3 bg-transparent border border-spotify-silver text-white hover:border-white;
+    @apply inline-flex items-center justify-center rounded-full border border-spotify-silver bg-transparent px-8 py-3 font-bold uppercase tracking-spotify text-white
+           transition-[transform,background-color,border-color,box-shadow] duration-300 ease-out
+           hover:-translate-y-0.5 hover:scale-[1.02] hover:border-white hover:bg-white/5 hover:shadow-[0_12px_28px_rgba(0,0,0,0.28)]
+           active:translate-y-0 active:scale-[0.98]
+           motion-reduce:transform-none;
   }
   
   .spotify-card {

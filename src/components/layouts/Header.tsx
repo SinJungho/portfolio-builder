@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronRight, Github, Menu, Sparkles, LogOut, User, LayoutDashboard, Settings } from "lucide-react";
+import { ChevronRight, Menu, Sparkles, LogOut, User, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -76,7 +76,10 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-6 h-16 sm:h-20 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="flex items-center gap-3 no-underline group">
+        <Link
+          href="/"
+          className="flex items-center gap-3 rounded-full no-underline group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-4 focus-visible:ring-offset-spotify-near-black"
+        >
           <LogoMark />
           <span className="text-[20px] font-bold text-white tracking-tight">
             PortfolioForge
@@ -89,7 +92,7 @@ export default function Header() {
             <Link
               key={item.name}
               href={item.href}
-              className="px-4 py-2 text-[14px] font-bold text-spotify-silver hover:text-white transition-colors no-underline uppercase tracking-spotify"
+              className="rounded-full px-4 py-2 text-[14px] font-bold uppercase tracking-spotify text-spotify-silver no-underline transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black"
             >
               {item.name}
             </Link>
@@ -103,7 +106,10 @@ export default function Header() {
           ) : isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 overflow-hidden outline-none focus:ring-2 focus:ring-spotify-green/20">
+                <button
+                  aria-label="계정 메뉴 열기"
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/5 bg-white/5 transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black"
+                >
                   {user?.image ? (
                     <Image
                       src={user.image}
@@ -149,16 +155,12 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Link 
-                href="/login" 
-                className="text-[14px] font-bold text-spotify-silver hover:text-white transition-colors no-underline uppercase tracking-spotify px-4 py-2"
+              <Button
+                asChild
+                className="btn-pill-primary h-10 px-5 text-[14px] font-extrabold tracking-[-0.01em]"
               >
-                로그인
-              </Link>
-              <Button asChild className="btn-pill-primary h-11 px-6">
-                <Link href="/login">
-                  <Github size={18} />
-                  시작하기
+                <Link href="/login" aria-label="로그인하고 PortfolioForge 시작하기">
+                  로그인
                 </Link>
               </Button>
             </>
@@ -172,7 +174,7 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-spotify-silver hover:text-white hover:bg-white/5 rounded-full"
+                className="rounded-full text-spotify-silver hover:bg-white/5 hover:text-white focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black"
                 aria-label="메뉴 열기"
               >
                 <Menu size={24} />
@@ -206,7 +208,7 @@ export default function Header() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="flex items-center justify-between px-8 py-4 text-[16px] font-bold text-spotify-silver hover:text-white hover:bg-white/5 transition-all no-underline uppercase tracking-spotify"
+                    className="flex items-center justify-between px-8 py-4 text-[16px] font-bold uppercase tracking-spotify text-spotify-silver no-underline transition-all hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-spotify-green"
                   >
                     {item.name}
                     <ChevronRight size={18} className="opacity-20" />
@@ -260,20 +262,14 @@ export default function Header() {
                   </>
                 ) : (
                   <>
-                    <Button asChild className="btn-pill-primary h-14 w-full text-[16px]">
+                    <Button
+                      asChild
+                      className="btn-pill-primary h-13 w-full rounded-2xl text-[15px] font-extrabold tracking-[-0.01em]"
+                    >
                       <Link href="/login" onClick={() => setOpen(false)}>
-                        <Github size={20} className="mr-3" />
-                        GitHub로 시작하기
-                        <ArrowRight size={18} className="ml-2" />
+                        로그인하고 시작하기
                       </Link>
                     </Button>
-                    <Link 
-                      href="/login" 
-                      onClick={() => setOpen(false)}
-                      className="text-center py-3 text-[14px] font-bold text-spotify-silver hover:text-white transition-colors no-underline"
-                    >
-                      이미 계정이 있으신가요? <span className="text-spotify-green ml-1">로그인</span>
-                    </Link>
                   </>
                 )}
               </div>

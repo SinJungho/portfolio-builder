@@ -19,7 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "PortfolioForge | AI 기반 포트폴리오 자동 생성",
-  description: "GitHub 데이터를 분석하여 나만의 프리미엄 포트폴리오를 1분 만에 완성하세요.",
+  description:
+    "GitHub 데이터를 분석하여 나만의 프리미엄 포트폴리오를 1분 만에 완성하세요.",
 };
 
 export default function RootLayout({
