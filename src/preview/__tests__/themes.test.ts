@@ -1,3 +1,4 @@
+import { describe, it, expect } from '@jest/globals'
 import { resolveTheme, THEMES, THEME_LIST } from '../themes'
 
 describe('resolveTheme', () => {

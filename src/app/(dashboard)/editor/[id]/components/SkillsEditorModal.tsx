@@ -58,7 +58,11 @@ export default function SkillsEditorModal({
     setSkills(skills.filter((_, i) => i !== index));
   };
 
-  const updateSkill = (index: number, field: keyof SkillItem, value: any) => {
+  const updateSkill = (
+    index: number,
+    field: keyof SkillItem,
+    value: string | number,
+  ) => {
     const newSkills = [...skills];
     newSkills[index] = { ...newSkills[index], [field]: value };
     setSkills(newSkills);
