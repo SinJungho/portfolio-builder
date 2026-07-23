@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRight, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import { useState } from "react";
 import Reveal from "../common/Reveal";
 
@@ -46,69 +46,25 @@ export default function Features() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f, i) => {
-            const Icon = f.icon;
-
-            return (
-              <Reveal key={i} delay={i * 100}>
-                <button
-                  onClick={() => setActive(i)}
-                  onMouseEnter={() => setActive(i)}
-                  className={`
-                    p-10 rounded-[32px] cursor-pointer text-left
-                    transition-all duration-500 ease-out w-full h-full
-                    border border-white/5 relative overflow-hidden group
-                  `}
-                  style={{
-                    background: active === i ? "#1f1f1f" : "#181818",
-                    transform: active === i ? "translateY(-8px)" : "none",
-                    boxShadow: active === i ? "0 16px 48px rgba(0,0,0,0.4)" : "none",
-                  }}
-                >
-                  {/* Glow effect on active */}
-                  {active === i && (
-                    <div 
-                      className="absolute -right-10 -top-10 w-40 h-40 rounded-full opacity-20 blur-3xl pointer-events-none"
-                      style={{ background: f.color }}
-                    />
-                  )}
-
-                  {/* icon */}
-                  <div
-                    className="w-14 h-14 rounded-2xl mb-8 flex items-center justify-center transition-transform duration-500 group-hover:scale-110"
-                    style={{ 
-                      background: active === i ? `${f.color}20` : "rgba(255,255,255,0.05)",
-                      border: `1px solid ${active === i ? f.color + "40" : "rgba(255,255,255,0.1)"}`
-                    }}
-                  >
-                    <Icon size={26} color={active === i ? f.color : "#b3b3b3"} strokeWidth={2.5} />
-                  </div>
-
-                  {/* tag */}
-                  <div
-                    className="inline-block px-4 py-1.5 rounded-full text-[12px] font-bold mb-4 uppercase tracking-spotify"
-                    style={{
-                      background: active === i ? `${f.color}15` : "rgba(255,255,255,0.05)",
-                      color: active === i ? f.color : "#b3b3b3",
-                    }}
-                  >
-                    {f.tag}
-                  </div>
-
-                  {/* title */}
-                  <h3 className="text-[24px] font-black text-white tracking-tight mb-4 m-0 leading-tight">
-                    {f.title}
-                  </h3>
-
-                  {/* description */}
-                  <p className="text-[16px] leading-relaxed text-spotify-silver font-medium m-0">
-                    {f.desc}
-                  </p>
+        <div className="grid gap-8 border-y border-white/10 py-2 lg:grid-cols-[minmax(16rem,0.72fr)_minmax(0,1.28fr)] lg:gap-16">
+          <div role="tablist" aria-label="PortfolioForge 주요 기능" className="divide-y divide-white/10 lg:col-start-1 lg:row-start-1">
+            {features.map((f, i) => {
+              const Icon = f.icon;
+              const selected = active === i;
+              return (
+                <button key={f.tag} id={`feature-tab-${i}`} role="tab" aria-selected={selected} aria-controls="feature-panel" onClick={() => setActive(i)} className="group flex w-full items-center gap-4 px-2 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors" style={{ color: selected ? f.color : "#b3b3b3", borderColor: selected ? `${f.color}80` : "rgba(255,255,255,0.12)", background: selected ? `${f.color}18` : "transparent" }}><Icon size={18} aria-hidden="true" /></span>
+                  <span className="min-w-0 flex-1"><span className="mb-1 block text-[11px] font-bold tracking-[0.12em]" style={{ color: selected ? f.color : "#b3b3b3" }}>{f.tag}</span><span className="block text-[20px] font-bold tracking-tight text-white sm:text-[22px]">{f.title}</span></span>
+                  <ArrowRight size={18} className="shrink-0 transition-transform group-hover:translate-x-1" style={{ color: selected ? f.color : "#737373" }} aria-hidden="true" />
                 </button>
-              </Reveal>
-            );
-          })}
+              );
+            })}
+          </div>
+          <div id="feature-panel" role="tabpanel" aria-labelledby={`feature-tab-${active}`} className="relative flex min-h-[260px] flex-col justify-between overflow-hidden rounded-[28px] border border-white/10 bg-spotify-dark-surface p-8 sm:p-10 lg:col-start-2 lg:row-start-1">
+            <div className="absolute right-0 top-0 h-44 w-44 rounded-full opacity-20 blur-3xl" style={{ background: features[active].color }} />
+            <div className="relative"><span className="mb-8 inline-flex h-14 w-14 items-center justify-center rounded-2xl border" style={{ color: features[active].color, background: `${features[active].color}18`, borderColor: `${features[active].color}45` }}>{(() => { const Icon = features[active].icon; return <Icon size={26} aria-hidden="true" />; })()}</span><h3 className="mb-4 text-[30px] font-black tracking-tight text-white sm:text-[36px]">{features[active].title}</h3><p className="max-w-xl text-[17px] font-medium leading-relaxed text-spotify-silver">{features[active].desc}</p></div>
+            <p className="relative mt-8 text-[12px] font-bold tracking-[0.12em] text-spotify-silver/65">필요한 정보를 먼저 정리하고, 결과는 언제든 편집할 수 있습니다.</p>
+          </div>
         </div>
       </div>
     </section>
