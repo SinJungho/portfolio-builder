@@ -1,7 +1,7 @@
 "use client";
 
 import MockPortfolio from "@/components/common/MockPortfolio";
-import { ArrowDown, ArrowRight, Github, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import CTAButton from "../common/CTAButton";
 
@@ -23,8 +23,8 @@ export default function Hero() {
         "
       />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[0.88fr_1.12fr] lg:gap-20">
-        <div className="text-center lg:text-left">
+      <div className="relative mx-auto grid max-w-[90rem] items-center gap-14 px-6 lg:grid-cols-[minmax(29rem,0.88fr)_minmax(0,1.12fr)] lg:gap-14 xl:gap-20">
+        <div className="min-w-0 text-center lg:text-left">
           <div
           className={`
             transition-all duration-700 ease-out
@@ -42,7 +42,7 @@ export default function Hero() {
           className={`
             mb-7 font-black leading-[1.02]
             tracking-tight text-white
-            text-[clamp(46px,6.2vw,82px)]
+            text-[clamp(46px,4.5vw,76px)] lg:whitespace-nowrap
             transition-all duration-1000 delay-100
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
@@ -70,15 +70,12 @@ export default function Hero() {
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
-          <CTAButton href="/login" primary className="h-14 w-full px-7 text-[16px] sm:w-auto">
-            <Github size={20} />
+          <CTAButton href="/login" primary className="h-13 w-full px-6 text-[15px] sm:h-14 sm:px-7 sm:text-[16px] sm:w-auto">
             GitHub로 시작하기
-            <ArrowRight size={18} />
           </CTAButton>
 
-          <CTAButton href="#portfolio-preview" className="h-14 w-full px-7 text-[16px] sm:w-auto">
+          <CTAButton href="#portfolio-preview" className="h-13 w-full px-6 text-[15px] sm:h-14 sm:px-7 sm:text-[16px] sm:w-auto">
             결과 미리 보기
-            <ArrowDown size={17} />
           </CTAButton>
         </div>
 
@@ -96,14 +93,17 @@ export default function Hero() {
         <div
           id="portfolio-preview"
           className={`
-            relative scroll-mt-24
+            relative min-w-0 scroll-mt-24
             transition-all duration-1000 delay-400
             ${mounted ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-12"}
           `}
         >
-          <div className="mb-4 flex items-center justify-between px-1 text-[11px] font-bold tracking-[0.12em] text-spotify-silver/70">
-            <span>LIVE PORTFOLIO PREVIEW</span>
-            <span className="text-spotify-green">PUBLISHED</span>
+          <div className="mb-5 flex flex-col items-start gap-2 rounded-2xl border border-white/10 bg-spotify-dark-surface px-4 py-3 text-[12px] font-bold tracking-[0.06em] text-spotify-near-white sm:flex-row sm:items-center sm:justify-between sm:text-[13px]">
+            <span>포트폴리오 결과 미리보기</span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-spotify-green/20 bg-spotify-green/10 px-2.5 py-1 text-[11px] tracking-[0.08em] text-spotify-green sm:text-[12px]">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-spotify-green shadow-[0_0_8px_rgba(30,215,96,0.75)]" />
+              배포 완료
+            </span>
           </div>
           <MockPortfolio />
         </div>

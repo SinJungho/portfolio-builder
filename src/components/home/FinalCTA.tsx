@@ -1,4 +1,3 @@
-import { ArrowRight, Github } from "lucide-react";
 import Reveal from "../common/Reveal";
 import CTAButton from "../common/CTAButton";
 
@@ -32,10 +31,8 @@ export default function FinalCTA() {
 
           {/* CTA button */}
           <div className="flex flex-col items-center gap-6">
-            <CTAButton primary className="h-16 px-12 text-[20px] shadow-spotify">
-              <Github size={24} />
+            <CTAButton href="/login" primary className="h-14 px-8 text-[16px] shadow-spotify sm:h-15 sm:px-10 sm:text-[17px]">
               GitHub로 무료 시작하기
-              <ArrowRight size={22} />
             </CTAButton>
 
             {/* sub text */}

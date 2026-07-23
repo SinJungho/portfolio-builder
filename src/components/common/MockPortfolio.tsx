@@ -1,17 +1,23 @@
 "use client";
 
+import { Activity, Clock3, Code2, FolderGit2, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ThemeInput } from "react-activity-calendar";
 import { GitHubCalendar } from "react-github-calendar";
 
 const PROJECTS = [
-  { name: "AI Portfolio Builder", stars: "128", color: "#1ed760" },
-  { name: "Design System Kit", stars: "89", color: "#b3b3b3" },
-  { name: "Real-time Dashboard", stars: "64", color: "#1ed760" },
-  { name: "Open Graph Studio", stars: "47", color: "#539df5" },
+  { name: "AI 포트폴리오 빌더", stars: "128", language: "TypeScript", updatedAt: "3시간 전", languageColor: "#3178c6" },
+  { name: "디자인 시스템 키트", stars: "89", language: "React", updatedAt: "어제", languageColor: "#61dafb" },
+  { name: "실시간 데이터 대시보드", stars: "64", language: "Next.js", updatedAt: "3일 전", languageColor: "#f5f5f5" },
+  { name: "오픈 그래프 스튜디오", stars: "47", language: "TypeScript", updatedAt: "지난주", languageColor: "#3178c6" },
 ];
 
-const TECH_TAGS = ["React", "TypeScript", "Next.js", "Tailwind"];
+const TECH_STACKS = [
+  { name: "React", color: "#61dafb" },
+  { name: "TypeScript", color: "#3178c6" },
+  { name: "Next.js", color: "#f5f5f5" },
+  { name: "Tailwind", color: "#38bdf8" },
+];
 
 const SPOTIFY_THEME: ThemeInput = {
   dark: [
@@ -28,6 +34,18 @@ function calcBlockSize(containerWidth: number): number {
   const weeks = 53;
   const size = Math.floor((containerWidth + margin) / weeks) - margin;
   return Math.min(12, Math.max(4, size));
+}
+
+function StackLabel({ name, color }: { name: string; color: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-2 border-l-[3px] bg-white/[0.08] px-2.5 py-1.5 font-mono text-[11px] font-semibold tracking-[0.01em] text-spotify-near-white"
+      style={{ borderLeftColor: color }}
+    >
+      <Code2 size={13} aria-hidden="true" style={{ color }} />
+      {name}
+    </span>
+  );
 }
 
 export default function MockPortfolio() {
@@ -80,70 +98,86 @@ export default function MockPortfolio() {
       </div>
 
       {/* 포트폴리오 바디 */}
-      <div className="p-8 sm:p-12 bg-spotify-near-black min-h-[400px]">
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 mb-12">
-          <div className="shrink-0 flex flex-col items-center lg:items-start">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-spotify-mid-dark border-4 border-spotify-dark-surface shadow-spotify-md mb-6 overflow-hidden">
-               <div className="w-full h-full bg-gradient-to-br from-spotify-green to-spotify-green-border opacity-80 flex items-center justify-center text-black font-black text-2xl">KJ</div>
+      <div className="min-h-[400px] bg-spotify-near-black p-8 sm:p-10 lg:p-12">
+        <div className="mb-12 grid gap-10 lg:grid-cols-[12.5rem_minmax(0,1fr)] lg:gap-9">
+          <aside className="flex flex-col items-center text-center lg:border-r lg:border-white/10 lg:pr-9 lg:text-left">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-spotify-dark-surface bg-gradient-to-br from-spotify-green to-spotify-green-border text-2xl font-black text-black shadow-spotify-md sm:h-24 sm:w-24">
+              KJ
             </div>
-            <div className="text-center lg:text-left">
-              <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
-                김재민
-              </h3>
-              <p className="text-[14px] font-bold text-spotify-green uppercase tracking-spotify mb-6">
-                Frontend Engineer · Seoul
-              </p>
-              <div className="flex flex-wrap justify-center lg:justify-start gap-2">
-                {TECH_TAGS.map((t) => (
-                  <span
-                    key={t}
-                    className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/5 border border-white/10 text-spotify-silver uppercase tracking-spotify-wide"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
+            <h3 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">김재민</h3>
+            <p className="mt-2 flex items-center gap-1.5 text-[12px] font-bold tracking-[0.08em] text-spotify-green sm:text-[13px]">
+              <Code2 size={14} aria-hidden="true" />
+              프론트엔드 개발자
+            </p>
+            <div className="mt-6 flex max-w-[12rem] flex-wrap justify-center gap-1.5 lg:justify-start" aria-label="개발 기술 스택">
+              {TECH_STACKS.map((stack) => (
+                <StackLabel key={stack.name} {...stack} />
+              ))}
             </div>
-          </div>
-          
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {PROJECTS.map((p) => (
-              <div
-                key={p.name}
-                className="rounded-2xl p-5 bg-spotify-dark-surface border border-white/5 hover:bg-spotify-mid-dark transition-colors group"
-              >
-                <div className="text-[15px] font-bold text-white mb-3 flex justify-between items-center">
-                  {p.name}
-                  <div
-                    className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(30,215,96,0.5)]"
-                    style={{ background: p.color }}
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[12px] font-bold text-spotify-silver uppercase tracking-spotify">
-                    ⭐ {p.stars} Stars
-                  </span>
-                  <div className="h-1 w-1 rounded-full bg-white/10" />
-                  <span className="text-[12px] font-bold text-spotify-green opacity-0 group-hover:opacity-100 transition-opacity">
-                    View Project
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          </aside>
+
+          <section className="min-w-0" aria-labelledby="featured-repositories-title">
+            <div className="mb-4 flex items-center gap-2">
+              <FolderGit2 size={17} className="text-spotify-green" aria-hidden="true" />
+              <h4 id="featured-repositories-title" className="text-[13px] font-bold tracking-[0.08em] text-white">
+                대표 리포지토리
+              </h4>
+              <span className="text-[11px] font-medium text-spotify-silver">4개</span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {PROJECTS.map((project) => (
+                <article
+                  key={project.name}
+                  className="group rounded-2xl border border-white/5 bg-spotify-dark-surface p-4 transition-colors duration-300 hover:border-white/10 hover:bg-spotify-mid-dark"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h5 className="text-[14px] font-bold leading-snug text-white">{project.name}</h5>
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1 border-l-2 bg-white/[0.035] px-1.5 py-1 font-mono text-[9px] font-medium text-spotify-silver"
+                      style={{ borderLeftColor: project.languageColor }}
+                    >
+                      <Code2 size={11} aria-hidden="true" style={{ color: project.languageColor }} />
+                      {project.language}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 text-[11px] font-medium text-spotify-silver">
+                    <span className="inline-flex items-center gap-1.5 text-spotify-near-white">
+                      <Star size={13} className="text-spotify-warning" aria-hidden="true" />
+                      {project.stars}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1.5 border-t border-white/5 pt-3 text-[11px] font-medium text-spotify-silver/80">
+                    <Clock3 size={13} aria-hidden="true" />
+                    <span>최근 업데이트 {project.updatedAt}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* ── GitHub 기여도 캘린더 ── */}
-        <div className="pt-8 border-t border-white/5">
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-[13px] font-bold text-white uppercase tracking-spotify">
-              최근 1년 기여도
+        <section className="border-t border-white/10 pt-7 sm:pt-8" aria-labelledby="contribution-title">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-spotify-green">
+                <Activity size={16} aria-hidden="true" />
+                <h4 id="contribution-title" className="text-[13px] font-bold tracking-[0.06em] text-white">
+                  최근 1년의 기여 활동
+                </h4>
+              </div>
+              <p className="mt-1 text-[11px] font-medium text-spotify-silver">
+                코드와 프로젝트에 남긴 기록
+              </p>
             </div>
-            <div className="text-[11px] font-bold text-spotify-silver uppercase tracking-spotify-wide">
-              Total 1,428 Contributions
+            <div className="shrink-0 border-l-2 border-spotify-green pl-3 text-right">
+              <p className="text-[10px] font-medium tracking-[0.08em] text-spotify-silver">총 기여</p>
+              <p className="mt-0.5 text-lg font-black leading-none tracking-tight text-white">
+                1,428<span className="ml-1 text-[11px] font-bold text-spotify-silver">회</span>
+              </p>
             </div>
           </div>
-          <div ref={wrapperRef} className="w-full overflow-hidden p-6 rounded-2xl bg-spotify-dark-surface border border-white/5">
+          <div ref={wrapperRef} className="w-full overflow-hidden rounded-2xl border border-white/5 bg-spotify-dark-surface p-4 sm:p-5">
             {mounted && (
               <GitHubCalendar
                 key={calKey}
@@ -159,7 +193,7 @@ export default function MockPortfolio() {
               />
             )}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
