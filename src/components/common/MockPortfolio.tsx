@@ -93,7 +93,7 @@ export default function MockPortfolio() {
           ))}
         </div>
         <div className="flex-1 bg-spotify-near-black border border-white/5 rounded-full px-4 py-1.5 text-[12px] text-spotify-silver font-medium text-center">
-          portfolioforge.app/jaemin-dev
+          jaemin-dev.portfolioforge.app
         </div>
       </div>
 

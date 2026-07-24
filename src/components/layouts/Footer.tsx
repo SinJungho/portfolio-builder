@@ -22,8 +22,8 @@ export default function Footer() {
             </Link>
 
             <p className="text-[15px] leading-relaxed text-spotify-silver max-w-xs font-medium">
-              개발자의 GitHub를 아름다운 포트폴리오로 자동 변환하는 AI 빌더.
-              전문성을 시각화하고 커리어 성장을 가속화하세요.
+              GitHub 활동을 채용 담당자가 읽기 좋은 포트폴리오로 만들어요.
+              한 번 연결하면 커밋할 때마다 알아서 최신으로 유지돼요.
             </p>
           </div>
 

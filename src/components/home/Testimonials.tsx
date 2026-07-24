@@ -1,86 +1,52 @@
 import Reveal from "../common/Reveal";
 
+// 실제 사용자 후기 데이터가 아직 없어, 지어낸 인물·회사 인용 대신
+// 제품이 실제로 해결하는 지점을 솔직하게 보여준다. 실제 후기가 쌓이면 교체.
+const relieved = [
+  {
+    concern: "시간이 없어서",
+    text: "이력서 마감은 다가오는데 포트폴리오는 엄두가 안 날 때. GitHub만 연결하면 초안이 바로 만들어져요.",
+  },
+  {
+    concern: "뭘 보여줄지 몰라서",
+    text: "저장소는 많은데 뭘 앞에 둘지 모르겠을 때. 눈에 띄는 프로젝트를 골라 읽기 좋게 정리해줘요.",
+  },
+  {
+    concern: "디자인이 자신 없어서",
+    text: "디자인 감각이 없어도 괜찮아요. 템플릿을 고르면 그대로 완성된 결과가 나와요.",
+  },
+];
+
 export default function Testimonials() {
-  const reviews = [
-    {
-      name: "박지현",
-      role: "프론트엔드 개발자",
-      company: "카카오",
-      text: "포트폴리오 만드는 데 일주일 걸릴 것 같았는데 30분 만에 완성했어요. 취업 면접에서 포트폴리오 칭찬을 엄청 받았습니다.",
-      rating: 5,
-    },
-    {
-      name: "이도윤",
-      role: "풀스택 개발자",
-      company: "토스",
-      text: "GitHub 연동하니까 알아서 최고의 프로젝트를 골라줬어요. AI 추천이 생각보다 훨씬 정확해서 놀랐어요.",
-      rating: 5,
-    },
-    {
-      name: "김민서",
-      role: "백엔드 개발자",
-      company: "네이버",
-      text: "디자인에 자신 없었는데 템플릿만 골랐더니 결과물이 너무 예뻐서 제가 만든 게 맞나 싶었어요 ㅋㅋ",
-      rating: 5,
-    },
-  ];
-
   return (
-    <section className="bg-spotify-near-black py-32 px-6">
-      <div className="max-w-7xl mx-auto">
+    <section className="bg-spotify-near-black px-6 py-28 sm:py-32">
+      <div className="mx-auto max-w-7xl">
         <Reveal>
-          <div className="text-center mb-20">
-            <p className="text-[14px] font-bold text-spotify-green uppercase tracking-spotify-wide mb-4">
-              TESTIMONIALS
+          <div className="mb-14 max-w-2xl sm:mb-16">
+            <p className="mb-4 text-[14px] font-bold tracking-[0.02em] text-spotify-green">
+              이럴 때 좋아요
             </p>
-
-            <h2 className="text-[clamp(36px,5vw,56px)] font-black text-white tracking-tight leading-tight m-0">
-              이미 많은 개발자가
+            <h2 className="m-0 text-[clamp(36px,5vw,56px)] font-black leading-tight tracking-tight text-white">
+              포트폴리오,
               <br />
-              취업에 성공했어요
+              어디서부터 막막했나요
             </h2>
+            <p className="mt-5 text-[16px] font-medium leading-relaxed text-spotify-silver sm:text-[18px]">
+              다들 여기서 한 번씩 멈춰요. 그 지점을 PortfolioForge가 어떻게 푸는지 정리했어요.
+            </p>
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reviews.map((r, i) => (
-            <Reveal key={i} delay={i * 100}>
-              <div className="bg-spotify-dark-surface rounded-[32px] p-10 shadow-spotify-md border border-white/5 hover:bg-spotify-mid-dark transition-colors duration-300">
-                {/* rating */}
-                <div className="flex gap-1 mb-6">
-                  {Array.from({ length: r.rating }).map((_, j) => (
-                    <span key={j} className="text-[18px] text-spotify-green">
-                      ★
-                    </span>
-                  ))}
-                </div>
-
-                {/* review text */}
-                <p className="text-[17px] leading-relaxed text-white mb-8 font-medium italic opacity-90">
-                  &quot;{r.text}&quot;
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {relieved.map((item, i) => (
+            <Reveal key={item.concern} delay={i * 100}>
+              <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-spotify-dark-surface p-7 transition-colors duration-300 hover:border-white/20">
+                <p className="mb-4 text-[14px] font-bold text-spotify-green">
+                  {item.concern}
                 </p>
-
-                {/* user */}
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-black shadow-spotify-md"
-                    style={{
-                      background: `hsl(${i * 80 + 160}, 60%, 40%)`,
-                      color: "white",
-                    }}
-                  >
-                    {r.name[0]}
-                  </div>
-
-                  <div>
-                    <div className="text-[16px] font-black text-white tracking-tight">
-                      {r.name}
-                    </div>
-                    <div className="text-[13px] font-bold text-spotify-silver uppercase tracking-spotify mt-0.5">
-                      {r.role} @ {r.company}
-                    </div>
-                  </div>
-                </div>
+                <p className="text-[16px] font-medium leading-relaxed text-white/90 sm:text-[17px]">
+                  {item.text}
+                </p>
               </div>
             </Reveal>
           ))}

@@ -1,9 +1,10 @@
-import { Check, ExternalLink, Globe2, Rocket, Zap } from "lucide-react";
+import { Check, ExternalLink, Globe2, Lock, Link2, Rocket, Zap } from "lucide-react";
 
-const destinations = [
-  { name: "Vercel", mark: "▲" },
-  { name: "Netlify", mark: "◆" },
-  { name: "GitHub Pages", mark: "●" },
+// 제3자 호스팅(Vercel/Netlify)이 아니라, PortfolioForge가 직접 내 주소로 호스팅한다.
+const perks = [
+  { name: "HTTPS 자동", Icon: Lock },
+  { name: "커스텀 도메인", Icon: Globe2 },
+  { name: "링크로 공유", Icon: Link2 },
 ];
 
 export default function StepVisualDeploy() {
@@ -33,7 +34,7 @@ export default function StepVisualDeploy() {
               <Globe2 size={18} strokeWidth={2.4} aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-bold text-white">yourname.portfolioforge.dev</p>
+              <p className="truncate text-[13px] font-bold text-white">jaemin-dev.portfolioforge.app</p>
               <p className="mt-0.5 text-[10px] font-medium text-spotify-silver">나만의 주소로 공개되었습니다</p>
             </div>
             <ExternalLink size={15} className="shrink-0 text-spotify-green transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -48,10 +49,10 @@ export default function StepVisualDeploy() {
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            {destinations.map((destination) => (
-              <div key={destination.name} className="rounded-lg border border-white/8 bg-white/[0.035] px-2 py-2.5 text-center">
-                <span className="block text-[10px] font-black text-spotify-green">{destination.mark}</span>
-                <span className="mt-1 block truncate text-[9px] font-semibold text-spotify-near-white">{destination.name}</span>
+            {perks.map((perk) => (
+              <div key={perk.name} className="flex flex-col items-center gap-1.5 rounded-lg border border-white/8 bg-white/[0.035] px-2 py-2.5 text-center">
+                <perk.Icon size={13} className="text-spotify-green" aria-hidden="true" />
+                <span className="block truncate text-[9px] font-semibold text-spotify-near-white">{perk.name}</span>
               </div>
             ))}
           </div>

@@ -70,7 +70,7 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-spotify-near-black/70 backdrop-blur-md border-b border-white/5"
+          ? "bg-spotify-near-black/85 backdrop-blur-lg border-b border-white/10"
           : "bg-transparent border-b border-transparent",
       )}
     >
