@@ -132,8 +132,11 @@ export default function Features() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] transition-colors duration-300"
-                      style={{ color: selected ? f.color : "#8a8a8a" }}
+                      className="mb-2 inline-flex rounded-md px-2 py-1 text-[12px] font-semibold tracking-[-0.01em] transition-colors duration-300"
+                      style={{
+                        color: selected ? "#ffffff" : "#b3b3b3",
+                        background: selected ? `${f.color}26` : "rgba(255,255,255,0.05)",
+                      }}
                     >
                       {f.tag}
                     </span>
@@ -162,13 +165,6 @@ export default function Features() {
             aria-labelledby={`feature-tab-${active}`}
             className="relative flex min-h-75 flex-col justify-between overflow-hidden rounded-[28px] border border-white/10 bg-spotify-dark-surface p-8 sm:p-10 lg:col-start-2 lg:row-start-1"
           >
-            {/* Editorial accent hairline (replaces the blurred glow) */}
-            <span
-              aria-hidden="true"
-              className="absolute inset-x-0 top-0 h-px transition-[background] duration-500"
-              style={{ background: `linear-gradient(90deg, ${current.color}, transparent 55%)` }}
-            />
-
             {/* Keyed content — crossfades on tab change */}
             <div
               key={active}
@@ -186,8 +182,8 @@ export default function Features() {
                   <CurrentIcon size={26} aria-hidden="true" />
                 </span>
                 <span
-                  className="text-[12px] font-bold uppercase tracking-[0.14em]"
-                  style={{ color: current.color }}
+                  className="inline-flex rounded-md px-3 py-1.5 text-[14px] font-bold tracking-[-0.01em] text-white"
+                  style={{ background: `${current.color}26` }}
                 >
                   {current.tag}
                 </span>
