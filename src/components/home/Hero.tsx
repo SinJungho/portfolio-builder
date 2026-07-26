@@ -1,7 +1,6 @@
 "use client";
 
 import MockPortfolio from "@/components/common/MockPortfolio";
-import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import CTAButton from "../common/CTAButton";
 
@@ -32,9 +31,16 @@ export default function Hero() {
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
           `}
         >
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-spotify-green/20 bg-spotify-green/10 px-3.5 py-1.5 text-[12px] font-bold text-spotify-green tracking-[0.08em]">
-            <Sparkles size={14} aria-hidden="true" />
-            GITHUB TO PORTFOLIO
+          <div className="mb-8 inline-flex items-baseline gap-2 text-[15px] font-medium tracking-[-0.02em] text-spotify-silver">
+            <span aria-hidden="true" className="font-mono text-[13px] font-semibold text-spotify-green">
+              {"/*"}
+            </span>
+            <span>
+              GitHub의 <strong className="font-semibold text-spotify-near-white">작업 기록</strong>을 포트폴리오로
+            </span>
+            <span aria-hidden="true" className="font-mono text-[13px] font-semibold text-spotify-green">
+              {"*/"}
+            </span>
           </div>
         </div>
 
