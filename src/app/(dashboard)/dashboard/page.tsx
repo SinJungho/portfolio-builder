@@ -200,7 +200,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <div className="max-w-3xl space-y-4">
           <div className="space-y-2">
-            <p className="text-[12px] font-bold tracking-spotify text-spotify-green">지원서 링크 준비</p>
+            <p className="text-[12px] font-bold tracking-spotify text-spotify-silver">지원서 링크 준비</p>
             <h2 className="text-[32px] font-bold tracking-tight text-white">
               {hasPublishedPortfolio && !hasDraft ? "공개 링크가 준비됐어요" : "지원서에 넣을 링크를 만들어요"}
             </h2>
@@ -208,7 +208,7 @@ export default function DashboardPage() {
               {journeyMessage}
             </p>
           </div>
-          <ol aria-label="포트폴리오 준비 단계" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <ol aria-label="포트폴리오 준비 단계" className="flex items-stretch gap-2">
             {[
               "GitHub 확인",
               "AI 초안 만들기",
@@ -220,8 +220,11 @@ export default function DashboardPage() {
               const isComplete = journeyStep > stepNumber || (stepNumber === 4 && hasPublishedPortfolio && !hasDraft);
 
               return (
-                <li key={step} className={`rounded-xl px-3 py-2 text-[12px] font-bold ${isCurrent ? "bg-spotify-green text-black" : isComplete ? "bg-spotify-mid-dark text-white" : "bg-spotify-near-black text-spotify-silver"}`} aria-current={isCurrent ? "step" : undefined}>
-                  <span className="mr-1.5 opacity-70">{stepNumber}</span>{step}
+                <li key={step} className="flex-1 space-y-1.5" aria-current={isCurrent ? "step" : undefined}>
+                  <div className={`h-1 rounded-full ${isComplete ? "bg-spotify-green" : isCurrent ? "bg-white" : "bg-white/10"}`} />
+                  <span className={`block text-[11px] font-bold leading-tight ${isCurrent ? "text-white" : isComplete ? "text-spotify-silver" : "text-spotify-silver/50"}`}>
+                    <span className="mr-1 opacity-60">{stepNumber}</span>{step}
+                  </span>
                 </li>
               );
             })}
@@ -472,7 +475,7 @@ export default function DashboardPage() {
                               toast.error("링크를 복사하지 못했습니다. 다시 시도해 주세요.");
                             }
                           }}
-                          className="flex-[1.4] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-spotify-green hover:bg-[#1fdf64] transition-all rounded-full disabled:opacity-50"
+                          className="flex-[1.4] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-spotify-green hover:brightness-110 transition-all rounded-full disabled:opacity-50"
                           aria-label={`${p.title || p.slug} 지원서용 링크 복사`}
                         >
                           <Copy className="w-4 h-4" aria-hidden="true" />
