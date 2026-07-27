@@ -64,7 +64,7 @@ export default function ConfigureStep({
           portfolio_id: portfolioId,
           project_ids: selectedIds,
           ai_focus: aiFocus,
-          auto_publish: true,
+          auto_publish: false,
         }),
       });
       if (!res.ok) {

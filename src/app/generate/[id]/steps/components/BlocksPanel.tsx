@@ -48,8 +48,6 @@ interface BlocksPanelProps {
   handleDragEnd: (event: DragEndEvent) => void;
   toggleBlock: (id: string) => void;
   deleteBlock: (id: string) => void;
-  moveUp: (index: number) => void;
-  moveDown: (index: number) => void;
   openProjectEditor: (block: Block) => void;
   addBlock: (type: string) => void;
 }
@@ -61,8 +59,6 @@ export const BlocksPanel = React.memo(function BlocksPanel({
   handleDragEnd,
   toggleBlock,
   deleteBlock,
-  moveUp,
-  moveDown,
   openProjectEditor,
   addBlock,
 }: BlocksPanelProps): React.ReactElement {
@@ -88,12 +84,10 @@ export const BlocksPanel = React.memo(function BlocksPanel({
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-4">
-              {blocks.map((block: Block, index: number) => (
+              {blocks.map((block: Block) => (
                 <SortableBlockItem
                   key={block.id}
                   block={block}
-                  index={index}
-                  totalBlocks={blocks.length}
                   icon={
                     blockTypeIcons[block.block_type] || (
                       <Grid className="w-6 h-6" />
@@ -101,8 +95,6 @@ export const BlocksPanel = React.memo(function BlocksPanel({
                   }
                   onToggle={toggleBlock}
                   onDelete={deleteBlock}
-                  onMoveUp={moveUp}
-                  onMoveDown={moveDown}
                   onOpenProjectEditor={openProjectEditor}
                 />
               ))}

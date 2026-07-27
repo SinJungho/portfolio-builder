@@ -1,10 +1,30 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
+import { Github, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 export function GitHubIntegrationCard() {
+  const [isSyncing, setIsSyncing] = React.useState(false);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch("/api/integrations/github/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: true }),
+      });
+      if (!response.ok) throw new Error();
+      toast.success("GitHub 동기화를 시작했어요. 잠시 후 대시보드에서 확인해 보세요.");
+    } catch {
+      toast.error("동기화를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
-    <article className="p-8 bg-spotify-dark-surface rounded-[32px] border border-white/5 flex flex-col sm:flex-row items-start justify-between gap-6 hover:bg-spotify-mid-dark transition-all group">
+    <article className="p-7 bg-spotify-dark-surface rounded-2xl flex flex-col sm:flex-row items-start justify-between gap-6 hover:bg-spotify-mid-dark transition-colors group">
       <div className="flex items-start gap-6">
         <div className="w-14 h-14 shrink-0 bg-spotify-green/10 rounded-2xl flex items-center justify-center border border-spotify-green/20 group-hover:border-spotify-green/30 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(30,215,96,0.05)]">
           <Github className="w-7 h-7 text-spotify-green" strokeWidth={1.5} />
@@ -34,10 +54,12 @@ export function GitHubIntegrationCard() {
       <div className="w-full sm:w-auto">
         <Button
           variant="outline"
-          disabled
-          className="w-full sm:w-40 btn-pill-secondary h-11 text-spotify-silver/40 border-white/5 bg-transparent cursor-not-allowed"
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="w-full sm:w-auto btn-pill-secondary h-11 px-5 text-white border-white/10 bg-transparent hover:bg-white/5"
         >
-          로그인 필수 연동
+          <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+          {isSyncing ? "동기화 시작 중" : "지금 동기화"}
         </Button>
       </div>
     </article>

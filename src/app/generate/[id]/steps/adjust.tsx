@@ -79,34 +79,6 @@ export default function AdjustStep({
     setInit(true);
   }
 
-  const moveUp = useCallback(
-    (index: number) => {
-      if (index === 0) return;
-      const newBlocks = [...blocks];
-      [newBlocks[index - 1], newBlocks[index]] = [
-        newBlocks[index],
-        newBlocks[index - 1],
-      ];
-      newBlocks.forEach((b, i) => (b.position = i));
-      reorderBlocks(newBlocks);
-    },
-    [blocks, reorderBlocks],
-  );
-
-  const moveDown = useCallback(
-    (index: number) => {
-      if (index === blocks.length - 1) return;
-      const newBlocks = [...blocks];
-      [newBlocks[index + 1], newBlocks[index]] = [
-        newBlocks[index],
-        newBlocks[index + 1],
-      ];
-      newBlocks.forEach((b, i) => (b.position = i));
-      reorderBlocks(newBlocks);
-    },
-    [blocks, reorderBlocks],
-  );
-
   // 일반 클릭 이벤트와의 오동작을 방지하기 위해, 5px 이상 드래그가 감지되었을 때만 dnd 동작을 시작합니다.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -224,8 +196,6 @@ export default function AdjustStep({
       handleDragEnd={handleDragEnd}
       toggleBlock={toggleBlock}
       deleteBlock={deleteBlock}
-      moveUp={moveUp}
-      moveDown={moveDown}
       openProjectEditor={openProjectEditor}
       addBlock={addBlock}
     />

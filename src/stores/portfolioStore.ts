@@ -49,7 +49,8 @@ export type PortfolioStore = {
     blockId: string,
     config: Record<string, unknown>,
   ) => Promise<void>;
-  addBlock: (block_type: string) => Promise<void>;
+  addBlock: (block_type: string) => Promise<Block | undefined>;
+  setPublished: (isPublished: boolean) => Promise<void>;
   setCustomDomain: (domain: string | null) => Promise<void>;
 };
 
@@ -233,10 +234,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch {
+      } catch (error) {
         set((state) => {
           state.blocks = previousBlocks;
         });
+        throw error;
       } finally {
         set((state) => {
           state.isSaving = false;
@@ -334,8 +336,39 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set((state) => {
           state.blocks.push(newBlock);
         });
+        return newBlock as Block;
       } catch (e) {
         console.error("Failed to add block", e);
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
+    },
+    setPublished: async (isPublished: boolean) => {
+      const { portfolioId, isPublished: previousPublished } = get();
+      if (!portfolioId) return;
+
+      set((state) => {
+        state.isPublished = isPublished;
+        state.isSaving = true;
+      });
+
+      try {
+        const res = await fetch(`/api/portfolios/${portfolioId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_published: isPublished }),
+        });
+        if (!res.ok) {
+          const { error } = await res.json();
+          throw new Error(error || "공개 상태를 변경하지 못했습니다.");
+        }
+      } catch (error) {
+        set((state) => {
+          state.isPublished = previousPublished;
+        });
+        throw error;
       } finally {
         set((state) => {
           state.isSaving = false;

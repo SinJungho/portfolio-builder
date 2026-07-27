@@ -1,13 +1,13 @@
 "use client";
 
-import { Bell, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
+import { BarChart3, Bell, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useSession, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,18 +24,23 @@ const LogoMark = () => (
   </div>
 );
 
-export function DashboardHeader() {
+export function DashboardHeader({ user }: { user?: { name?: string | null; email?: string | null; image?: string | null } }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
   
   const isGenerateFlow = pathname.startsWith("/generate");
+  const pageTitle = pathname.startsWith("/analytics")
+    ? "분석"
+    : pathname.startsWith("/settings")
+      ? "설정"
+      : "내 포트폴리오";
   const step = searchParams.get("step");
   const isAdjustStep = isGenerateFlow && step === "adjust";
   const portfolioId = pathname.split("/")[2];
-  const user = session?.user;
+
+  if (pathname.startsWith("/editor/")) return null;
 
   const handleCopy = () => {
     const pubUrl = `${window.location.origin}/${portfolioId}`;
@@ -68,7 +73,7 @@ export function DashboardHeader() {
           {!isGenerateFlow && <div className="h-4 w-px bg-white/10 mx-4 hidden lg:block" />}
 
           <h1 className={cn("hidden lg:block text-[15px] font-bold text-spotify-silver", !isGenerateFlow && "lg:block")}>
-            {isGenerateFlow ? (isAdjustStep ? "디자인 및 상세 조정" : "포트폴리오 생성") : "내 포트폴리오"}
+            {isGenerateFlow ? (isAdjustStep ? "디자인 및 상세 조정" : "포트폴리오 생성") : pageTitle}
           </h1>
         </div>
 
@@ -102,7 +107,7 @@ export function DashboardHeader() {
               </Button>
             </div>
           ) : !isGenerateFlow && (
-            <Link href="/generate/new">
+            <Link href="/dashboard#new-portfolio">
               <Button size="sm" className="btn-pill-primary h-10 px-6 font-bold gap-2">
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">새 포트폴리오</span>
@@ -139,6 +144,12 @@ export function DashboardHeader() {
                   <Link href="/dashboard" className="flex items-center w-full">
                     <LayoutDashboard className="mr-3 h-4.5 w-4.5 opacity-70" />
                     <span className="font-bold">대시보드</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-xl py-2.5 cursor-pointer focus:bg-white/5 focus:text-white text-spotify-silver">
+                  <Link href="/analytics" className="flex items-center w-full">
+                    <BarChart3 className="mr-3 h-4.5 w-4.5 opacity-70" />
+                    <span className="font-bold">분석</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-xl py-2.5 cursor-pointer focus:bg-white/5 focus:text-white text-spotify-silver">

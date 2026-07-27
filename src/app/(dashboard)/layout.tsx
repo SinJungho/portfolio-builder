@@ -22,9 +22,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-spotify-near-black">
-      <Sidebar />
+      <Sidebar user={session.user} />
       <div className="flex flex-col flex-1 md:pl-64">
-        <DashboardHeader />
+        <DashboardHeader user={session.user} />
         <main className="flex-1 pb-24 md:pb-0">{children}</main>
       </div>
     </div>

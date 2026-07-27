@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     const portfolio_id = json.portfolio_id as string;
-    const auto_publish = (json.auto_publish as boolean) ?? true;
+    const auto_publish = (json.auto_publish as boolean) ?? false;
     const project_ids = json.project_ids as string[] | undefined;
     const ai_focus = json.ai_focus as string | undefined;
 

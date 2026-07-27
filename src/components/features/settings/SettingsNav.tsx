@@ -10,10 +10,10 @@ export function SettingsNav({
   onSectionChange,
 }: SettingsNavProps) {
   const sections = [
-    { id: "profile" as const, label: "Profile" },
-    { id: "account" as const, label: "Account" },
-    { id: "integrations" as const, label: "Integrations" },
-    { id: "danger" as const, label: "Danger Zone" },
+    { id: "profile" as const, label: "프로필" },
+    { id: "account" as const, label: "계정" },
+    { id: "integrations" as const, label: "연동" },
+    { id: "danger" as const, label: "위험 영역" },
   ];
 
   return (
@@ -23,7 +23,7 @@ export function SettingsNav({
           <li key={section.id}>
             <button
               onClick={() => onSectionChange(section.id)}
-              className={`w-full text-left px-5 py-3 rounded-full text-[14px] font-bold uppercase tracking-spotify transition-all ${
+              className={`w-full text-left px-5 py-3 rounded-full text-[14px] font-bold transition-all ${
                 activeSection === section.id
                   ? "bg-spotify-green text-black"
                   : section.id === "danger"
