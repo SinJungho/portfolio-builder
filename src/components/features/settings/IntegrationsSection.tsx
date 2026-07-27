@@ -29,7 +29,7 @@ export function IntegrationsSection() {
       <div>
         <h2
           id="integrations-title"
-          className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify"
+          className="text-xl font-bold text-white mb-8 tracking-tight uppercase tracking-spotify"
         >
           연동된 서비스
         </h2>
