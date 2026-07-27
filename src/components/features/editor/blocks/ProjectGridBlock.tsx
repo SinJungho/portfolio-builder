@@ -33,7 +33,7 @@ export default function ProjectGridBlock({
     <section className="w-full py-16 px-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-2 mb-10">
         <div className="h-10 w-1 bg-primary rounded-full" />
-        <h2 className="text-3xl font-bold tracking-tight">Featured Projects</h2>
+        <h2 className="text-3xl font-bold tracking-tight">대표 프로젝트</h2>
       </div>
 
       <div

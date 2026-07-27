@@ -31,7 +31,7 @@ export function BlogIntegrationCard({
       <article
         aria-busy="true"
         aria-label="블로그 피드 연동 정보 로딩 중"
-        className="p-8 bg-spotify-dark-surface rounded-[32px] border border-white/5 flex flex-col items-stretch gap-6 animate-pulse"
+        className="p-7 bg-spotify-dark-surface rounded-2xl border border-white/5 flex flex-col items-stretch gap-6 animate-pulse"
       >
         <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
           <div className="flex items-start gap-6">
@@ -59,7 +59,7 @@ export function BlogIntegrationCard({
   const theme = getProviderStyles(blogIntegration?.provider);
 
   return (
-    <article className="p-8 bg-spotify-dark-surface rounded-[32px] border border-white/5 flex flex-col items-stretch gap-6 hover:bg-spotify-mid-dark transition-all group">
+    <article className="p-7 bg-spotify-dark-surface rounded-2xl border border-white/5 flex flex-col items-stretch gap-6 hover:bg-spotify-mid-dark transition-colors group">
       <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
         <div className="flex items-start gap-6">
           <div

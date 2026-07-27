@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { THEMES } from "@/preview/themes";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import { Sparkles } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+
+const isHexColor = (value: string) => /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value);
 
 export default function ColorCustomizer() {
   const { theme, designTokens, setDesignTokens } = usePortfolioStore();
@@ -17,6 +19,14 @@ export default function ColorCustomizer() {
   const currentTheme = THEMES[theme] || THEMES.minimal;
   const primaryColor =
     (designTokens?.primaryColor as string) || currentTheme?.accent || "#1ed760";
+  const [inputValue, setInputValue] = useState(primaryColor);
+  const [error, setError] = useState("");
+
+  const commitColor = (value: string) => {
+    if (!isHexColor(value)) return setError("#RGB 또는 #RRGGBB 형식의 색상을 입력하세요.");
+    setError("");
+    updateToken("primaryColor", value);
+  };
 
   return (
     <section className="space-y-6" aria-labelledby="color-customizer-heading">
@@ -44,19 +54,19 @@ export default function ColorCustomizer() {
               htmlFor="primaryColor"
               className="text-[12px] font-bold text-spotify-silver tracking-spotify"
             >
-              강조 색상 (Accent)
+              강조 색상
             </Label>
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
                 <Input
                   id="primaryColor"
                   type="text"
-                  value={primaryColor}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    updateToken("primaryColor", event.target.value)
-                  }
+                  value={inputValue}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value)}
+                  onBlur={() => commitColor(inputValue)}
+                  onKeyDown={(event) => event.key === "Enter" && commitColor(inputValue)}
                   className="h-12 border-none bg-spotify-near-black rounded-full font-mono text-[14px] font-bold text-white pl-12 pr-4 focus-visible:ring-1 focus-visible:ring-spotify-green shadow-inner"
-                  aria-label="포인트 컬러 HEX 코드 입력"
+                  aria-describedby={error ? "primary-color-error" : undefined}
                 />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
                   <div className="relative">
@@ -66,7 +76,7 @@ export default function ColorCustomizer() {
                       className="w-7 h-7 rounded-full border-none p-0 cursor-pointer overflow-hidden opacity-0 absolute inset-0 z-10"
                       value={primaryColor}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updateToken("primaryColor", event.target.value)
+                        commitColor(event.target.value)
                       }
                     />
                     <div
@@ -80,6 +90,7 @@ export default function ColorCustomizer() {
                 </div>
               </div>
             </div>
+            {error && <p id="primary-color-error" role="alert" className="text-[12px] font-medium text-spotify-negative">{error}</p>}
           </div>
         </div>
 

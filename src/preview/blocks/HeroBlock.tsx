@@ -34,9 +34,9 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
   const { ref: avatarRevealRef, style: avatarRevealStyle } = useScrollReveal("scaleIn");
 
   const stats = [
-    { icon: Code2, label: "Repositories", value: config.github_repos_count ?? "–" },
-    { icon: Star, label: "Total Stars", value: config.github_stars_count ?? "–" },
-    { icon: GitFork, label: "Contributions", value: config.github_contributions ?? "–" },
+    { icon: Code2, label: "리포지토리", value: config.github_repos_count ?? "–" },
+    { icon: Star, label: "받은 스타", value: config.github_stars_count ?? "–" },
+    { icon: GitFork, label: "기여 횟수", value: config.github_contributions ?? "–" },
   ];
 
   return (
@@ -73,7 +73,7 @@ export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
                   style={{ backgroundColor: t.accent, opacity: 0.4 }}
                 />
               </span>
-              Available for hire
+              새로운 기회를 찾고 있어요
             </div>
           </div>
 

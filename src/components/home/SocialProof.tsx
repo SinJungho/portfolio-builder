@@ -1,38 +1,55 @@
+import { FileDown, Globe, ShieldCheck, Sparkles } from "lucide-react";
 import Reveal from "../common/Reveal";
 
 export default function SocialProof() {
-  const stats = [
-    { value: "12,400+", label: "생성된 포트폴리오" },
-    { value: "94%", label: "취업 성공률" },
-    { value: "3분", label: "평균 생성 시간" },
-    { value: "4.9/5", label: "사용자 만족도" },
+  // Features가 자동 동기화·큐레이션·코드 없는 편집을 이미 다루므로,
+  // 여기서는 그와 겹치지 않는 '이의 해소'(개인정보·소유·이식성·비용)만 보장한다.
+  const guarantees = [
+    {
+      icon: ShieldCheck,
+      claim: "공개 데이터만",
+      support: "저장소를 읽기만 해요. 코드는 건드리지 않아요",
+    },
+    {
+      icon: Globe,
+      claim: "내 주소로 공개",
+      support: "완성하면 링크 하나로 바로 공유할 수 있어요",
+    },
+    {
+      icon: FileDown,
+      claim: "PDF로도 내보내기",
+      support: "링크 대신 PDF로 저장해 지원서에 바로 첨부해요",
+    },
+    {
+      icon: Sparkles,
+      claim: "무료로 시작",
+      support: "신용카드 없이 지금 바로 만들어 볼 수 있어요",
+    },
   ];
 
   return (
-    <section className="border-y border-white/5 bg-spotify-near-black px-6 py-16 sm:py-24">
-      <div className="mx-auto grid grid-cols-2 lg:flex max-w-7xl justify-center gap-x-12 gap-y-10 md:gap-24 lg:gap-32">
-        {stats.map((s, i) => (
-          <Reveal key={i} delay={i * 80}>
-            <div className="text-center group">
-              <div
-                className="
-                  mb-2
-                  text-[32px] sm:text-[42px]
-                  font-black
-                  tracking-tight
-                  text-white
-                  group-hover:text-spotify-green transition-colors duration-500
-                "
-              >
-                {s.value}
+    <section className="border-y border-white/5 bg-spotify-near-black px-6 py-16 sm:py-20">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+        {guarantees.map((g, i) => {
+          const Icon = g.icon;
+          return (
+            <Reveal key={g.claim} delay={i * 80}>
+              <div className="flex items-start gap-3.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-spotify-green/10 text-spotify-green">
+                  <Icon size={18} strokeWidth={2.2} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[16px] font-bold leading-tight text-white sm:text-[17px]">
+                    {g.claim}
+                  </p>
+                  <p className="mt-1.5 text-[13px] font-medium leading-snug text-spotify-silver sm:text-[14px]">
+                    {g.support}
+                  </p>
+                </div>
               </div>
-
-              <div className="text-[14px] font-bold text-spotify-silver uppercase tracking-spotify">
-                {s.label}
-              </div>
-            </div>
-          </Reveal>
-        ))}
+            </Reveal>
+          );
+        })}
       </div>
     </section>
   );

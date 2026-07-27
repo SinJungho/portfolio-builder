@@ -13,33 +13,53 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { getPortfolioReadiness } from "@/lib/portfolio-readiness";
+import {
+  getPortfolioState,
+  portfolioStateLabel,
+} from "@/lib/portfolio-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import {
   AlertTriangle,
   Clock,
+  Copy,
   Edit2,
-  ExternalLink,
   Github,
   Loader2,
   Plus,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+type DashboardPortfolio = {
+  id: string;
+  title: string | null;
+  slug: string | null;
+  theme: string;
+  is_published: boolean;
+  created_at: string | Date;
+  _count: { blocks: number };
+  blocks: { block_type: string; is_visible: boolean; config: Record<string, unknown> }[];
+};
 
 export default function DashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [syncJobId, setSyncJobId] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["dashboardData"],
     queryFn: async () => {
       const res = await fetch("/api/portfolios");
       if (!res.ok) throw new Error("Failed to fetch dashboard data");
-      return res.json();
+      return { ...(await res.json()), fetchedAt: Date.now() };
     },
   });
 
@@ -77,6 +97,39 @@ export default function DashboardPage() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/integrations/github/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ force: true }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "동기화를 시작하지 못했습니다.");
+      return data as { job_id: string };
+    },
+    onSuccess: ({ job_id }) => { setSyncError(null); setSyncJobId(job_id); toast.success("GitHub 동기화를 시작했습니다."); },
+    onError: (error: Error) => { setSyncError(error.message); toast.error(error.message); },
+  });
+
+  const { data: syncJob, isError: isSyncJobError } = useQuery<{ status: string; error?: string }>({
+    queryKey: ["github-sync", syncJobId],
+    queryFn: async () => {
+      const res = await fetch(`/api/integrations/github/sync/${syncJobId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "동기화 상태를 확인하지 못했습니다.");
+      return data;
+    },
+    enabled: Boolean(syncJobId),
+    refetchInterval: (query) => ["completed", "failed"].includes(query.state.data?.status || "") ? false : 2500,
+  });
+
+  useEffect(() => {
+    if (!syncJob || !syncJobId) return;
+    if (syncJob.status === "completed") {
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      toast.success("GitHub 동기화가 완료되었습니다.");
+    } else if (syncJob.status === "failed") {
+      toast.error(syncJob.error || "GitHub 동기화에 실패했습니다.");
+    }
+  }, [queryClient, syncJob, syncJobId]);
+
   if (isLoading) {
     return (
       <div
@@ -98,110 +151,173 @@ export default function DashboardPage() {
   if (isError || !data) {
     return (
       <div className="max-w-6xl mx-auto py-12 px-6">
-        <Alert
-          variant="destructive"
-          className="bg-spotify-negative/10 border-spotify-negative/20 text-spotify-negative rounded-2xl"
-        >
-          <AlertTriangle aria-hidden="true" className="h-4 w-4" />
-          <AlertDescription className="font-bold">
-            데이터를 불러올 수 없습니다.{" "}
-            {(error as Error)?.message || "잠시 후 다시 시도해주세요."}
-          </AlertDescription>
+        <Alert variant="destructive" className="flex items-center justify-between gap-4 bg-spotify-negative/10 border-spotify-negative/20 text-spotify-negative rounded-2xl">
+          <div className="flex items-center gap-3">
+            <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+            <AlertDescription className="font-bold">포트폴리오를 불러오지 못했습니다. 다시 시도해 주세요.</AlertDescription>
+          </div>
+          <Button variant="outline" onClick={() => refetch()} className="shrink-0 border-spotify-negative/30 bg-transparent text-spotify-negative hover:bg-spotify-negative/10 hover:text-spotify-negative">
+            다시 시도
+          </Button>
         </Alert>
       </div>
     );
   }
 
-  const { portfolios, github_synced_at } = data;
+  const { portfolios, github_connected, github_synced_at } = data;
+  const syncFailure = syncJob?.status === "failed"
+    ? syncJob.error || "GitHub 동기화에 실패했습니다."
+    : syncError;
+  const githubSyncDate = github_synced_at ? new Date(github_synced_at) : null;
+  const hasGithubSync = Boolean(githubSyncDate && !Number.isNaN(githubSyncDate.getTime()));
+  const hasDraft = portfolios.some((portfolio: { is_published: boolean }) => !portfolio.is_published);
+  const hasReadyDraft = portfolios.some((portfolio: { is_published: boolean; blocks: { block_type: string; is_visible: boolean; config: Record<string, unknown> }[] }) =>
+    !portfolio.is_published && getPortfolioReadiness(portfolio.blocks).every((item) => item.complete),
+  );
+  const hasPublishedPortfolio = portfolios.some((portfolio: { is_published: boolean }) => portfolio.is_published);
+  const mostAdvancedDraft = (portfolios as DashboardPortfolio[])
+    .filter((portfolio) => !portfolio.is_published)
+    .map((portfolio) => ({
+      portfolio,
+      readiness: getPortfolioReadiness(portfolio.blocks),
+    }))
+    .sort((a, b) => b.readiness.filter((item) => item.complete).length - a.readiness.filter((item) => item.complete).length)[0];
+  const nextDraftItem = mostAdvancedDraft?.readiness.find((item) => !item.complete);
+  const journeyStep = !github_connected ? 1 : portfolios.length === 0 ? 2 : hasReadyDraft ? 3 : hasPublishedPortfolio ? 4 : 3;
+  const journeyMessage = !github_connected
+    ? "GitHub 연동을 확인하면 프로젝트를 포트폴리오 초안으로 만들 수 있어요."
+    : portfolios.length === 0
+      ? "GitHub 프로젝트를 불러와 초안을 만들면 약 1분 뒤에 검토를 시작할 수 있어요."
+      : hasReadyDraft
+        ? "필수 정보를 모두 채웠어요. 공개 전 검토를 마치고 링크를 공유해 보세요."
+        : hasPublishedPortfolio && !hasDraft
+          ? "공개 링크가 준비됐어요. 지원서에 복사해 바로 공유할 수 있어요."
+          : "가장 진행된 초안을 먼저 마무리하면 지원서용 링크를 만들 수 있어요.";
+  const isSyncStale = !githubSyncDate || !hasGithubSync || data.fetchedAt - githubSyncDate.getTime() > 24 * 60 * 60 * 1000;
 
   return (
-    <div className="max-w-7xl mx-auto py-10 md:py-16 px-6 flex flex-col gap-12 animate-in fade-in duration-700">
-      <div className="flex flex-col gap-3">
-        <h2 className="text-[32px] font-bold tracking-tight text-white">
-          환영합니다! 👋
-        </h2>
-        <p className="text-spotify-silver text-[16px] font-semibold">
-          나만의 멋진 포트폴리오를 관리하고 성장을 기록하세요.
-        </p>
-      </div>
+    <div className="max-w-7xl mx-auto py-8 sm:py-10 md:py-16 px-4 sm:px-6 flex flex-col gap-14 md:gap-16 animate-in fade-in duration-700">
+      <div className="flex flex-col gap-6">
+        <div className="max-w-3xl space-y-4">
+          <div className="space-y-2">
+            <p className="text-[12px] font-bold tracking-spotify text-spotify-green">지원서 링크 준비</p>
+            <h2 className="text-[32px] font-bold tracking-tight text-white">
+              {hasPublishedPortfolio && !hasDraft ? "공개 링크가 준비됐어요" : "지원서에 넣을 링크를 만들어요"}
+            </h2>
+            <p className="text-spotify-silver text-[16px] font-semibold">
+              {journeyMessage}
+            </p>
+          </div>
+          <ol aria-label="포트폴리오 준비 단계" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              "GitHub 확인",
+              "AI 초안 만들기",
+              "공개 전 검토",
+              "링크 공유",
+            ].map((step, index) => {
+              const stepNumber = index + 1;
+              const isCurrent = journeyStep === stepNumber;
+              const isComplete = journeyStep > stepNumber || (stepNumber === 4 && hasPublishedPortfolio && !hasDraft);
 
-      {/* GitHub 동기화 상태 바 영역 */}
-      <section
-        aria-label="GitHub 연동 상태 알림"
-        className="flex flex-wrap items-center gap-3"
-      >
-        {!github_synced_at ? (
+              return (
+                <li key={step} className={`rounded-xl px-3 py-2 text-[12px] font-bold ${isCurrent ? "bg-spotify-green text-black" : isComplete ? "bg-spotify-mid-dark text-white" : "bg-spotify-near-black text-spotify-silver"}`} aria-current={isCurrent ? "step" : undefined}>
+                  <span className="mr-1.5 opacity-70">{stepNumber}</span>{step}
+                </li>
+              );
+            })}
+          </ol>
+          {mostAdvancedDraft && (
+            <div className="flex flex-col gap-3 rounded-2xl bg-spotify-dark-surface p-4 shadow-spotify-md sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[12px] font-bold text-spotify-green">다음 한 가지</p>
+                <p className="mt-1 text-[15px] font-bold text-white">{mostAdvancedDraft.portfolio.title || mostAdvancedDraft.portfolio.slug} {nextDraftItem ? `· ${nextDraftItem.label}` : "· 공개 전 검토"}</p>
+              </div>
+              <Link href={`/editor/${mostAdvancedDraft.portfolio.id}${nextDraftItem ? `?focus=${nextDraftItem.destination}` : ""}`} className="w-full sm:w-auto">
+                <Button className="btn-pill-primary h-10 w-full px-5 text-[12px] sm:w-auto">
+                  {nextDraftItem ? nextDraftItem.action : "공개 전 검토하기"}
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* GitHub 동기화 상태 바 영역 */}
+        <section
+          aria-label="GitHub 연동 상태 알림"
+          className="flex flex-wrap items-center gap-3"
+        >
+        {!github_connected ? (
           <div
             role="region"
             aria-label="GitHub 연동 상태 경고"
-            className="w-full p-6 bg-spotify-warning/10 border border-spotify-warning/20 rounded-2xl text-spotify-warning flex flex-col sm:flex-row items-center justify-between gap-4 shadow-spotify-md"
+            className="w-full p-4 sm:p-6 bg-spotify-warning/10 border border-spotify-warning/20 rounded-2xl text-spotify-warning flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div
                 className="p-2.5 bg-spotify-warning/20 rounded-full"
                 aria-hidden="true"
               >
                 <AlertTriangle className="w-6 h-6 shrink-0" />
               </div>
-              <span className="font-bold text-[16px]">
-                GitHub 연동이 완료되지 않았습니다.
+              <span className="min-w-0 font-bold text-[16px]">
+                GitHub 연동을 확인하면 포트폴리오를 만들 수 있어요.
               </span>
             </div>
-            <Link href="/generate/new">
-              <Button className="btn-pill-primary h-12 px-8">
-                지금 연동하기
+            <Link href="/settings?section=integrations" className="w-full sm:w-auto">
+              <Button className="btn-pill-primary h-12 w-full px-6 sm:w-auto sm:px-8">
+                GitHub 연동 확인하기
               </Button>
             </Link>
           </div>
-        ) : !data.user?.github_bio_verified ? (
+        ) : syncFailure ? (
           <div
-            role="region"
-            aria-label="GitHub Bio 등록 안내"
-            className="w-full p-6 bg-spotify-announcement/10 border border-spotify-announcement/20 rounded-2xl text-spotify-announcement flex flex-col sm:flex-row items-center justify-between gap-4 shadow-spotify-md"
+            role="alert"
+            aria-live="assertive"
+            className="w-full p-4 sm:p-5 bg-spotify-negative/10 border border-spotify-negative/30 rounded-2xl text-spotify-negative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
           >
-            <div className="flex items-center gap-3">
-              <div
-                className="p-2.5 bg-spotify-announcement/20 rounded-full"
-                aria-hidden="true"
-              >
-                <AlertTriangle className="w-6 h-6 shrink-0" />
-              </div>
-              <span className="font-bold text-[16px]">
-                GitHub bio를 등록하면 AI가 더 멋진 소개글을 만들어드려요!
-              </span>
+            <div className="min-w-0">
+              <p className="font-bold">GitHub 동기화에 실패했습니다.</p>
+              <p className="mt-1 text-sm text-spotify-silver break-words">원인: {syncFailure}</p>
             </div>
-            <a
-              href="https://github.com/settings/profile"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="GitHub 프로필 설정 페이지로 이동 (새 창)"
-            >
-              <Button className="btn-pill px-8 h-12 bg-spotify-announcement text-white hover:brightness-110">
-                GitHub 설정 가기
+            <div className="flex w-full sm:w-auto flex-wrap gap-2">
+              <Button type="button" variant="outline" disabled={syncMutation.isPending} onClick={() => { setSyncJobId(null); syncMutation.mutate(); }} className="border-spotify-negative/30 bg-transparent text-spotify-negative hover:bg-spotify-negative/10 hover:text-spotify-negative">
+                {syncMutation.isPending ? "재시도 중…" : "다시 시도"}
               </Button>
-            </a>
+              <Link href="/settings?section=integrations">
+                <Button type="button" variant="ghost" className="text-white hover:bg-white/10 hover:text-white">연동 설정</Button>
+              </Link>
+            </div>
           </div>
         ) : (
           <div
             role="status"
             aria-live="polite"
-            className="flex items-center gap-3 text-[13px] font-bold text-spotify-silver bg-spotify-mid-dark px-5 py-2.5 rounded-full border border-white/5 shadow-spotify-md"
+            className={`flex flex-wrap items-center gap-3 text-[13px] font-bold px-5 py-2.5 rounded-full border shadow-spotify-md ${
+              isSyncStale
+                ? "border-spotify-warning/30 bg-spotify-warning/10 text-spotify-warning"
+                : "border-white/5 bg-spotify-mid-dark text-spotify-silver"
+            }`}
           >
             <div
-              className="h-2 w-2 rounded-full bg-spotify-green animate-pulse shadow-[0_0_8px_rgba(30,215,96,0.5)]"
+              className={`h-2 w-2 rounded-full ${
+                isSyncStale ? "bg-spotify-warning" : "bg-spotify-green animate-pulse shadow-[0_0_8px_rgba(30,215,96,0.5)]"
+              }`}
               aria-hidden="true"
             />
             <Github className="w-4 h-4" aria-hidden="true" />
             <span>
-              마지막 동기화:{" "}
-              {formatDistanceToNow(new Date(github_synced_at), {
-                addSuffix: true,
-                locale: ko,
-              })}
+              {hasGithubSync && githubSyncDate
+                ? `${isSyncStale ? "동기화 필요 ·" : "마지막 동기화:"} ${formatDistanceToNow(githubSyncDate, {
+                    addSuffix: true,
+                    locale: ko,
+                  })}`
+                : "아직 GitHub 데이터를 불러오지 않았어요."}
             </span>
+            {isSyncStale && <Button type="button" variant="ghost" size="sm" disabled={syncMutation.isPending || (Boolean(syncJobId) && !isSyncJobError && !["completed", "failed"].includes(syncJob?.status || ""))} onClick={() => { if (isSyncJobError) setSyncJobId(null); syncMutation.mutate(); }} className="h-7 rounded-full px-2 text-[12px] font-bold text-spotify-warning hover:bg-spotify-warning/10 hover:text-white"><RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending || (syncJobId && !isSyncJobError && !["completed", "failed"].includes(syncJob?.status || "")) ? "animate-spin" : ""}`} />{isSyncJobError ? "동기화 다시 시도" : syncMutation.isPending || (syncJobId && !["completed", "failed"].includes(syncJob?.status || "")) ? "GitHub 동기화 중" : "지금 동기화"}</Button>}
           </div>
         )}
-      </section>
+        </section>
+      </div>
 
       {/* 포트폴리오 목록 섹션 */}
       <section aria-labelledby="portfolio-section-title" className="space-y-8">
@@ -215,7 +331,7 @@ export default function DashboardPage() {
         </div>
 
         {portfolios.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-16 md:p-32 bg-spotify-dark-surface border border-white/5 rounded-[40px] gap-8 text-center shadow-spotify">
+          <div id="new-portfolio" className="flex flex-col items-center justify-center p-16 md:p-24 bg-spotify-dark-surface rounded-2xl gap-8 text-center shadow-spotify">
             <div
               className="p-8 bg-spotify-mid-dark rounded-full text-spotify-green shadow-spotify-md"
               aria-hidden="true"
@@ -227,18 +343,19 @@ export default function DashboardPage() {
                 아직 포트폴리오가 없어요
               </h3>
               <p className="text-spotify-silver text-[16px] font-medium max-w-sm leading-relaxed">
-                GitHub 연동 한 번으로 AI가 당신만의 전문적인 포트폴리오를 구성해
-                드립니다. 1분이면 충분해요!
+                {github_connected
+                  ? "GitHub 프로젝트를 불러와 지원서에 쓸 포트폴리오 초안을 만들어요. 약 1분 걸립니다."
+                  : "먼저 GitHub 연동을 확인해 주세요. 연동 후 프로젝트를 불러와 포트폴리오를 만들 수 있어요."}
               </p>
             </div>
             <Button
               size="lg"
               className="btn-pill-primary h-14 px-12 text-[17px]"
-              disabled={createMutation.isPending}
-              onClick={() => createMutation.mutate()}
-              aria-label="첫 포트폴리오 생성하기"
+              disabled={!github_connected || createMutation.isPending}
+              onClick={() => github_connected && createMutation.mutate()}
+              aria-label={github_connected ? "GitHub에서 프로젝트 불러와 포트폴리오 만들기" : "GitHub 연동 후 포트폴리오 만들기 가능"}
             >
-              지금 시작하기
+              {createMutation.isPending ? "프로젝트 불러오는 중…" : github_connected ? "GitHub에서 프로젝트 불러와 포트폴리오 만들기" : "GitHub 연동 후 만들 수 있어요"}
             </Button>
           </div>
         ) : (
@@ -246,29 +363,12 @@ export default function DashboardPage() {
             aria-label="내 포트폴리오 카드 목록"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-0 m-0"
           >
-            {/* 새 포트폴리오 만들기 카드 */}
-            <li className="list-none">
-              <button
-                type="button"
-                disabled={createMutation.isPending}
-                onClick={() => createMutation.mutate()}
-                className="group w-full relative flex flex-col items-center justify-center border border-white/10 rounded-xl p-8 min-h-[300px] bg-spotify-dark-surface hover:bg-spotify-mid-dark hover:border-white/20 transition-all duration-300 shadow-spotify-md"
-                aria-label="새 포트폴리오 만들기"
-              >
-                <div
-                  className="p-5 bg-spotify-near-black text-white rounded-full mb-6 transition-all group-hover:scale-110 group-hover:bg-spotify-green group-hover:text-black duration-500 shadow-spotify-md"
-                  aria-hidden="true"
-                >
-                  <Plus className="w-10 h-10" />
-                </div>
-                <span className="text-[18px] font-bold text-white tracking-tight">
-                  새 포트폴리오 만들기
-                </span>
-              </button>
-            </li>
-
             {/* 기존 포트폴리오 카드 리스트 */}
-            {portfolios.map(
+            {[...portfolios].sort((a, b) => {
+              const progress = (portfolio: typeof a) => getPortfolioReadiness(portfolio.blocks).filter((item) => item.complete).length;
+              if (a.is_published !== b.is_published) return Number(a.is_published) - Number(b.is_published);
+              return progress(b) - progress(a);
+            }).map(
               (p: {
                 id: string;
                 title: string | null;
@@ -276,56 +376,68 @@ export default function DashboardPage() {
                 theme: string;
                 is_published: boolean;
                 created_at: string | Date;
-              }) => (
-                <li
+                _count: { blocks: number };
+                blocks: { block_type: string; is_visible: boolean; config: Record<string, unknown> }[];
+              }) => {
+                const state = getPortfolioState(
+                  p.is_published,
+                  p._count.blocks,
+                );
+                const readiness = getPortfolioReadiness(p.blocks);
+                const completeCount = readiness.filter((item) => item.complete).length;
+                const nextItem = readiness.find((item) => !item.complete);
+                const stateLabel = state === "preview" && nextItem ? "작성 중" : portfolioStateLabel[state];
+                const publicUrl = p.slug ? `${window.location.origin}/${p.slug}` : null;
+
+                return (
+                  <li
                   key={p.id}
-                  className="group relative flex flex-col bg-spotify-dark-surface rounded-xl overflow-hidden shadow-spotify-md hover:bg-spotify-mid-dark transition-all duration-500 min-h-[300px] border border-white/5 hover:border-white/10 list-none"
+                  className="group relative flex flex-col bg-spotify-dark-surface rounded-2xl overflow-hidden shadow-spotify-md hover:bg-spotify-mid-dark transition-colors duration-300 min-h-[300px] list-none"
                 >
-                  <div className="p-8 flex-1 flex flex-col items-start gap-5">
+                  <div className="p-7 flex-1 flex flex-col items-start gap-5">
                     <div className="flex w-full items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-[22px] text-white truncate mb-2 group-hover:text-spotify-green transition-colors">
                           {p.title || p.slug}
                         </h3>
                         <div className="flex items-center gap-2.5">
-                          <span className="text-[12px] font-bold text-spotify-silver uppercase tracking-spotify">
-                            <span className="sr-only">테마: </span>
-                            {p.theme}
+                          <span className="text-[12px] font-bold text-spotify-silver">
+                            {stateLabel}
                           </span>
                           <div
                             className="h-1 w-1 rounded-full bg-white/20"
                             aria-hidden="true"
                           />
                           <span className="text-[12px] font-medium text-spotify-silver truncate tracking-tight">
-                            <span className="sr-only">주소: </span>
-                            {p.slug}.portfolioforge.app
+                            <span className="sr-only">공개 URL: </span>
+                            {state === "published" && publicUrl ? publicUrl : `${p.slug}.portfolioforge.app`}
                           </span>
                         </div>
                       </div>
-                      {p.is_published ? (
+                      {state === "published" ? (
                         <div
                           role="status"
-                          aria-label="배포 상태: 라이브"
-                          className="shrink-0 px-3 py-1 text-[10px] font-bold bg-spotify-green text-black rounded-full flex items-center gap-1.5 shadow-[0_0_12px_rgba(30,215,96,0.2)]"
+                          aria-label="배포 상태: 공개됨"
+                          className="shrink-0 px-3 py-1 text-[11px] font-bold bg-spotify-green text-black rounded-full flex items-center gap-1.5"
                         >
                           <div
                             className="h-1.5 w-1.5 rounded-full bg-black animate-pulse"
                             aria-hidden="true"
                           />
-                          LIVE
+                          공개됨
                         </div>
                       ) : (
                         <div
                           role="status"
-                          aria-label="배포 상태: 초안"
-                          className="shrink-0 px-3 py-1 text-[10px] font-bold bg-white/10 text-spotify-silver rounded-full"
+                          aria-label={`배포 상태: ${stateLabel}`}
+                          className="shrink-0 px-3 py-1 text-[11px] font-bold bg-white/10 text-spotify-silver rounded-full"
                         >
-                          DRAFT
+                          {stateLabel}
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-auto flex w-full items-center justify-between">
+                    <div className="mt-auto flex w-full flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-4">
                       <div className="flex items-center gap-2 text-[12px] font-bold text-spotify-silver">
                         <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                         <span className="sr-only">생성 일자: </span>
@@ -336,7 +448,11 @@ export default function DashboardPage() {
                           })}
                         </span>
                       </div>
+                      <span className="text-[12px] font-medium text-spotify-silver">
+                        구성한 섹션 {p._count.blocks}개
+                      </span>
                     </div>
+                    {state !== "published" && <div className="w-full space-y-2"><div className="flex items-center justify-between text-[12px] font-bold"><span className="text-white">공개 준비 {completeCount}/{readiness.length} 완료</span><span className="text-spotify-silver">{nextItem ? `다음: ${nextItem.action}` : "다음: 공개 전 검토하기"}</span></div><div role="progressbar" aria-label={`${p.title || p.slug} 공개 준비도`} aria-valuemin={0} aria-valuemax={readiness.length} aria-valuenow={completeCount} className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-spotify-green" style={{ width: `${(completeCount / readiness.length) * 100}%` }} /></div></div>}
                   </div>
 
                   <div className="p-4 pt-0">
@@ -344,27 +460,33 @@ export default function DashboardPage() {
                       aria-label={`${p.title || p.slug} 포트폴리오 제어 도구`}
                       className="flex h-14 bg-spotify-near-black rounded-full border border-white/5 overflow-hidden p-1 shadow-spotify-md"
                     >
-                      <a
-                        href={p.slug ? `/${p.slug}` : "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 text-[13px] font-bold text-spotify-silver hover:text-white transition-all rounded-full"
-                        aria-label={`${p.title || p.slug} 포트폴리오 새 창에서 보기`}
-                      >
-                        <ExternalLink
-                          className="w-4 h-4 opacity-70"
-                          aria-hidden="true"
-                        />
-                        보기
-                      </a>
+                      {state === "published" && (
+                        <button
+                          type="button"
+                          disabled={!publicUrl}
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(publicUrl || "");
+                              toast.success("지원서용 링크를 복사했습니다.");
+                            } catch {
+                              toast.error("링크를 복사하지 못했습니다. 다시 시도해 주세요.");
+                            }
+                          }}
+                          className="flex-[1.4] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-spotify-green hover:bg-[#1fdf64] transition-all rounded-full disabled:opacity-50"
+                          aria-label={`${p.title || p.slug} 지원서용 링크 복사`}
+                        >
+                          <Copy className="w-4 h-4" aria-hidden="true" />
+                          지원서용 링크 복사
+                        </button>
+                      )}
                       <Link
-                        href={`/editor/${p.id}`}
+                        href={`/editor/${p.id}${nextItem ? `?focus=${nextItem.destination}` : ""}`}
                         prefetch={false}
-                        className="flex-[1.5] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-white hover:bg-spotify-near-white transition-all rounded-full shadow-spotify-md"
-                        aria-label={`${p.title || p.slug} 포트폴리오 편집하기`}
+                        className={`flex-1 flex items-center justify-center gap-2 text-[13px] font-bold ${state === "published" ? "text-spotify-silver hover:text-white" : "text-black bg-white hover:bg-spotify-near-white shadow-spotify-md"} transition-all rounded-full`}
+                        aria-label={`${p.title || p.slug} ${state === "published" ? "다듬기" : nextItem ? nextItem.action : "공개 전 검토하기"}`}
                       >
                         <Edit2 className="w-4 h-4" aria-hidden="true" />
-                        편집하기
+                        {state === "published" ? "다듬기" : nextItem ? nextItem.action : "공개 전 검토하기"}
                       </Link>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -407,8 +529,27 @@ export default function DashboardPage() {
                     </nav>
                   </div>
                 </li>
-              ),
+                );
+              },
             )}
+            <li className="order-last md:order-first list-none">
+              <button
+                type="button"
+                id="new-portfolio"
+                disabled={!github_connected || createMutation.isPending}
+                onClick={() => github_connected && createMutation.mutate()}
+                className="group w-full relative flex min-h-32 items-center justify-center gap-4 rounded-xl border border-white/10 bg-spotify-dark-surface px-5 py-4 shadow-spotify-md transition-all duration-300 hover:border-white/20 hover:bg-spotify-mid-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green disabled:opacity-50 md:min-h-[300px] md:flex-col md:p-8"
+                aria-label={github_connected ? "GitHub에서 프로젝트 불러와 포트폴리오 만들기" : "GitHub 연동 후 포트폴리오 만들기 가능"}
+                aria-busy={createMutation.isPending}
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-spotify-near-black text-white transition-all group-hover:bg-spotify-green group-hover:text-black md:mb-6 md:h-20 md:w-20" aria-hidden="true">
+                  <Plus className="h-6 w-6 md:h-10 md:w-10" aria-hidden="true" />
+                </span>
+                <span className="text-left text-[16px] font-bold tracking-tight text-white md:text-center md:text-[18px]">
+                  {createMutation.isPending ? "프로젝트 불러오는 중…" : github_connected ? "GitHub에서 프로젝트 불러와 포트폴리오 만들기" : "GitHub 연동 후 만들 수 있어요"}
+                </span>
+              </button>
+            </li>
           </ul>
         )}
       </section>

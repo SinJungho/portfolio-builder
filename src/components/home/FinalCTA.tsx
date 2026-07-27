@@ -25,8 +25,8 @@ export default function FinalCTA() {
 
           {/* description */}
           <p className="text-[18px] sm:text-[22px] text-spotify-silver font-medium leading-relaxed mb-14 max-w-2xl mx-auto">
-            수백 명의 개발자가 PortfolioForge와 함께 <br className="hidden sm:block" />
-            성공적인 커리어 여정을 시작했습니다.
+            GitHub에 쌓인 작업을, <br className="hidden sm:block" />
+            오늘 저녁 채용 담당자에게 보낼 링크로 만들어 보세요.
           </p>
 
           {/* CTA button */}
@@ -36,8 +36,8 @@ export default function FinalCTA() {
             </CTAButton>
 
             {/* sub text */}
-            <div className="text-[14px] font-bold text-spotify-silver/60 uppercase tracking-spotify">
-              신용카드 불필요 · 1분 완성 · 평생 무료
+            <div className="text-[14px] font-bold text-spotify-silver uppercase tracking-spotify">
+              신용카드 불필요 · 무료로 시작
             </div>
           </div>
         </div>

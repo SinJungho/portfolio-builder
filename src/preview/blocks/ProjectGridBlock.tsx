@@ -54,24 +54,13 @@ function parseSummary(summary: string | null) {
 }
 
 export default function ProjectGridBlock({ config, theme: t, portfolioId, blockId }: ProjectGridBlockProps) {
-  const { project_ids, show_tech_stack, projectsData = [] } = config;
+  const { show_tech_stack, projectsData = [] } = config;
 
-  const displayProjects =
-    projectsData.length > 0
-      ? projectsData
-      : project_ids.map((id, index) => ({
-          id,
-          name: `Project ${index + 1}`,
-          description: "A sample project description.",
-          ai_summary: "AI-generated summary of the project with key highlights.",
-          ai_tags: ["React", "TypeScript", "Next.js"],
-          html_url: "#",
-          language: "TypeScript",
-          stargazers_count: 0,
-          pushed_at: null,
-        }));
+  const displayProjects = projectsData;
 
   const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
+
+  if (displayProjects.length === 0) return null;
 
   return (
     <section className="space-y-12">
@@ -82,13 +71,13 @@ export default function ProjectGridBlock({ config, theme: t, portfolioId, blockI
             className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
             style={{ color: t.text }}
           >
-            Featured Projects
+            대표 프로젝트
           </h2>
           <span
             className="text-[14px] font-semibold mb-1"
             style={{ color: t.textMuted }}
           >
-            {displayProjects.length} projects
+            {displayProjects.length}개 프로젝트
           </span>
         </div>
         <div
@@ -280,7 +269,7 @@ function FeaturedCard({
                 style={{ borderColor: t.cardBorder, color: t.text, backgroundColor: t.cardBg }}
               >
                 <ArrowUpRight className="w-4 h-4" />
-                Live Demo
+                데모 보기
               </Link>
             )}
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import MockPortfolio from "@/components/common/MockPortfolio";
-import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import CTAButton from "../common/CTAButton";
 
@@ -28,12 +27,20 @@ export default function Hero() {
           <div
           className={`
             transition-all duration-700 ease-out
+            motion-reduce:transition-none motion-reduce:!translate-y-0 motion-reduce:!opacity-100
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
           `}
         >
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-spotify-green/20 bg-spotify-green/10 px-3.5 py-1.5 text-[12px] font-bold text-spotify-green tracking-[0.08em]">
-            <Sparkles size={14} aria-hidden="true" />
-            GITHUB TO PORTFOLIO
+          <div className="mb-8 inline-flex items-baseline gap-2 text-[15px] font-medium tracking-[-0.02em] text-spotify-silver">
+            <span aria-hidden="true" className="font-mono text-[13px] font-semibold text-spotify-green">
+              {"/*"}
+            </span>
+            <span>
+              GitHub의 <strong className="font-semibold text-spotify-near-white">작업 기록</strong>을 포트폴리오로
+            </span>
+            <span aria-hidden="true" className="font-mono text-[13px] font-semibold text-spotify-green">
+              {"*/"}
+            </span>
           </div>
         </div>
 
@@ -44,6 +51,7 @@ export default function Hero() {
             tracking-tight text-white
             text-[clamp(46px,4.5vw,76px)] lg:whitespace-nowrap
             transition-all duration-1000 delay-100
+            motion-reduce:transition-none motion-reduce:!translate-y-0 motion-reduce:!opacity-100
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
@@ -56,6 +64,7 @@ export default function Hero() {
           className={`
             mx-auto mb-9 max-w-xl text-[17px] font-medium leading-relaxed text-spotify-silver sm:text-[19px] lg:mx-0
             transition-all duration-1000 delay-200
+            motion-reduce:transition-none motion-reduce:!translate-y-0 motion-reduce:!opacity-100
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
@@ -67,6 +76,7 @@ export default function Hero() {
           className={`
             flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center lg:justify-start
             transition-all duration-1000 delay-300
+            motion-reduce:transition-none motion-reduce:!translate-y-0 motion-reduce:!opacity-100
             ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
@@ -83,6 +93,7 @@ export default function Hero() {
           className={`
             mt-6 text-[13px] font-medium text-spotify-silver/70
             transition-opacity duration-1000 delay-500
+            motion-reduce:transition-none motion-reduce:!opacity-100
             ${mounted ? "opacity-100" : "opacity-0"}
           `}
         >
@@ -95,11 +106,17 @@ export default function Hero() {
           className={`
             relative min-w-0 scroll-mt-24
             transition-all duration-1000 delay-400
+            motion-reduce:transition-none motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100
             ${mounted ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-12"}
           `}
         >
           <div className="mb-5 flex flex-col items-start gap-2 rounded-2xl border border-white/10 bg-spotify-dark-surface px-4 py-3 text-[12px] font-bold tracking-[0.06em] text-spotify-near-white sm:flex-row sm:items-center sm:justify-between sm:text-[13px]">
-            <span>포트폴리오 결과 미리보기</span>
+            <span className="flex items-center gap-2">
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] text-spotify-silver">
+                예시
+              </span>
+              포트폴리오 결과 미리보기
+            </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-spotify-green/20 bg-spotify-green/10 px-2.5 py-1 text-[11px] tracking-[0.08em] text-spotify-green sm:text-[12px]">
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-spotify-green shadow-[0_0_8px_rgba(30,215,96,0.75)]" />
               배포 완료

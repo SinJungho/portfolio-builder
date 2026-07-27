@@ -81,7 +81,7 @@ export class PortfolioService {
         slug: finalSlug,
         theme: data.theme || 'minimalist',
         generation_mode: 'auto',
-        auto_published: true, // MVP core principle: auto-publish by default
+        auto_published: false,
       },
     });
   }

@@ -3,8 +3,8 @@
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
+  BarChart3,
   ChevronRight,
-  FolderOpen,
   Home,
   LogOut,
   Menu,
@@ -12,7 +12,7 @@ import {
   Sparkles,
   User,
 } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -21,7 +21,7 @@ import { LanguageSwitcher } from "../common/LanguageSwitcher";
 
 const navItems = [
   { icon: Home, label: "대시보드", href: "/dashboard" },
-  { icon: FolderOpen, label: "프로젝트", href: "/projects" },
+  { icon: BarChart3, label: "분석", href: "/analytics" },
   { icon: Settings, label: "설정", href: "/settings" },
 ];
 
@@ -31,16 +31,15 @@ const LogoMark = () => (
   </div>
 );
 
-export function Sidebar() {
+export function Sidebar({ user }: { user?: { name?: string | null; email?: string | null; image?: string | null } }) {
   const pathname = usePathname();
+  const isEditor = pathname.startsWith("/editor/");
   const [isOpen, setIsOpen] = useState(false);
-  const { data: session } = useSession();
-  const user = session?.user;
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-spotify-near-black flex-col z-50">
+      <aside className={cn("fixed left-0 top-0 h-screen w-64 bg-spotify-near-black flex-col z-50", isEditor ? "hidden" : "hidden md:flex")}>
         {/* Logo */}
         <div className="h-20 flex items-center px-8">
           <Link href="/" className="flex items-center gap-3 group no-underline">
@@ -56,13 +55,13 @@ export function Sidebar() {
           <ul className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <li key={item.label}>
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-4 px-4 py-3 rounded-md transition-all duration-300 group no-underline",
+                      "flex items-center gap-4 px-4 py-3 rounded-md transition-all duration-300 group no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green",
                       isActive
                         ? "text-white"
                         : "text-spotify-silver hover:text-white",
@@ -114,6 +113,7 @@ export function Sidebar() {
             <button 
               onClick={() => signOut()}
               className="p-1.5 text-spotify-silver hover:text-white transition-colors"
+              aria-label="로그아웃"
             >
               <LogOut size={16} />
             </button>
@@ -122,16 +122,16 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 px-6 flex items-center justify-between z-50 safe-area-inset-bottom">
+      <div className={cn("md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 px-3 sm:px-6 items-center justify-between z-50 safe-area-inset-bottom", isEditor ? "hidden" : "flex")}>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.label}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 min-w-[64px] transition-all no-underline",
+              "flex flex-1 flex-col items-center gap-1 transition-all no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green",
                 isActive ? "text-white" : "text-spotify-silver",
               )}
             >
@@ -156,7 +156,7 @@ export function Sidebar() {
         {/* Mobile More / Sheet */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center gap-1 min-w-[64px] text-spotify-silver outline-none">
+            <button className="flex flex-1 flex-col items-center gap-1 text-spotify-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
               <Menu className="w-[22px] h-[22px] stroke-[2px]" />
               <span className="text-[10px] font-bold opacity-60">더보기</span>
             </button>
@@ -201,7 +201,7 @@ export function Sidebar() {
                     size={20}
                     className="text-spotify-silver group-hover:text-white"
                   />
-                  <span>사용 설정</span>
+                  <span>설정</span>
                 </div>
                 <ChevronRight size={18} className="text-white/20" />
               </Link>

@@ -20,6 +20,15 @@ const SKILL_CATEGORIES: Record<string, string[]> = {
   Mobile: ["React Native", "Flutter", "Swift", "Kotlin", "iOS", "Android", "Dart"],
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  Frontend: "프론트엔드",
+  Backend: "백엔드",
+  Database: "데이터베이스",
+  DevOps: "개발 환경",
+  Mobile: "모바일",
+  Other: "기타",
+};
+
 function categorize(skillName: string): string {
   for (const [cat, keywords] of Object.entries(SKILL_CATEGORIES)) {
     if (keywords.some((kw) => skillName.toLowerCase().includes(kw.toLowerCase()))) {
@@ -71,16 +80,7 @@ function AnimatedBar({ level, fill, track, delay }: { level: number; fill: strin
 export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
   const { skills } = config;
 
-  const displaySkills =
-    skills.length > 0
-      ? skills
-      : [
-          { name: "TypeScript", level: 90 },
-          { name: "React", level: 85 },
-          { name: "Next.js", level: 80 },
-          { name: "Node.js", level: 75 },
-          { name: "PostgreSQL", level: 60 },
-        ];
+  const displaySkills = skills;
 
   const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
 
@@ -95,6 +95,8 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
   const categories = Object.entries(grouped);
   const categoryReveals = useStaggerReveal<HTMLDivElement>(categories.length, "fadeUp");
 
+  if (categories.length === 0) return null;
+
   return (
     <section className="space-y-12">
       {/* Section Header */}
@@ -103,7 +105,7 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
           className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
           style={{ color: t.text }}
         >
-          Skills & Expertise
+          기술 스택
         </h2>
         <div
           className="h-[3px] w-12 rounded-full"
@@ -121,7 +123,7 @@ export default function SkillsBlock({ config, theme: t }: SkillsBlockProps) {
                 className="text-[15px] font-bold uppercase tracking-[2px]"
                 style={{ color: t.accent }}
               >
-                {category}
+                {CATEGORY_LABELS[category] || category}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {catSkills

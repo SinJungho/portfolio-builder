@@ -13,8 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  ArrowDown,
-  ArrowUp,
   GripVertical,
   Settings,
   Trash2,
@@ -37,13 +35,9 @@ interface SortableBlockItemProps<T = unknown> {
     is_ai_generated?: boolean;
     config?: Record<string, unknown>;
   };
-  index: number;
-  totalBlocks: number;
   icon: React.ReactNode;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
   onOpenProjectEditor: (block: T) => void;
 }
 
@@ -51,13 +45,9 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
   T = unknown,
 >({
   block,
-  index,
-  totalBlocks,
   icon,
   onToggle,
   onDelete,
-  onMoveUp,
-  onMoveDown,
   onOpenProjectEditor,
 }: SortableBlockItemProps<T>) {
   const {
@@ -87,13 +77,16 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
       `}
     >
       <div className="flex items-center gap-4 w-full min-w-0">
-        <div
+        <button
+          type="button"
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1 text-spotify-silver hover:text-white hover:bg-white/5 rounded transition-colors"
+          aria-label="블록 순서 변경"
+          title="스페이스바와 방향키 또는 드래그로 순서 변경"
         >
           <GripVertical className="w-5 h-5" />
-        </div>
+        </button>
 
         <div
           className={`p-3 rounded-2xl transition-colors shrink-0 ${!block.is_visible ? "bg-spotify-near-black text-spotify-silver/50" : "bg-spotify-green/10 text-spotify-green"}`}
@@ -124,32 +117,15 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-white/5 mt-auto ml-10">
+      <div className="flex items-center justify-between gap-3 pt-5 border-t border-white/5 mt-auto ml-10">
         <div className="flex items-center gap-3">
-          <div className="flex rounded-xl overflow-hidden border border-white/5">
-            <button
-              onClick={() => onMoveUp(index)}
-              disabled={index === 0}
-              className="p-2.5 bg-spotify-near-black hover:bg-white/5 text-spotify-silver hover:text-white disabled:opacity-20 transition-colors cursor-pointer"
-              title="위로 이동"
-            >
-              <ArrowUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onMoveDown(index)}
-              disabled={index === totalBlocks - 1}
-              className="p-2.5 bg-spotify-near-black hover:bg-white/5 text-spotify-silver hover:text-white border-l border-white/5 disabled:opacity-20 transition-colors cursor-pointer"
-              title="아래로 이동"
-            >
-              <ArrowDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="h-10 w-px bg-white/5 mx-1" />
-          <div className="flex items-center px-1">
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-[12px] font-bold text-spotify-silver">표시</span>
             <Switch
               checked={block.is_visible}
               onCheckedChange={() => onToggle(block.id)}
               className="data-[state=checked]:bg-spotify-green scale-100 cursor-pointer"
+              aria-label={`${blockTypeLabels[block.block_type] || block.block_type} 블록 표시`}
             />
           </div>
         </div>

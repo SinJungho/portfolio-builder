@@ -1,14 +1,10 @@
 "use client";
 
-import { LinkedInIcon, XIcon } from "@/components/icons";
 import type { GenerateJobResponse } from "@/types/generate";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowRight,
-  Check,
-  Copy,
-  ExternalLink,
   Loader2,
   RotateCcw,
   Settings2,
@@ -16,7 +12,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
+
+export function clampProgress(progress: number | undefined) {
+  return Math.min(100, Math.max(0, typeof progress === "number" && Number.isFinite(progress) ? progress : 0));
+}
 
 export default function GenerateStep({
   portfolioId,
@@ -27,7 +26,6 @@ export default function GenerateStep({
 }) {
   const router = useRouter();
   const timeoutsCount = useRef(0);
-  const [copied, setCopied] = useState(false);
   const [isTimedOut, setIsTimedOut] = useState(false);
 
   const { data, error, refetch } = useQuery<GenerateJobResponse>({
@@ -73,8 +71,9 @@ export default function GenerateStep({
 
   const renderContent = () => {
     if (
-      !isActuallyFinished &&
-      (error || data?.status === "failed" || isTimedOut)
+      !generateJobId ||
+      (!isActuallyFinished &&
+        (error || data?.status === "failed" || isTimedOut))
     ) {
       return (
         <div
@@ -89,16 +88,25 @@ export default function GenerateStep({
             <AlertCircle className="w-10 h-10 text-spotify-negative" />
           </div>
           <h2 className="text-[24px] font-extrabold tracking-[-1px] text-white mb-2">
-            포트폴리오 생성에 실패했습니다
+            {generateJobId
+              ? "포트폴리오 생성에 실패했습니다"
+              : "생성 작업을 이어갈 수 없어요"}
           </h2>
           <p className="text-[15px] text-spotify-silver leading-[1.7] mb-8 font-normal">
-            {data?.error ||
+            {!generateJobId
+              ? "생성 작업 정보를 찾을 수 없습니다. 프로젝트를 다시 선택해 생성해 주세요."
+              : data?.error ||
               (isTimedOut
                 ? "생성 작업이 다소 지연되고 있습니다. 잠시 후 다시 한 번 시도해 주세요."
                 : "일시적인 시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")}
           </p>
           <button
+            type="button"
             onClick={() => {
+              if (!generateJobId) {
+                router.push(`/generate/${portfolioId}?step=configure`);
+                return;
+              }
               timeoutsCount.current = 0;
               setIsTimedOut(false);
               refetch();
@@ -110,26 +118,20 @@ export default function GenerateStep({
               text-[15px] font-bold text-white uppercase tracking-spotify
               transition-all duration-200
               hover:border-white hover:scale-105 active:scale-95
+              focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green
+              motion-reduce:transform-none
               cursor-pointer
             "
           >
             <RotateCcw className="w-4 h-4" />
-            다시 시도하기
+            {generateJobId ? "다시 시도하기" : "프로젝트 다시 선택하기"}
           </button>
         </div>
       );
     }
 
     if (isActuallyFinished) {
-      const pubUrl =
-        data?.published_url || dbCheck?.published_url || `/${portfolioId}`;
-      const fullUrl = pubUrl.startsWith("http")
-        ? pubUrl
-        : `${typeof window !== "undefined" ? window.location.origin : ""}${pubUrl.startsWith("/") ? pubUrl : `/${pubUrl}`}`;
       const missingFields = data?.missing_optional_fields || [];
-      const shareText = encodeURIComponent(
-        `GitHub으로 포트폴리오를 5분 만에 만들었어요! 👉 ${fullUrl}`,
-      );
 
       return (
         <div className="flex flex-col items-center gap-8 w-full max-w-[520px] text-white">
@@ -145,7 +147,7 @@ export default function GenerateStep({
             <div
               className="h-2.5"
               style={{
-                background: "linear-gradient(90deg, #1ed760, #1db954, #8b5cf6)",
+                background: "linear-gradient(90deg, #1ed760, #1db954)",
               }}
             />
 
@@ -163,80 +165,21 @@ export default function GenerateStep({
 
               <div className="space-y-3">
                 <h2 className="text-[26px] sm:text-[32px] font-extrabold tracking-[-1px] sm:tracking-[-1.5px] text-white leading-[1.2]">
-                  포트폴리오가
-                  <br />
-                  멋지게 완성되었습니다! 🎉
+                  초안이 준비되었습니다! 🎉
                 </h2>
                 <p className="text-sm sm:text-[16px] text-spotify-silver font-medium">
-                  아래 주소에서 지금 바로 결과물을 확인해 보세요.
+                  에디터에서 미리보기를 확인한 뒤 공개하세요.
                 </p>
               </div>
 
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(fullUrl);
-                  setCopied(true);
-                  toast.success("배포 URL이 복사되었습니다!");
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className="
-                  group relative flex w-full items-center justify-between gap-4
-                  rounded-[24px] border border-white/5 bg-spotify-mid-dark
-                  px-5 sm:px-6 py-4 sm:py-5 text-left
-                  transition-all duration-300
-                  hover:bg-spotify-mid-dark/80 hover:border-spotify-green/20
-                  hover:-translate-y-0.5
-                "
+                type="button"
+                onClick={() => router.push(`/editor/${portfolioId}`)}
+                className="flex h-14 sm:h-[60px] w-full items-center justify-center gap-2 rounded-full bg-spotify-green text-sm sm:text-[16px] font-bold text-black shadow-[0_8px_24px_rgba(30,215,96,0.25)] transition-all hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green motion-reduce:transform-none"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] sm:text-[12px] font-bold text-spotify-silver uppercase tracking-wider mb-0.5">
-                    포트폴리오 링크 주소
-                  </p>
-                  <span className="font-mono text-sm sm:text-[15px] font-medium text-white select-all truncate block">
-                    {fullUrl}
-                  </span>
-                </div>
-                <div className="shrink-0 bg-spotify-dark-surface p-2 sm:p-2.5 rounded-xl border border-white/5 shadow-sm">
-                  {copied ? (
-                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-spotify-green stroke-[3px]" />
-                  ) : (
-                    <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-spotify-silver group-hover:text-spotify-green transition-colors" />
-                  )}
-                </div>
+                <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                미리보기 및 공개하기
               </button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-4 pt-2">
-                <a
-                  href={fullUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="
-                    flex h-14 sm:h-[60px] items-center justify-center gap-2
-                    rounded-full text-sm sm:text-[16px] font-bold text-black
-                    bg-spotify-green hover:scale-105 active:scale-95 transition-all
-                    shadow-[0_8px_24px_rgba(30,215,96,0.25)]
-                  "
-                >
-                  <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5px]" />
-                  내 포트폴리오 보러 가기
-                </a>
-                <button
-                  onClick={() =>
-                    router.push(`/generate/${portfolioId}?step=adjust`)
-                  }
-                  className="
-                    flex h-14 sm:h-[60px] items-center justify-center gap-2
-                    rounded-full border border-spotify-silver/40 bg-transparent
-                    text-sm sm:text-[16px] font-bold text-white
-                    hover:scale-105 active:scale-95 transition-all
-                    hover:border-white
-                    cursor-pointer
-                  "
-                >
-                  <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                  블록 직접 수정하기
-                </button>
-              </div>
             </div>
           </div>
 
@@ -270,10 +213,11 @@ export default function GenerateStep({
                   추가하면 방문자(인사담당자)에게 한층 더 신뢰를 줄 수 있어요.
                 </p>
                 <button
+                  type="button"
                   onClick={() =>
                     router.push(`/generate/${portfolioId}?step=adjust`)
                   }
-                  className="mt-2 font-bold flex items-center gap-1 transition-all hover:gap-2 text-spotify-green cursor-pointer"
+                  className="mt-2 flex items-center gap-1 font-bold text-spotify-green transition-all hover:gap-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green cursor-pointer"
                 >
                   지금 바로 보완하기 <ArrowRight className="w-4 h-4" />
                 </button>
@@ -281,46 +225,11 @@ export default function GenerateStep({
             </div>
           )}
 
-          <div className="flex items-center gap-4 pt-2">
-            <span className="text-[14px] font-bold text-spotify-silver">
-              멋진 성과를 동료들에게 공유해 보세요
-            </span>
-            <div className="flex items-center gap-3">
-              <a
-                href={`https://twitter.com/intent/tweet?text=${shareText}`}
-                target="_blank"
-                rel="noreferrer"
-                className="
-                  flex h-12 w-12 items-center justify-center
-                  rounded-full bg-spotify-mid-dark border border-white/5 text-white
-                  transition-all duration-300
-                  hover:-translate-y-1 hover:text-spotify-green hover:shadow-spotify
-                  active:scale-90
-                "
-              >
-                <XIcon className="w-5 h-5" />
-              </a>
-              <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(fullUrl)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="
-                  flex h-12 w-12 items-center justify-center
-                  rounded-full bg-spotify-mid-dark border border-white/5 text-white
-                  transition-all duration-300
-                  hover:-translate-y-1 hover:text-spotify-green hover:shadow-spotify
-                  active:scale-90
-                "
-              >
-                <LinkedInIcon className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
         </div>
       );
     }
 
-    const progress = data?.progress || 0;
+    const progress = clampProgress(data?.progress);
     const statusLabel =
       progress >= 80
         ? "마지막 단장 중이에요. 거의 다 되었어요!"
@@ -337,7 +246,7 @@ export default function GenerateStep({
           shadow-spotify
         "
       >
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-8" aria-live="polite">
           <div className="flex h-20 w-20 items-center justify-center rounded-[28px] shadow-sm border border-white/5 bg-spotify-mid-dark">
             <Loader2 className="w-10 h-10 animate-spin text-spotify-green" />
           </div>
@@ -357,6 +266,11 @@ export default function GenerateStep({
             <div className="w-full h-3 bg-spotify-mid-dark rounded-full overflow-hidden p-[3px] border border-white/5">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
+                role="progressbar"
+                aria-label="포트폴리오 생성 진행률"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
                 style={{
                   width: `${Math.max(progress, 5)}%`,
                   background: "linear-gradient(90deg, #1ed760, #1db954)",

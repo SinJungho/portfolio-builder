@@ -16,6 +16,7 @@ import {
   TrendingUp, 
   Users, 
   MousePointer2, 
+  Copy,
   ExternalLink,
   Layout,
   Clock
@@ -26,6 +27,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserPortfolios, type PortfolioWithBlocks } from "./actions";
+import Link from "next/link";
+import { toast } from "sonner";
+import { getPortfolioState } from "@/lib/portfolio-state";
 
 interface DailyStat {
   date: string;
@@ -52,6 +56,16 @@ interface AnalyticsSummary {
   topReferrers: TopReferrer[];
 }
 
+function getVisitorTrendSummary(stats: DailyStat[]) {
+  if (!stats.length) return "선택한 기간의 일별 방문자 데이터가 없습니다.";
+
+  const firstViews = stats[0].views;
+  const lastViews = stats.at(-1)?.views ?? firstViews;
+  if (firstViews === lastViews) return `일별 페이지 뷰는 ${firstViews}건으로 기간의 처음과 마지막이 같습니다.`;
+
+  return `일별 페이지 뷰는 기간 첫날 ${firstViews}건에서 마지막 날 ${lastViews}건으로 ${lastViews > firstViews ? "증가" : "감소"}했습니다.`;
+}
+
 export default function AnalyticsPage() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
@@ -70,7 +84,7 @@ export default function AnalyticsPage() {
   }, [portfolios, selectedPortfolioId]);
 
   // 2. Fetch Summary
-  const { data: summary, isLoading: isSummaryLoading, isFetching: isSummaryFetching } = useQuery<AnalyticsSummary>({
+  const { data: summary, error: summaryError, isLoading: isSummaryLoading, isFetching: isSummaryFetching, refetch: refetchSummary } = useQuery<AnalyticsSummary>({
     queryKey: ["analytics", selectedPortfolioId, period],
     queryFn: async () => {
       const res = await fetch(`/api/analytics/${selectedPortfolioId}/summary?period=${period}`);
@@ -83,19 +97,37 @@ export default function AnalyticsPage() {
   // Block ID Translation helper
   const getBlockName = (blockId: string) => {
     const activePortfolio = portfolios?.find(p => p.id === selectedPortfolioId);
-    if (!activePortfolio) return `섹션 (ID: ${blockId.slice(0, 4)})`;
+    if (!activePortfolio) return "알 수 없는 섹션";
     
     const block = activePortfolio.blocks.find(b => b.id === blockId);
-    if (!block) return `섹션 (ID: ${blockId.slice(0, 4)})`;
+    if (!block) return "삭제된 섹션";
     
     const blockTypeNames: Record<string, string> = {
-      hero: "Hero 소개 섹션",
+      hero: "소개 섹션",
       project_grid: "프로젝트 그리드",
       skills: "기술 스택 차트",
       blog_feed: "블로그 RSS 피드",
       contact: "연락처 및 소셜 링크"
     };
     return blockTypeNames[block.block_type] || block.block_type;
+  };
+
+  const selectedPortfolio = portfolios?.find((portfolio) => portfolio.id === selectedPortfolioId);
+  const portfolioState = selectedPortfolio
+    ? getPortfolioState(selectedPortfolio.is_published, selectedPortfolio.blocks.length)
+    : "draft";
+  const hasAnalyticsData = Boolean(summary && (summary.totalViews || summary.uniqueVisitors || summary.totalClicks));
+  const periodLabel = period === "7d" ? "7일" : period === "30d" ? "30일" : "90일";
+
+  const copyPortfolioLink = async () => {
+    if (!selectedPortfolio?.slug) return;
+
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/${selectedPortfolio.slug}`);
+      toast.success("공개 링크를 복사했습니다.");
+    } catch {
+      toast.error("링크를 복사하지 못했습니다. 다시 시도해주세요.");
+    }
   };
 
   if (isPortfoliosLoading) {
@@ -117,11 +149,11 @@ export default function AnalyticsPage() {
           <div className="space-y-2">
             <h2 className="text-2xl font-black text-white">아직 분석할 포트폴리오가 없습니다</h2>
             <p className="text-spotify-silver text-[14px] font-medium leading-relaxed">
-              포트폴리오를 먼저 생성하고 전 세계에 공유해 보세요. 방문자가 생기는 즉시 통계를 실시간으로 확인하실 수 있습니다.
+              포트폴리오를 먼저 만들고 공개 준비를 마쳐보세요. 공개 후 방문자가 생기면 이곳에서 통계를 확인할 수 있습니다.
             </p>
           </div>
-          <Button className="rounded-full bg-spotify-green hover:bg-spotify-green/90 text-black font-extrabold px-8 h-12 transition-all scale-100 hover:scale-105 active:scale-95">
-            포트폴리오 생성하기
+          <Button asChild className="btn-pill-primary h-12 px-8">
+            <Link href="/dashboard#new-portfolio">포트폴리오 만들기</Link>
           </Button>
         </div>
       </div>
@@ -135,7 +167,7 @@ export default function AnalyticsPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-spotify-green font-bold text-xs tracking-widest uppercase">
             <TrendingUp className="w-4 h-4" />
-            Performance Insight
+            포트폴리오 성과
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">분석 대시보드</h1>
         </div>
@@ -157,41 +189,49 @@ export default function AnalyticsPage() {
             </SelectContent>
           </Select>
 
-          <div className="bg-spotify-dark-surface p-1.5 rounded-2xl flex gap-1 border border-white/5">
+          <div className="bg-spotify-dark-surface p-1.5 rounded-xl flex gap-1 border border-white/5">
             {(["7d", "30d", "90d"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
+                aria-pressed={period === p}
+                aria-label={`최근 ${p.slice(0, -1)}일 분석 보기`}
                 className={`
-                  px-4 py-2 rounded-xl text-[13px] font-extrabold transition-all
+                  px-4 py-2 rounded-lg text-[13px] font-extrabold transition-all
                   ${period === p 
-                    ? "bg-white text-black shadow-spotify-md scale-[1.02]" 
+                    ? "bg-spotify-green text-black shadow-spotify-md scale-[1.02]"
                     : "text-spotify-silver hover:text-white hover:bg-white/5"}
                 `}
               >
-                {p.toUpperCase()}
+                {p.slice(0, -1)}일
               </button>
             ))}
           </div>
+          {isSummaryFetching && (
+            <span role="status" aria-live="polite" className="text-[12px] font-bold text-spotify-green">
+              선택한 분석을 업데이트하는 중…
+            </span>
+          )}
         </div>
       </div>
 
       {isSummaryLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-32 rounded-[32px] bg-white/5" />
-          <Skeleton className="h-32 rounded-[32px] bg-white/5" />
-          <Skeleton className="h-32 rounded-[32px] bg-white/5" />
-          <Skeleton className="h-[400px] md:col-span-3 rounded-[40px] bg-white/5" />
+          <Skeleton className="h-32 rounded-2xl bg-white/5" />
+          <Skeleton className="h-32 rounded-2xl bg-white/5" />
+          <Skeleton className="h-32 rounded-2xl bg-white/5" />
+          <Skeleton className="h-[400px] md:col-span-3 rounded-2xl bg-white/5" />
         </div>
       ) : summary ? (
-        <div className="space-y-10">
+        hasAnalyticsData ? (
+        <div className="space-y-10" aria-busy={isSummaryFetching}>
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <Card className="rounded-[32px] bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-all duration-300">
+            <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-colors duration-300">
               <CardContent className="p-8">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-[13px] font-bold text-spotify-silver uppercase tracking-wider">Total Views</p>
+                    <p className="text-[13px] font-bold text-spotify-silver">전체 조회</p>
                     <h3 className="text-4xl font-black text-white">{summary.totalViews.toLocaleString()}</h3>
                   </div>
                   <div className="p-3 bg-spotify-green/10 rounded-2xl group-hover:scale-110 transition-transform duration-500">
@@ -201,29 +241,29 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[32px] bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-all duration-300">
+            <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-colors duration-300">
               <CardContent className="p-8">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-[13px] font-bold text-spotify-silver uppercase tracking-wider">Unique Visitors</p>
+                    <p className="text-[13px] font-bold text-spotify-silver">순 방문자</p>
                     <h3 className="text-4xl font-black text-white">{summary.uniqueVisitors.toLocaleString()}</h3>
                   </div>
-                  <div className="p-3 bg-purple-500/10 rounded-2xl group-hover:scale-110 transition-transform duration-500">
-                    <MousePointer2 className="w-6 h-6 text-purple-400" />
+                  <div className="p-3 bg-white/5 rounded-xl group-hover:scale-105 transition-transform duration-300">
+                    <MousePointer2 className="w-6 h-6 text-spotify-silver" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="rounded-[32px] bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-all duration-300">
+            <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-colors duration-300">
               <CardContent className="p-8">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-[13px] font-bold text-spotify-silver uppercase tracking-wider">Total Clicks</p>
+                    <p className="text-[13px] font-bold text-spotify-silver">링크 클릭</p>
                     <h3 className="text-4xl font-black text-white">{summary.totalClicks.toLocaleString()}</h3>
                   </div>
-                  <div className="p-3 bg-emerald-500/10 rounded-2xl group-hover:scale-110 transition-transform duration-500">
-                    <BarChart3 className="w-6 h-6 text-emerald-400" />
+                  <div className="p-3 bg-white/5 rounded-xl group-hover:scale-105 transition-transform duration-300">
+                    <BarChart3 className="w-6 h-6 text-spotify-silver" />
                   </div>
                 </div>
               </CardContent>
@@ -231,77 +271,110 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Main Chart */}
-          <Card className="rounded-[40px] bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
+          <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
             <CardHeader className="p-8 pb-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-2xl font-black text-white">방문자 추이</CardTitle>
+                  <CardTitle id="visitor-trend-title" className="text-2xl font-black text-white">방문자 추이</CardTitle>
                   <CardDescription className="text-sm font-medium text-spotify-silver mt-1">
-                    지난 {period === '7d' ? '7일' : period === '30d' ? '30일' : '90일'}간의 일별 페이지 뷰 현황입니다.
+                    지난 {periodLabel}간의 일별 페이지 뷰 현황입니다.
                   </CardDescription>
                 </div>
                 {isSummaryFetching && (
                   <div className="text-[11px] font-bold text-spotify-green animate-pulse bg-spotify-green/10 px-3 py-1 rounded-full uppercase">
-                    Refreshing...
+                    새로고침 중
                   </div>
                 )}
               </div>
             </CardHeader>
             <CardContent className="p-8">
-              <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={summary.dailyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1ed760" stopOpacity={0.25}/>
-                        <stop offset="95%" stopColor="#1ed760" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
-                      dy={10}
-                      tickFormatter={(val: string) => val.split('-').slice(1).join('/')}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
-                      dx={-10}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#181818',
-                        borderRadius: '20px', 
-                        border: '1px solid rgba(255, 255, 255, 0.1)', 
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        padding: '12px 16px'
-                      }}
-                      labelStyle={{ marginBottom: '4px', fontWeight: 800, color: '#ffffff' }}
-                      itemStyle={{ fontWeight: 700, color: '#1ed760' }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="views" 
-                      stroke="#1ed760" 
-                      strokeWidth={4}
-                      fillOpacity={1} 
-                      fill="url(#colorViews)" 
-                      animationDuration={1500}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div aria-labelledby="visitor-trend-title" aria-describedby="visitor-trend-summary">
+                <p id="visitor-trend-summary" className="sr-only">지난 {periodLabel}의 방문자 추이입니다. {getVisitorTrendSummary(summary.dailyStats)}</p>
+                <div className="h-[350px] w-full" aria-hidden="true">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={summary.dailyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1ed760" stopOpacity={0.25}/>
+                          <stop offset="95%" stopColor="#1ed760" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
+                        dy={10}
+                        tickFormatter={(val: string) => val.split('-').slice(1).join('/')}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
+                        dx={-10}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#181818',
+                          borderRadius: '20px',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                          padding: '12px 16px'
+                        }}
+                        labelStyle={{ marginBottom: '4px', fontWeight: 800, color: '#ffffff' }}
+                        itemStyle={{ fontWeight: 700, color: '#1ed760' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="views"
+                        stroke="#1ed760"
+                        strokeWidth={4}
+                        fillOpacity={1}
+                        fill="url(#colorViews)"
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                {summary.dailyStats.length > 0 ? (
+                  <table className="sr-only">
+                    <caption>지난 {periodLabel} 방문자 추이 일별 데이터</caption>
+                    <thead>
+                      <tr><th scope="col">날짜</th><th scope="col">페이지 뷰</th></tr>
+                    </thead>
+                    <tbody>
+                      {summary.dailyStats.map((stat) => <tr key={stat.date}><td>{stat.date}</td><td>{stat.views}건</td></tr>)}
+                    </tbody>
+                  </table>
+                ) : <p className="sr-only">지난 {periodLabel}의 방문자 추이 데이터가 없습니다.</p>}
               </div>
             </CardContent>
           </Card>
 
+          {(summary.topBlocks[0] || summary.topReferrers[0]) && (
+            <section className="flex flex-col gap-4 rounded-2xl border border-spotify-green/20 bg-spotify-green/5 p-6 sm:flex-row sm:items-center sm:justify-between" aria-label="다음 추천 작업">
+              <div>
+                <p className="text-[12px] font-bold text-spotify-green">다음 한 가지</p>
+                <p className="mt-1 text-[15px] font-bold text-white">
+                  {summary.topBlocks[0]
+                    ? `${getBlockName(summary.topBlocks[0].block_id)} 섹션이 가장 많은 관심을 받았어요.`
+                    : `${summary.topReferrers[0].referrer || "직접 방문"}에서 방문이 가장 많아요.`}
+                </p>
+                <p className="mt-1 text-[13px] text-spotify-silver">이 흐름을 이어서 포트폴리오를 다듬거나 링크를 공유해 보세요.</p>
+              </div>
+              <Button asChild className="btn-pill-primary h-10 shrink-0 px-5">
+                <Link href={`/editor/${selectedPortfolioId}?focus=${summary.topBlocks[0] ? "blocks" : "publish"}`}>
+                  {summary.topBlocks[0] ? "섹션 다듬기" : "공개 준비 확인"}
+                </Link>
+              </Button>
+            </section>
+          )}
+
           {/* Detailed Lists */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Top Blocks */}
-            <Card className="rounded-[40px] bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
+            <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
               <CardHeader className="p-8">
                 <CardTitle className="text-xl font-black text-white">인기 블록 (클릭 수)</CardTitle>
                 <CardDescription className="text-[13px] font-medium text-spotify-silver">
@@ -324,14 +397,11 @@ export default function AnalyticsPage() {
                             <h4 className="text-[15px] font-extrabold text-white group-hover:text-spotify-green transition-colors">
                               {getBlockName(block.block_id)}
                             </h4>
-                            <p className="text-[11px] font-bold text-spotify-silver tracking-wider uppercase">
-                              ID: {block.block_id.slice(0, 8)}
-                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-[16px] font-black text-white">{block.count}</span>
-                          <span className="text-[11px] font-bold text-spotify-silver uppercase">Clicks</span>
+                          <span className="text-[11px] font-bold text-spotify-silver">클릭</span>
                         </div>
                       </div>
                     ))
@@ -346,9 +416,9 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Top Referrers */}
-            <Card className="rounded-[40px] bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
+            <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
               <CardHeader className="p-8">
-                <CardTitle className="text-xl font-black text-white">주요 유입 경로 (Referrers)</CardTitle>
+                <CardTitle className="text-xl font-black text-white">주요 유입 경로</CardTitle>
                 <CardDescription className="text-[13px] font-medium text-spotify-silver">
                   사용자들이 어떤 경로를 통해 접속했는지 확인하세요.
                 </CardDescription>
@@ -363,11 +433,11 @@ export default function AnalyticsPage() {
                             <ExternalLink className="w-3.5 h-3.5 text-spotify-silver group-hover:text-spotify-green" />
                           </div>
                           <span className="text-[14px] font-bold text-white truncate max-w-[200px] md:max-w-[300px]">
-                            {ref.referrer === '' ? 'Direct / Bookmark' : ref.referrer}
+                            {ref.referrer === '' ? '직접 방문' : ref.referrer}
                           </span>
                         </div>
                         <Badge className="bg-white/5 border border-white/5 text-spotify-green font-extrabold px-3 py-1 text-[11px] shadow-sm">
-                          {(ref.count / summary.totalViews * 100).toFixed(0)}%
+                          {summary.totalViews ? (ref.count / summary.totalViews * 100).toFixed(0) : 0}%
                         </Badge>
                       </div>
                     ))
@@ -382,8 +452,47 @@ export default function AnalyticsPage() {
             </Card>
           </div>
         </div>
+        ) : (
+          <section className="max-w-xl py-12 sm:py-20" aria-labelledby="analytics-empty-title">
+            <p className="mb-3 text-[14px] font-bold text-spotify-green">첫 방문자를 기다리는 중</p>
+            <h2 id="analytics-empty-title" className="text-[clamp(28px,4vw,40px)] font-black tracking-tight text-white">
+              아직 방문 데이터가 없어요
+            </h2>
+            <p className="mt-4 max-w-lg text-[16px] font-medium leading-relaxed text-spotify-silver">
+              {portfolioState === "published"
+                ? "공개 링크를 공유하면 방문과 반응이 이곳에 쌓입니다."
+                : portfolioState === "preview"
+                  ? "공개 전 확인을 마치면 지원서에 넣을 링크를 만들 수 있어요."
+                  : "먼저 에디터에서 포트폴리오를 구성해 주세요."}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {portfolioState === "published" ? (
+                <Button onClick={copyPortfolioLink} className="btn-pill-primary h-12 px-6">
+                  <Copy className="mr-2 h-4 w-4" /> 공개 링크 복사
+                </Button>
+              ) : portfolioState === "preview" ? (
+                <Button asChild className="btn-pill-primary h-12 px-6">
+                  <Link href={`/editor/${selectedPortfolioId}`}>공개 전 확인하기</Link>
+                </Button>
+              ) : (
+                <Button asChild className="btn-pill-primary h-12 px-6">
+                  <Link href={`/editor/${selectedPortfolioId}`}>포트폴리오 구성하기</Link>
+                </Button>
+              )}
+            </div>
+            <ul className="mt-8 space-y-3 border-t border-white/5 pt-6 text-[14px] font-medium leading-relaxed text-spotify-silver">
+              <li>{portfolioState === "published" ? "이력서나 지원서에 공개 링크를 넣어 첫 방문을 만들어 보세요." : "에디터에서 공개 준비를 마치면 지원서에 넣을 링크를 만들 수 있어요."}</li>
+              <li>방문이 쌓이면 조회 수, 유입 경로, 관심을 받은 섹션을 여기서 확인할 수 있어요.</li>
+            </ul>
+          </section>
+        )
       ) : (
-        <div className="py-20 text-center text-spotify-silver">데이터를 불러오지 못했습니다.</div>
+        <div role="alert" className="py-20 text-center text-spotify-silver space-y-4">
+          <p>{summaryError instanceof Error ? "분석 데이터를 불러오지 못했습니다." : "데이터를 불러오지 못했습니다."}</p>
+          <Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white/5" onClick={() => refetchSummary()}>
+            다시 시도
+          </Button>
+        </div>
       )}
     </div>
   );

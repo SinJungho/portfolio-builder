@@ -68,6 +68,7 @@ export async function POST(req: Request) {
         user_id: user.id,
         slug: finalSlug,
         theme: theme || "minimal",
+        auto_published: false,
       },
       select: {
         id: true,
@@ -97,6 +98,10 @@ export async function GET() {
     const portfolios = await prisma.portfolio.findMany({
       where: { user_id: user.id },
       orderBy: { created_at: "desc" },
+      include: {
+        _count: { select: { blocks: true } },
+        blocks: { select: { block_type: true, is_visible: true, config: true } },
+      },
     });
 
     const dbUser = await prisma.user.findUnique({
@@ -113,6 +118,7 @@ export async function GET() {
     return NextResponse.json({
       portfolios,
       user: dbUser,
+      github_connected: Boolean(integration),
       github_synced_at: integration?.synced_at || null,
     });
   } catch (error: unknown) {

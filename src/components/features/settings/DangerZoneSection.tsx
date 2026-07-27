@@ -7,7 +7,7 @@ export function DangerZoneSection() {
       <div>
         <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify">Danger Zone</h2>
 
-        <div className="bg-spotify-negative/5 border border-spotify-negative/20 rounded-[32px] p-10 shadow-spotify-md">
+        <div className="bg-spotify-negative/5 border border-spotify-negative/20 rounded-2xl p-7 shadow-spotify-md">
           <div className="flex flex-col sm:flex-row items-start gap-8 mb-10">
             <div className="w-16 h-16 rounded-2xl bg-spotify-negative/10 flex items-center justify-center text-spotify-negative shrink-0 shadow-[0_0_20px_rgba(243,114,127,0.1)]">
               <AlertTriangle className="w-8 h-8" strokeWidth={2} />

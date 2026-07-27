@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { getMissingPortfolioReadiness, isPortfolioReady } from "@/lib/portfolio-readiness";
 
 export async function GET(
   _req: Request,
@@ -28,9 +29,20 @@ export async function GET(
       return new NextResponse(null, { status: 404 });
     }
 
+    const blocks = await prisma.portfolioBlock.findMany({
+      where: { portfolio_id: id },
+      select: { block_type: true, is_visible: true, config: true },
+    });
+    const readinessBlocks = blocks.map((block) => ({
+      ...block,
+      config: block.config as Record<string, unknown>,
+    }));
+
     return NextResponse.json({
       is_published: portfolio.is_published,
       published_url: portfolio.slug ? `/${portfolio.slug}` : null,
+      is_ready: isPortfolioReady(readinessBlocks),
+      missing_items: getMissingPortfolioReadiness(readinessBlocks),
     });
   } catch (error: unknown) {
     console.error("GET /api/portfolios/[id]/status error:", error);

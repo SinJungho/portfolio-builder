@@ -7,7 +7,7 @@ export function ProfileSection() {
       <div>
         <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify">Profile Information</h2>
 
-        <form className="space-y-8 bg-spotify-dark-surface p-8 rounded-[32px] border border-white/5 shadow-spotify-md">
+        <form className="space-y-8 bg-spotify-dark-surface p-7 rounded-2xl border border-white/5 shadow-spotify-md">
           {/* Avatar */}
           <div className="flex flex-col sm:flex-row items-center gap-8">
             <div className="relative group cursor-pointer">

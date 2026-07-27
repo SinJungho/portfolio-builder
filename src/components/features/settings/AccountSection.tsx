@@ -24,7 +24,7 @@ export function AccountSection() {
       <div>
         <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase tracking-spotify">Account Settings</h2>
 
-        <div className="space-y-6 bg-spotify-dark-surface p-8 rounded-[32px] border border-white/5 shadow-spotify-md">
+        <div className="space-y-6 bg-spotify-dark-surface p-7 rounded-2xl border border-white/5 shadow-spotify-md">
           {/* Username */}
           <div>
             <label
