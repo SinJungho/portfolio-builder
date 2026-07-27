@@ -13,6 +13,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
+export function clampProgress(progress: number | undefined) {
+  return Math.min(100, Math.max(0, typeof progress === "number" && Number.isFinite(progress) ? progress : 0));
+}
+
 export default function GenerateStep({
   portfolioId,
   generateJobId,
@@ -67,8 +71,9 @@ export default function GenerateStep({
 
   const renderContent = () => {
     if (
-      !isActuallyFinished &&
-      (error || data?.status === "failed" || isTimedOut)
+      !generateJobId ||
+      (!isActuallyFinished &&
+        (error || data?.status === "failed" || isTimedOut))
     ) {
       return (
         <div
@@ -83,16 +88,25 @@ export default function GenerateStep({
             <AlertCircle className="w-10 h-10 text-spotify-negative" />
           </div>
           <h2 className="text-[24px] font-extrabold tracking-[-1px] text-white mb-2">
-            포트폴리오 생성에 실패했습니다
+            {generateJobId
+              ? "포트폴리오 생성에 실패했습니다"
+              : "생성 작업을 이어갈 수 없어요"}
           </h2>
           <p className="text-[15px] text-spotify-silver leading-[1.7] mb-8 font-normal">
-            {data?.error ||
+            {!generateJobId
+              ? "생성 작업 정보를 찾을 수 없습니다. 프로젝트를 다시 선택해 생성해 주세요."
+              : data?.error ||
               (isTimedOut
                 ? "생성 작업이 다소 지연되고 있습니다. 잠시 후 다시 한 번 시도해 주세요."
                 : "일시적인 시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")}
           </p>
           <button
+            type="button"
             onClick={() => {
+              if (!generateJobId) {
+                router.push(`/generate/${portfolioId}?step=configure`);
+                return;
+              }
               timeoutsCount.current = 0;
               setIsTimedOut(false);
               refetch();
@@ -104,11 +118,13 @@ export default function GenerateStep({
               text-[15px] font-bold text-white uppercase tracking-spotify
               transition-all duration-200
               hover:border-white hover:scale-105 active:scale-95
+              focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green
+              motion-reduce:transform-none
               cursor-pointer
             "
           >
             <RotateCcw className="w-4 h-4" />
-            다시 시도하기
+            {generateJobId ? "다시 시도하기" : "프로젝트 다시 선택하기"}
           </button>
         </div>
       );
@@ -131,7 +147,7 @@ export default function GenerateStep({
             <div
               className="h-2.5"
               style={{
-                background: "linear-gradient(90deg, #1ed760, #1db954, #8b5cf6)",
+                background: "linear-gradient(90deg, #1ed760, #1db954)",
               }}
             />
 
@@ -157,8 +173,9 @@ export default function GenerateStep({
               </div>
 
               <button
+                type="button"
                 onClick={() => router.push(`/editor/${portfolioId}`)}
-                className="flex h-14 sm:h-[60px] w-full items-center justify-center gap-2 rounded-full text-sm sm:text-[16px] font-bold text-black bg-spotify-green hover:scale-105 active:scale-95 transition-all shadow-[0_8px_24px_rgba(30,215,96,0.25)]"
+                className="flex h-14 sm:h-[60px] w-full items-center justify-center gap-2 rounded-full bg-spotify-green text-sm sm:text-[16px] font-bold text-black shadow-[0_8px_24px_rgba(30,215,96,0.25)] transition-all hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green motion-reduce:transform-none"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 미리보기 및 공개하기
@@ -196,10 +213,11 @@ export default function GenerateStep({
                   추가하면 방문자(인사담당자)에게 한층 더 신뢰를 줄 수 있어요.
                 </p>
                 <button
+                  type="button"
                   onClick={() =>
                     router.push(`/generate/${portfolioId}?step=adjust`)
                   }
-                  className="mt-2 font-bold flex items-center gap-1 transition-all hover:gap-2 text-spotify-green cursor-pointer"
+                  className="mt-2 flex items-center gap-1 font-bold text-spotify-green transition-all hover:gap-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green cursor-pointer"
                 >
                   지금 바로 보완하기 <ArrowRight className="w-4 h-4" />
                 </button>
@@ -211,7 +229,7 @@ export default function GenerateStep({
       );
     }
 
-    const progress = data?.progress || 0;
+    const progress = clampProgress(data?.progress);
     const statusLabel =
       progress >= 80
         ? "마지막 단장 중이에요. 거의 다 되었어요!"
@@ -228,7 +246,7 @@ export default function GenerateStep({
           shadow-spotify
         "
       >
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-8" aria-live="polite">
           <div className="flex h-20 w-20 items-center justify-center rounded-[28px] shadow-sm border border-white/5 bg-spotify-mid-dark">
             <Loader2 className="w-10 h-10 animate-spin text-spotify-green" />
           </div>
@@ -248,6 +266,11 @@ export default function GenerateStep({
             <div className="w-full h-3 bg-spotify-mid-dark rounded-full overflow-hidden p-[3px] border border-white/5">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
+                role="progressbar"
+                aria-label="포트폴리오 생성 진행률"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
                 style={{
                   width: `${Math.max(progress, 5)}%`,
                   background: "linear-gradient(90deg, #1ed760, #1db954)",
