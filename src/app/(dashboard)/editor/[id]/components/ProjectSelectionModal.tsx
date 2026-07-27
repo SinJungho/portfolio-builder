@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MarkdownEditor from "@/components/ui/MarkdownEditor";
+import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { Check, GitFork, Search, Star, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { type RawProject } from "@/types/project";
 
 interface ProjectSelectionModalProps {
@@ -39,6 +40,12 @@ export default function ProjectSelectionModal({
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
     Record<string, string>
   >(() => initialCustomDescriptions);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
+    isOpen,
+    onClose,
+    searchInputRef,
+  );
 
   if (!isOpen) return null;
 
@@ -61,18 +68,19 @@ export default function ProjectSelectionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="project-selection-title" aria-describedby="project-selection-description" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
       {/* 모달 헤더 영역 */}
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
+            aria-label="프로젝트 선택 닫기"
           >
             <X className="w-6 h-6 text-white" />
           </button>
-          <h3 className="text-[18px] font-bold text-white">
+          <h3 id="project-selection-title" className="text-[18px] font-bold text-white">
             대표 리포지토리 선택 ({tempSelectedIds.length})
           </h3>
         </div>
@@ -89,12 +97,16 @@ export default function ProjectSelectionModal({
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
         {/* 검색 폼 */}
         <div className="mb-8 space-y-4">
+          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">포트폴리오에 보여줄 리포지토리를 선택하세요. 선택한 프로젝트는 소개를 직접 다듬을 수 있어요.</p>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-spotify-silver" />
+            <Label htmlFor="project-search" className="sr-only">프로젝트 검색</Label>
+            <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-spotify-silver" />
             <Input
+              id="project-search"
               placeholder="리포지토리 검색..."
               className="pl-12 h-14 bg-spotify-dark-surface border border-white/5 rounded-full text-[16px] focus:border-spotify-green text-white placeholder:text-spotify-silver/30 transition-all"
               value={searchQuery}
+              ref={searchInputRef}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setSearchQuery(e.target.value)
               }
@@ -107,9 +119,8 @@ export default function ProjectSelectionModal({
           {filteredProjects.map((project: RawProject) => (
             <Card
               key={project.id}
-              onClick={() => toggleTempProject(project.id)}
               className={`
-                relative p-6 cursor-pointer rounded-[28px] border transition-all duration-300 group
+                relative p-6 rounded-[28px] border transition-all duration-300 group
                 ${
                   tempSelectedIds.includes(project.id)
                     ? "border-spotify-green bg-spotify-green/5 ring-1 ring-spotify-green/30 text-white shadow-spotify"
@@ -118,13 +129,13 @@ export default function ProjectSelectionModal({
               `}
             >
               {/* 선택 여부 체크박스 표시 */}
-              <div className="absolute top-5 right-5 h-6 w-6 rounded-full border border-white/5 bg-spotify-near-black flex items-center justify-center transition-colors">
+              <button type="button" onClick={() => toggleTempProject(project.id)} aria-pressed={tempSelectedIds.includes(project.id)} aria-label={`${project.name} ${tempSelectedIds.includes(project.id) ? "선택 해제" : "선택"}`} className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-full border border-white/5 bg-spotify-near-black transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
                 {tempSelectedIds.includes(project.id) && (
-                  <div className="h-full w-full rounded-full bg-spotify-green flex items-center justify-center animate-in zoom-in-50 duration-200">
+                  <span className="h-6 w-6 rounded-full bg-spotify-green flex items-center justify-center animate-in zoom-in-50 duration-200">
                     <Check className="w-4 h-4 text-black" strokeWidth={3} />
-                  </div>
+                  </span>
                 )}
-              </div>
+              </button>
 
               <div className="space-y-4">
                 <div className="pr-10">
@@ -156,12 +167,7 @@ export default function ProjectSelectionModal({
 
                 {/* 프로젝트 상세 소개글 마크다운 에디터 영역 ( 선택 시에만 표시 ) */}
                 {tempSelectedIds.includes(project.id) && (
-                  <div
-                    className="pt-4 border-t border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300"
-                    onClick={(e: React.MouseEvent<HTMLDivElement>) =>
-                      e.stopPropagation()
-                    }
-                  >
+                  <div className="pt-4 border-t border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                     <Label className="text-[11px] font-bold text-spotify-green uppercase tracking-wider flex items-center gap-2">
                       포트폴리오용 프로젝트 소개
                       <span className="px-1.5 py-0.5 rounded-md bg-spotify-green/10 text-spotify-green text-[10px]">

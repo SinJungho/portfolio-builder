@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { X, Plus, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,12 @@ export default function SkillsEditorModal({
   const [skills, setSkills] = useState<SkillItem[]>(
     (initialConfig.skills as SkillItem[]) || [],
   );
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
+    isOpen,
+    onClose,
+    titleRef,
+  );
 
   if (!isOpen) return null;
 
@@ -69,17 +76,18 @@ export default function SkillsEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="skills-editor-title" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
+            aria-label="기술 스택 편집 닫기"
           >
             <X className="w-6 h-6 text-white" />
           </button>
-          <h3 className="text-[18px] font-bold text-white">
+          <h3 ref={titleRef} id="skills-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
             기술 스택(Skills) 편집
           </h3>
         </div>
