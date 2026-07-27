@@ -82,7 +82,7 @@ export default function ContactBlock({ config, theme: t, portfolioId, blockId }:
               className="text-[36px] md:text-[48px] font-extrabold tracking-[-2.5px] leading-[1.05]"
               style={{ color: t.text }}
             >
-              Let&apos;s build something
+              함께 좋은 결과를
               <br />
               <span
                 style={{
@@ -92,7 +92,7 @@ export default function ContactBlock({ config, theme: t, portfolioId, blockId }:
                   backgroundClip: "text",
                 }}
               >
-                together.
+                만들어가요.
               </span>
             </h2>
             <p
