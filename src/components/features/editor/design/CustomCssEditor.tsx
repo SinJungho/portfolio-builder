@@ -11,7 +11,7 @@ export default function CustomCssEditor() {
   };
 
   return (
-    <section className="space-y-6 pt-10 border-t border-white/5">
+    <section className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2.5 bg-white/5 rounded-full">
           <Code className="w-5 h-5 text-white" />
@@ -21,7 +21,7 @@ export default function CustomCssEditor() {
             고급 CSS 편집
           </h3>
           <p className="text-[12px] text-spotify-silver font-bold tracking-spotify">
-            직접 스타일 작성
+            포트폴리오 기본 스타일을 직접 덮어씁니다.
           </p>
         </div>
       </div>
