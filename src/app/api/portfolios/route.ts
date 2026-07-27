@@ -118,6 +118,7 @@ export async function GET() {
     return NextResponse.json({
       portfolios,
       user: dbUser,
+      github_connected: Boolean(integration),
       github_synced_at: integration?.synced_at || null,
     });
   } catch (error: unknown) {

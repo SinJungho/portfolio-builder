@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DesignTokenSchema } from "@/schemas/portfolio";
+import { getMissingPortfolioReadiness } from "@/lib/portfolio-readiness";
 
 const updatePortfolioSchema = z.object({
   theme: z
@@ -50,27 +51,19 @@ export async function PATCH(
           where: { portfolio_id: id },
           select: { block_type: true, is_visible: true, config: true },
         });
-        const visibleBlock = (type: string) =>
-          blocks.find((block) => block.block_type === type && block.is_visible);
-        const projectBlock = visibleBlock("project_grid");
-        const contactBlock = visibleBlock("contact");
-        const projectIds = projectBlock?.config as { project_ids?: unknown } | undefined;
-        const contact = contactBlock?.config as
-          | { email?: unknown; linkedin_url?: unknown; website_url?: unknown }
-          | undefined;
-        const missing = [
-          !visibleBlock("hero") && "소개를 표시하기",
-          !(Array.isArray(projectIds?.project_ids) && projectIds.project_ids.length) && "대표 프로젝트 고르기",
-          !(
-            typeof contact?.email === "string" && contact.email.trim()
-            || typeof contact?.linkedin_url === "string" && contact.linkedin_url.trim()
-            || typeof contact?.website_url === "string" && contact.website_url.trim()
-          ) && "연락처 추가하기",
-        ].filter(Boolean);
+        const missing = getMissingPortfolioReadiness(
+          blocks.map((block) => ({
+            ...block,
+            config: block.config as Record<string, unknown>,
+          })),
+        );
 
         if (missing.length) {
           return NextResponse.json(
-            { error: `공개 전 다음 항목을 완료해주세요: ${missing[0]}.` },
+            {
+              error: `공개 전 ${missing[0].label}을(를) 완료해주세요.`,
+              missing_items: missing,
+            },
             { status: 400 },
           );
         }
