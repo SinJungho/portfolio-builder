@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import {
+  AlertCircle,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -13,7 +14,7 @@ import {
   RefreshCw,
   Terminal,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /**
@@ -35,9 +36,9 @@ function DNSRecordItem({
   onCopy,
 }: DNSRecordItemProps) {
   return (
-    <div className="bg-[#121212] rounded-xl p-3.5 border border-white/5 shadow-inner mt-2 first:mt-0">
+    <div className="bg-spotify-near-black rounded-xl p-3.5 border border-white/5 shadow-inner mt-2 first:mt-0">
       <div className="flex justify-between items-center mb-3">
-        <span className="text-[11px] font-black text-white bg-white/10 px-2 py-1 rounded-md tracking-wide">
+        <span className="text-[11px] font-bold text-white bg-white/10 px-2 py-1 rounded-md tracking-wide">
           {optionTitle}
         </span>
       </div>
@@ -83,36 +84,50 @@ export default function CustomDomainSection() {
   const { customDomain, setCustomDomain } = usePortfolioStore();
   const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  // 실제 DNS 검증 결과. 화면의 "연결 완료" 표시는 오직 이 값에서만 나온다.
+  const [dnsStatus, setDnsStatus] = useState<
+    "unchecked" | "connected" | "pending" | "error"
+  >("unchecked");
 
   // 1. 도메인 연결 설정 핸들러
   const handleConnectDomain = (domainValue: string) => {
     setCustomDomain(domainValue || null)
-      .then(() => toast.success("도메인이 업데이트되었습니다."))
+      .then(() => toast.success("도메인이 저장됐어요."))
       .catch((err: Error) => toast.error(err.message));
   };
 
-  // 2. 도메인 연결 실시간 상태 조회 핸들러
+  // 2. 도메인 연결 실시간 상태 조회 핸들러(수동 갱신) — 실제 검증 결과만 상태에 반영한다
   const handleCheckDomainStatus = async () => {
     if (!customDomain) return;
     setIsChecking(true);
     try {
       const res = await fetch(`/api/domains/${customDomain}`);
       const data = await res.json();
-      if (data.configured) {
-        toast.success("도메인이 포트폴리오에 성공적으로 연결되었습니다!");
-      } else {
-        toast.error(
-          "도메인 정보를 확인 중이거나 인터넷 등록(전파) 중입니다. 가이드에 따라 레코드를 올바르게 등록하셨다면, 실제 연결 완료까지 최대 24~48시간이 걸릴 수 있으니 안심하시고 잠시만 기다려 주세요!",
-        );
-      }
+      setDnsStatus(data.configured ? "connected" : "pending");
     } catch {
-      toast.error(
-        "도메인 연결 상태를 확인하는 중 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-      );
+      setDnsStatus("error");
     } finally {
       setIsChecking(false);
     }
   };
+
+  // 도메인이 저장돼 있으면 열릴 때 실제 연결 상태를 한 번 확인한다.
+  // (상태는 네트워크 응답 콜백에서만 갱신 — 동기 setState로 인한 연쇄 렌더 방지)
+  useEffect(() => {
+    if (!customDomain) return;
+    let cancelled = false;
+    fetch(`/api/domains/${customDomain}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setDnsStatus(data.configured ? "connected" : "pending");
+      })
+      .catch(() => {
+        if (!cancelled) setDnsStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [customDomain]);
 
   // 3. 클립보드 값 복사 핸들러
   const handleCopyToClipboard = (value: string, successMessage: string) => {
@@ -125,18 +140,18 @@ export default function CustomDomainSection() {
       <div className="space-y-2.5 pt-2 border-t border-white/5">
         <Label
           htmlFor="custom-domain"
-          className="text-[10px] font-black uppercase text-spotify-silver tracking-wider"
+          className="text-[10px] font-bold uppercase text-spotify-silver tracking-wider"
         >
           커스텀 도메인 연결{" "}
-          <span className="text-[9px] text-spotify-silver/50 lowercase font-medium">
-            (optional)
+          <span className="text-[9px] text-spotify-silver/50 font-medium">
+            (선택 사항)
           </span>
         </Label>
         <div className="flex gap-2">
           <Input
             id="custom-domain"
             placeholder="www.yourdomain.com"
-            className="rounded-full h-9 bg-spotify-near-black border-white/5 focus:border-spotify-green text-white placeholder:text-spotify-silver/20 text-xs px-4"
+            className="rounded-full h-9 bg-spotify-near-black border-white/5 focus:border-spotify-green text-white placeholder:text-spotify-silver/50 text-xs px-4"
             defaultValue={customDomain || ""}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter") {
@@ -161,19 +176,27 @@ export default function CustomDomainSection() {
       </div>
 
       {customDomain && (
-        <div className="bg-spotify-green/5 border border-spotify-green/20 rounded-xl overflow-hidden mt-4">
+        <div className="bg-spotify-dark-surface border border-white/5 rounded-xl overflow-hidden mt-4">
           {/* 타임라인 헤더 영역 */}
           <div className="p-4 space-y-5">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] font-black text-spotify-green flex items-center gap-2 tracking-wide">
-                <span className="w-2 h-2 bg-spotify-green rounded-full animate-pulse shadow-[0_0_8px_rgba(30,215,96,0.8)]" />
+              <span className="text-[12px] font-bold text-white flex items-center gap-2 tracking-wide">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    dnsStatus === "connected"
+                      ? "bg-spotify-green"
+                      : dnsStatus === "error"
+                        ? "bg-spotify-negative"
+                        : "bg-spotify-warning animate-pulse"
+                  }`}
+                />
                 도메인 연결 상태
               </span>
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={isChecking}
-                className="h-7 text-spotify-green hover:text-white hover:bg-spotify-green/10 text-[11px] font-bold rounded px-3 transition-colors disabled:opacity-50"
+                className="h-7 text-spotify-silver hover:text-white hover:bg-white/5 text-[11px] font-bold rounded px-3 transition-colors disabled:opacity-50"
                 onClick={handleCheckDomainStatus}
               >
                 <RefreshCw className={`w-3 h-3 mr-1.5 ${isChecking ? "animate-spin" : ""}`} />
@@ -183,11 +206,12 @@ export default function CustomDomainSection() {
 
             {/* 연결 타임라인 시각화 */}
             <div className="relative pl-3.5 space-y-5 before:absolute before:inset-y-2.5 before:left-[17px] before:w-[2px] before:bg-white/10">
+              {/* 1단계: 도메인 저장 — 문자열이 저장되면 실제로 완료된 사실 */}
               <div className="relative flex items-start gap-4">
-                <div className="bg-spotify-green w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-[#181818] z-10" />
+                <div className="bg-spotify-green w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-spotify-dark-surface z-10" />
                 <div>
                   <h4 className="text-white text-xs font-bold flex items-center gap-1.5">
-                    도메인 등록 완료{" "}
+                    도메인 저장됨{" "}
                     <CheckCircle2 className="w-3.5 h-3.5 text-spotify-green" />
                   </h4>
                   <p className="text-spotify-silver text-[11px] mt-1 font-medium">
@@ -195,26 +219,69 @@ export default function CustomDomainSection() {
                   </p>
                 </div>
               </div>
+
+              {/* 2단계: 실제 DNS 연결 — 검증 결과(dnsStatus)에 따라서만 표시 */}
               <div className="relative flex items-start gap-4">
-                <div className="bg-amber-400 w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-[#181818] z-10 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-                <div>
-                  <h4 className="text-amber-400 text-xs font-bold flex items-center gap-1.5">
-                    DNS 설정 및 전파 대기 중 <Clock className="w-3.5 h-3.5" />
-                  </h4>
-                  <p className="text-spotify-silver text-[11px] mt-1.5 leading-relaxed bg-[#121212] p-2 rounded-lg border border-white/5 inline-block">
-                    올바른 레코드가 설정되었는지 확인하세요.
-                    <br />
-                    글로벌 DNS 전파에는{" "}
-                    <strong className="text-white">최대 24~48시간</strong>이
-                    소요될 수 있습니다.
-                  </p>
-                </div>
+                {isChecking ? (
+                  <>
+                    <div className="bg-spotify-silver w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-spotify-dark-surface z-10" />
+                    <h4 className="text-spotify-silver text-xs font-bold flex items-center gap-1.5">
+                      연결 상태 확인 중
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    </h4>
+                  </>
+                ) : dnsStatus === "connected" ? (
+                  <>
+                    <div className="bg-spotify-green w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-spotify-dark-surface z-10" />
+                    <div>
+                      <h4 className="text-spotify-green text-xs font-bold flex items-center gap-1.5">
+                        연결 완료
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </h4>
+                      <p className="text-spotify-silver text-[11px] mt-1.5 leading-relaxed">
+                        이제{" "}
+                        <strong className="text-white">{customDomain}</strong>{" "}
+                        주소로 포트폴리오에 접속할 수 있어요.
+                      </p>
+                    </div>
+                  </>
+                ) : dnsStatus === "error" ? (
+                  <>
+                    <div className="bg-spotify-negative w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-spotify-dark-surface z-10" />
+                    <div>
+                      <h4 className="text-spotify-negative text-xs font-bold flex items-center gap-1.5">
+                        상태를 확인하지 못했어요
+                        <AlertCircle className="w-3.5 h-3.5" />
+                      </h4>
+                      <p className="text-spotify-silver text-[11px] mt-1.5 leading-relaxed">
+                        네트워크 문제로 연결 상태를 불러오지 못했어요. 잠시 후
+                        ‘상태 갱신’을 눌러 다시 확인해 주세요.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-spotify-warning w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-spotify-dark-surface z-10 animate-pulse" />
+                    <div>
+                      <h4 className="text-spotify-warning text-xs font-bold flex items-center gap-1.5">
+                        DNS 전파 대기 중 <Clock className="w-3.5 h-3.5" />
+                      </h4>
+                      <p className="text-spotify-silver text-[11px] mt-1.5 leading-relaxed bg-spotify-near-black p-2 rounded-lg border border-white/5">
+                        아직 연결이 확인되지 않았어요. 아래 가이드대로 레코드를
+                        등록했다면 전파에{" "}
+                        <strong className="text-white">최대 24~48시간</strong>이
+                        걸릴 수 있어요. 잠시 뒤 ‘상태 갱신’으로 다시 확인해
+                        주세요.
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           {/* 네임서버 대행업체 맞춤형 레코드 등록 가이드 */}
-          <div className="border-t border-spotify-green/10 bg-spotify-dark-surface/80 transition-all duration-300">
+          <div className="border-t border-white/5 bg-spotify-near-black/40 transition-all duration-300">
             <button
               className="w-full p-3.5 flex items-center justify-between text-[11px] font-bold text-white hover:bg-white/5 transition-colors"
               onClick={() => setShowDomainGuide(!showDomainGuide)}
@@ -232,8 +299,8 @@ export default function CustomDomainSection() {
 
             {showDomainGuide && (
               <div className="p-4 pt-0 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="text-[11px] text-spotify-silver leading-relaxed bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
-                  <strong className="text-blue-400 block mb-1">
+                <div className="text-[11px] text-spotify-silver leading-relaxed bg-spotify-announcement/10 p-3 rounded-lg border border-spotify-announcement/20">
+                  <strong className="text-spotify-announcement block mb-1">
                     ℹ️ DNS 레코드 등록 방법
                   </strong>
                   도메인 구입처(가비아, 카페24, 클라우드플레어 등)의 DNS 관리
