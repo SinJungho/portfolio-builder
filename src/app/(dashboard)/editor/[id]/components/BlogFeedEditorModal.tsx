@@ -59,7 +59,7 @@ export default function BlogFeedEditorModal({
             <X className="w-6 h-6 text-white" />
           </button>
           <h3 ref={titleRef} id="blog-feed-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            블로그 피드(Blog) 편집
+            블로그 피드 편집
           </h3>
         </div>
         <Button
@@ -74,10 +74,11 @@ export default function BlogFeedEditorModal({
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-spotify-silver">
+            <Label htmlFor="blog-max-items" className="text-xs font-bold text-spotify-silver">
               최대 표시 개수
             </Label>
             <Input
+              id="blog-max-items"
               type="number"
               min="1"
               max="12"

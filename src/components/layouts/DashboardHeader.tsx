@@ -81,7 +81,7 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
           {isAdjustStep ? (
             <div className="flex items-center gap-2">
               <div className="hidden lg:flex flex-col items-end mr-3">
-                <span className="text-[9px] font-bold text-spotify-silver uppercase tracking-spotify leading-none mb-1">Public URL</span>
+                <span className="text-[9px] font-bold text-spotify-silver tracking-spotify leading-none mb-1">공개 주소</span>
                 <span className="font-mono text-[11px] font-medium text-spotify-green truncate max-w-[150px]">
                   {portfolioId}.portfolioforge.app
                 </span>
@@ -125,7 +125,7 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
           <div className="flex items-center gap-1.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 overflow-hidden outline-none focus:ring-2 focus:ring-spotify-green/20">
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
                    {user?.image ? (
                     <Image src={user.image} alt={user.name || ""} width={36} height={36} className="w-full h-full object-cover" />
                   ) : (

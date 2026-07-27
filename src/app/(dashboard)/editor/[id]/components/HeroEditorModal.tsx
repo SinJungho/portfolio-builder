@@ -60,12 +60,12 @@ export default function HeroEditorModal({
             onClick={onClose}
             className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
-            aria-label="소개 블록 편집 닫기"
+            aria-label="소개 화면 편집 닫기"
           >
             <X className="w-6 h-6 text-white" />
           </button>
           <h3 ref={titleRef} id="hero-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            소개(Hero) 블록 편집
+            소개 화면 편집
           </h3>
         </div>
         <Button
@@ -80,10 +80,11 @@ export default function HeroEditorModal({
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-spotify-silver">
-              헤드라인 (Headline)
+            <Label htmlFor="hero-headline" className="text-xs font-bold text-spotify-silver">
+              한 줄 제목
             </Label>
             <Input
+              id="hero-headline"
               value={headline}
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="예: 이름 또는 직무"
@@ -92,10 +93,11 @@ export default function HeroEditorModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-spotify-silver">
-              서브 헤드라인 (Subheadline)
+            <Label htmlFor="hero-subheadline" className="text-xs font-bold text-spotify-silver">
+              짧은 소개
             </Label>
             <Input
+              id="hero-subheadline"
               value={subheadline}
               onChange={(e) => setSubheadline(e.target.value)}
               placeholder="직군 + 핵심 기술 + 강점 형태의 짧은 소개글"
@@ -104,10 +106,11 @@ export default function HeroEditorModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-spotify-silver">
-              상세 소개 (Bio)
+            <Label htmlFor="hero-bio" className="text-xs font-bold text-spotify-silver">
+              자기소개
             </Label>
             <textarea
+              id="hero-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="본인에 대한 상세한 소개를 작성해주세요."
@@ -121,7 +124,7 @@ export default function HeroEditorModal({
                 GitHub 통계 표시
               </Label>
               <p className="text-[12px] text-spotify-silver">
-                커밋, PR 수 등의 통계를 히어로 영역에 보여줍니다.
+                커밋, PR 수 등의 통계를 소개 화면에 보여줍니다.
               </p>
             </div>
             <Switch

@@ -88,7 +88,7 @@ export default function SkillsEditorModal({
             <X className="w-6 h-6 text-white" />
           </button>
           <h3 ref={titleRef} id="skills-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            기술 스택(Skills) 편집
+            기술 스택 편집
           </h3>
         </div>
         <Button
@@ -103,16 +103,16 @@ export default function SkillsEditorModal({
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-spotify-silver">
-              차트 타입
+            <Label htmlFor="skills-chart-type" className="text-xs font-bold text-spotify-silver">
+              차트 종류
             </Label>
             <Select value={chartType} onValueChange={setChartType}>
-              <SelectTrigger className="w-full h-12 bg-spotify-dark-surface border-white/5 text-white rounded-xl focus:ring-spotify-green cursor-pointer">
-                <SelectValue placeholder="차트 타입을 선택하세요" />
+              <SelectTrigger id="skills-chart-type" className="w-full h-12 bg-spotify-dark-surface border-white/5 text-white rounded-xl focus:ring-spotify-green cursor-pointer">
+                <SelectValue placeholder="차트 종류를 선택하세요" />
               </SelectTrigger>
               <SelectContent className="bg-spotify-dark-surface border-white/5 text-white rounded-xl">
-                <SelectItem value="radar" className="focus:bg-white/5 cursor-pointer">레이더 차트 (Radar)</SelectItem>
-                <SelectItem value="bar" className="focus:bg-white/5 cursor-pointer">막대 차트 (Bar)</SelectItem>
+                <SelectItem value="radar" className="focus:bg-white/5 cursor-pointer">레이더형</SelectItem>
+                <SelectItem value="bar" className="focus:bg-white/5 cursor-pointer">막대형</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -143,6 +143,7 @@ export default function SkillsEditorModal({
                       value={skill.name}
                       onChange={(e) => updateSkill(index, "name", e.target.value)}
                       placeholder="기술명 (예: React)"
+                      aria-label={`기술 ${index + 1} 이름`}
                       className="bg-transparent border-white/10 text-white h-9 text-sm"
                     />
                   </div>
@@ -155,6 +156,7 @@ export default function SkillsEditorModal({
                       onChange={(e) =>
                         updateSkill(index, "level", parseInt(e.target.value) || 0)
                       }
+                      aria-label={`기술 ${index + 1} 숙련도 (0-100)`}
                       className="bg-transparent border-white/10 text-white h-9 text-sm"
                     />
                   </div>

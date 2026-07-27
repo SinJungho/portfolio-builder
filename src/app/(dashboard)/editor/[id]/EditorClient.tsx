@@ -369,7 +369,7 @@ export default function EditorClient({
       setIsEditingSkills(false);
       setIsEditingBlogFeed(false);
       setEditingBlockId(null);
-      toast.success("블록 설정이 업데이트되었습니다.");
+      toast.success("섹션 설정이 업데이트되었습니다.");
     });
   };
 
@@ -459,7 +459,7 @@ export default function EditorClient({
               aria-controls="editor-panel-blocks"
               tabIndex={sidebarTab === "blocks" ? 0 : -1}
             >
-              블록 구성
+              섹션 구성
             </button>
             <button
               id="editor-tab-design"
@@ -629,12 +629,12 @@ const BlocksPanel = React.memo(function BlocksPanel({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-[17px] font-extrabold tracking-tight text-white flex items-center gap-2">
-          블록 순서 및 표시 설정
+        <h2 className="text-[17px] font-bold tracking-tight text-white flex items-center gap-2">
+          섹션 순서 및 표시 설정
         </h2>
       </div>
       <p className="px-1 text-[12px] font-medium leading-relaxed text-spotify-silver">
-        순서 변경 아이콘을 선택한 뒤 스페이스바와 방향키로도 블록 순서를 바꿀 수 있어요.
+        순서 변경 아이콘을 선택한 뒤 스페이스바와 방향키로도 섹션 순서를 바꿀 수 있어요.
       </p>
       <DndContext
         sensors={sensors}
@@ -669,14 +669,14 @@ const BlocksPanel = React.memo(function BlocksPanel({
             <Grid className="w-6 h-6" />
           </div>
           <p className="text-spotify-silver font-bold text-[14px]">
-            추가된 블록이 없습니다.
+            아직 추가된 섹션이 없어요.
           </p>
         </div>
       )}
 
       <div className="pt-6 border-t border-white/5 mt-6">
         <div className="flex flex-col gap-1 mb-4 px-1">
-          <h4 className="text-[15px] font-bold text-white">새로운 블록 추가</h4>
+          <h4 className="text-[15px] font-bold text-white">새 섹션 추가</h4>
           <p className="text-[12px] text-spotify-silver font-medium">
             내 포트폴리오를 더 풍성하게 만들어보세요.
           </p>
@@ -755,9 +755,9 @@ const SettingsPanel = React.memo(function SettingsPanel({
     <div className="space-y-6">
       <div className="bg-spotify-dark-surface border border-white/5 rounded-[24px] p-6 shadow-spotify text-white space-y-6">
         <div className="space-y-1">
-          <h3 className="text-[16px] font-black text-white flex items-center gap-2">
+          <h3 className="text-[16px] font-bold text-white flex items-center gap-2">
             <Globe className="w-4 h-4 text-spotify-green" />
-            지원 준비도
+            공개 준비도
           </h3>
           <p className="text-[12px] text-spotify-silver font-medium">
             채용 담당자가 빠르게 읽을 수 있는지 확인한 뒤 공개하세요.
@@ -767,7 +767,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
         <ul className="space-y-2" aria-label="공개 전 확인 항목">
           {readinessItems.map((item) => (
             <li key={item.label} className="flex items-center gap-3 text-[12px] font-bold">
-              <Check className={`h-4 w-4 shrink-0 ${item.complete ? "text-spotify-green" : "text-white/20"}`} aria-hidden="true" />
+              <Check className={`h-4 w-4 shrink-0 ${item.complete ? "text-spotify-green" : "text-white/40"}`} aria-hidden="true" />
               <span className={item.complete ? "text-white" : "text-spotify-silver"}>{item.label}</span>
               {item.complete ? (
                 <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
@@ -785,7 +785,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
             </li>
           ))}
           <li className="flex items-center gap-3 text-[12px] font-bold">
-            <Check className={`h-4 w-4 shrink-0 ${hasReviewedPreview ? "text-spotify-green" : "text-white/20"}`} aria-hidden="true" />
+            <Check className={`h-4 w-4 shrink-0 ${hasReviewedPreview ? "text-spotify-green" : "text-white/40"}`} aria-hidden="true" />
             <span className={hasReviewedPreview ? "text-white" : "text-spotify-silver"}>미리보기 확인</span>
             {hasReviewedPreview ? (
               <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
@@ -820,7 +820,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
         )}
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-spotify-silver tracking-wider">
+          <Label className="text-[10px] font-bold uppercase text-spotify-silver tracking-wider">
             기본 주소
           </Label>
           <div className="flex flex-col gap-3 p-3 bg-white/5 border border-white/5 rounded-xl">
@@ -831,7 +831,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${
+              <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
                 portfolioState === "published" ? "bg-spotify-green/10 text-spotify-green" : "bg-white/10 text-spotify-silver"
               }`}>
                 {portfolioStateLabel[portfolioState]}
@@ -860,7 +860,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
                   공개하기
                 </Button>
               ) : (
-                <span className="text-[11px] font-medium text-spotify-silver">블록을 추가하면 공개할 수 있어요.</span>
+                <span className="text-[11px] font-medium text-spotify-silver">섹션을 추가하면 공개할 수 있어요.</span>
               )}
             </div>
           </div>
@@ -874,8 +874,8 @@ const SettingsPanel = React.memo(function SettingsPanel({
 
       <div className="bg-spotify-dark-surface border border-white/5 rounded-[24px] p-5 shadow-spotify space-y-5 text-white">
         <div className="space-y-1">
-          <h3 className="text-[16px] font-extrabold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
+          <h3 className="text-[16px] font-bold text-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-spotify-green" />
             연락처 보완
           </h3>
         </div>
@@ -892,7 +892,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
                 id="email"
                 type="email"
                 placeholder="contact@example.com"
-                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-white/10 text-xs px-5 h-10"
+                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-spotify-silver/50 text-xs px-5 h-10"
                 defaultValue={(contactBlock.config?.email as string) || ""}
                 onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
                   handleOptionalChange("email", e.target.value)
@@ -910,7 +910,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
                 id="linkedin"
                 type="url"
                 placeholder="https://linkedin.com/in/..."
-                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-white/10 text-xs px-5 h-10"
+                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-spotify-silver/50 text-xs px-5 h-10"
                 defaultValue={
                   (contactBlock.config?.linkedin_url as string) || ""
                 }
@@ -930,7 +930,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
                 id="website"
                 type="url"
                 placeholder="https://..."
-                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-white/10 text-xs px-5 h-10"
+                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-spotify-silver/50 text-xs px-5 h-10"
                 defaultValue={
                   (contactBlock.config?.website_url as string) || ""
                 }
@@ -942,7 +942,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
           </div>
         ) : (
           <div className="text-[12px] text-spotify-silver bg-spotify-near-black p-4 rounded-xl text-center font-medium">
-            연락처 블록이 없습니다.
+            아직 연락처 섹션이 없어요.
           </div>
         )}
       </div>
@@ -955,7 +955,7 @@ function DesignPanel() {
   return (
     <div className="space-y-6">
       <div className="px-1">
-        <h2 className="text-[17px] font-extrabold tracking-tight text-white">디자인</h2>
+        <h2 className="text-[17px] font-bold tracking-tight text-white">디자인</h2>
         <p className="mt-1 text-[12px] font-medium text-spotify-silver">테마와 도메인은 공개 준비와 분리해 언제든 조정할 수 있어요.</p>
       </div>
       <DesignEditor />
