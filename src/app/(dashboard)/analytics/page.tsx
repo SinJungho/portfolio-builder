@@ -56,6 +56,16 @@ interface AnalyticsSummary {
   topReferrers: TopReferrer[];
 }
 
+function getVisitorTrendSummary(stats: DailyStat[]) {
+  if (!stats.length) return "선택한 기간의 일별 방문자 데이터가 없습니다.";
+
+  const firstViews = stats[0].views;
+  const lastViews = stats.at(-1)?.views ?? firstViews;
+  if (firstViews === lastViews) return `일별 페이지 뷰는 ${firstViews}건으로 기간의 처음과 마지막이 같습니다.`;
+
+  return `일별 페이지 뷰는 기간 첫날 ${firstViews}건에서 마지막 날 ${lastViews}건으로 ${lastViews > firstViews ? "증가" : "감소"}했습니다.`;
+}
+
 export default function AnalyticsPage() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
@@ -107,6 +117,7 @@ export default function AnalyticsPage() {
     ? getPortfolioState(selectedPortfolio.is_published, selectedPortfolio.blocks.length)
     : "draft";
   const hasAnalyticsData = Boolean(summary && (summary.totalViews || summary.uniqueVisitors || summary.totalClicks));
+  const periodLabel = period === "7d" ? "7일" : period === "30d" ? "30일" : "90일";
 
   const copyPortfolioLink = async () => {
     if (!selectedPortfolio?.slug) return;
@@ -183,10 +194,12 @@ export default function AnalyticsPage() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
+                aria-pressed={period === p}
+                aria-label={`최근 ${p.slice(0, -1)}일 분석 보기`}
                 className={`
                   px-4 py-2 rounded-lg text-[13px] font-extrabold transition-all
                   ${period === p 
-                    ? "bg-white text-black shadow-spotify-md scale-[1.02]" 
+                    ? "bg-spotify-green text-black shadow-spotify-md scale-[1.02]"
                     : "text-spotify-silver hover:text-white hover:bg-white/5"}
                 `}
               >
@@ -194,6 +207,11 @@ export default function AnalyticsPage() {
               </button>
             ))}
           </div>
+          {isSummaryFetching && (
+            <span role="status" aria-live="polite" className="text-[12px] font-bold text-spotify-green">
+              선택한 분석을 업데이트하는 중…
+            </span>
+          )}
         </div>
       </div>
 
@@ -206,7 +224,7 @@ export default function AnalyticsPage() {
         </div>
       ) : summary ? (
         hasAnalyticsData ? (
-        <div className="space-y-10">
+        <div className="space-y-10" aria-busy={isSummaryFetching}>
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden group hover:bg-spotify-mid-dark transition-colors duration-300">
@@ -257,9 +275,9 @@ export default function AnalyticsPage() {
             <CardHeader className="p-8 pb-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-2xl font-black text-white">방문자 추이</CardTitle>
+                  <CardTitle id="visitor-trend-title" className="text-2xl font-black text-white">방문자 추이</CardTitle>
                   <CardDescription className="text-sm font-medium text-spotify-silver mt-1">
-                    지난 {period === '7d' ? '7일' : period === '30d' ? '30일' : '90일'}간의 일별 페이지 뷰 현황입니다.
+                    지난 {periodLabel}간의 일별 페이지 뷰 현황입니다.
                   </CardDescription>
                 </div>
                 {isSummaryFetching && (
@@ -270,55 +288,88 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-8">
-              <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={summary.dailyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1ed760" stopOpacity={0.25}/>
-                        <stop offset="95%" stopColor="#1ed760" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
-                      dy={10}
-                      tickFormatter={(val: string) => val.split('-').slice(1).join('/')}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
-                      dx={-10}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#181818',
-                        borderRadius: '20px', 
-                        border: '1px solid rgba(255, 255, 255, 0.1)', 
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        padding: '12px 16px'
-                      }}
-                      labelStyle={{ marginBottom: '4px', fontWeight: 800, color: '#ffffff' }}
-                      itemStyle={{ fontWeight: 700, color: '#1ed760' }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="views" 
-                      stroke="#1ed760" 
-                      strokeWidth={4}
-                      fillOpacity={1} 
-                      fill="url(#colorViews)" 
-                      animationDuration={1500}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div aria-labelledby="visitor-trend-title" aria-describedby="visitor-trend-summary">
+                <p id="visitor-trend-summary" className="sr-only">지난 {periodLabel}의 방문자 추이입니다. {getVisitorTrendSummary(summary.dailyStats)}</p>
+                <div className="h-[350px] w-full" aria-hidden="true">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={summary.dailyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1ed760" stopOpacity={0.25}/>
+                          <stop offset="95%" stopColor="#1ed760" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
+                        dy={10}
+                        tickFormatter={(val: string) => val.split('-').slice(1).join('/')}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fontWeight: 700, fill: '#b3b3b3' }}
+                        dx={-10}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#181818',
+                          borderRadius: '20px',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                          padding: '12px 16px'
+                        }}
+                        labelStyle={{ marginBottom: '4px', fontWeight: 800, color: '#ffffff' }}
+                        itemStyle={{ fontWeight: 700, color: '#1ed760' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="views"
+                        stroke="#1ed760"
+                        strokeWidth={4}
+                        fillOpacity={1}
+                        fill="url(#colorViews)"
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                {summary.dailyStats.length > 0 ? (
+                  <table className="sr-only">
+                    <caption>지난 {periodLabel} 방문자 추이 일별 데이터</caption>
+                    <thead>
+                      <tr><th scope="col">날짜</th><th scope="col">페이지 뷰</th></tr>
+                    </thead>
+                    <tbody>
+                      {summary.dailyStats.map((stat) => <tr key={stat.date}><td>{stat.date}</td><td>{stat.views}건</td></tr>)}
+                    </tbody>
+                  </table>
+                ) : <p className="sr-only">지난 {periodLabel}의 방문자 추이 데이터가 없습니다.</p>}
               </div>
             </CardContent>
           </Card>
+
+          {(summary.topBlocks[0] || summary.topReferrers[0]) && (
+            <section className="flex flex-col gap-4 rounded-2xl border border-spotify-green/20 bg-spotify-green/5 p-6 sm:flex-row sm:items-center sm:justify-between" aria-label="다음 추천 작업">
+              <div>
+                <p className="text-[12px] font-bold text-spotify-green">다음 한 가지</p>
+                <p className="mt-1 text-[15px] font-bold text-white">
+                  {summary.topBlocks[0]
+                    ? `${getBlockName(summary.topBlocks[0].block_id)} 섹션이 가장 많은 관심을 받았어요.`
+                    : `${summary.topReferrers[0].referrer || "직접 방문"}에서 방문이 가장 많아요.`}
+                </p>
+                <p className="mt-1 text-[13px] text-spotify-silver">이 흐름을 이어서 포트폴리오를 다듬거나 링크를 공유해 보세요.</p>
+              </div>
+              <Button asChild className="btn-pill-primary h-10 shrink-0 px-5">
+                <Link href={`/editor/${selectedPortfolioId}?focus=${summary.topBlocks[0] ? "blocks" : "publish"}`}>
+                  {summary.topBlocks[0] ? "섹션 다듬기" : "공개 준비 확인"}
+                </Link>
+              </Button>
+            </section>
+          )}
 
           {/* Detailed Lists */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
