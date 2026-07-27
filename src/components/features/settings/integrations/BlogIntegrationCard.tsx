@@ -74,7 +74,7 @@ export function BlogIntegrationCard({
 
           <div>
             <header className="flex flex-wrap items-center gap-3 mb-2">
-              <h3 className="text-[18px] font-black text-white tracking-tight">
+              <h3 className="text-[18px] font-bold text-white tracking-tight">
                 블로그 피드
                 {blogIntegration && (
                   <span className="text-[14px] font-normal text-spotify-silver ml-1.5">
@@ -86,7 +86,7 @@ export function BlogIntegrationCard({
                 <span
                   role="status"
                   aria-label={`${getProviderDisplayName(blogIntegration.provider)} 피드 동기화 활성화됨`}
-                  className="flex items-center gap-2 text-[11px] font-black text-spotify-green bg-spotify-green/10 px-3 py-1 rounded-full uppercase tracking-spotify"
+                  className="flex items-center gap-2 text-[11px] font-bold text-spotify-green bg-spotify-green/10 px-3 py-1 rounded-full uppercase tracking-spotify"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${theme.pulse} ${theme.shadow}`}></span>
                   동기화 활성화됨
@@ -95,7 +95,7 @@ export function BlogIntegrationCard({
                 <span
                   role="status"
                   aria-label="블로그 피드 연동 안 됨"
-                  className="text-[11px] font-black text-spotify-silver bg-white/5 px-3 py-1 rounded-full uppercase tracking-spotify"
+                  className="text-[11px] font-bold text-spotify-silver bg-white/5 px-3 py-1 rounded-full uppercase tracking-spotify"
                 >
                   연동 안 됨
                 </span>

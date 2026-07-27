@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
 
   if (isPortfoliosLoading) {
     return (
-      <div className="p-8 space-y-8 animate-in fade-in duration-500 min-h-screen bg-[#121212]">
+      <div className="p-8 space-y-8 animate-in fade-in duration-500 min-h-screen bg-spotify-near-black">
         <Skeleton className="h-10 w-48 bg-white/10" />
         <Skeleton className="h-[400px] w-full rounded-[32px] bg-white/10" />
       </div>
@@ -141,13 +141,13 @@ export default function AnalyticsPage() {
 
   if (!portfolios || portfolios.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-[#121212]">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-spotify-near-black">
         <div className="p-8 bg-spotify-dark-surface border border-white/5 rounded-[40px] max-w-md shadow-spotify flex flex-col items-center space-y-6 animate-in fade-in duration-500">
-          <div className="p-5 bg-spotify-green/10 rounded-3xl border border-spotify-green/20">
+          <div className="p-5 bg-spotify-mid-dark rounded-3xl border border-white/5">
             <Layout className="w-12 h-12 text-spotify-green" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-white">아직 분석할 포트폴리오가 없습니다</h2>
+            <h2 className="text-2xl font-bold text-white">아직 분석할 포트폴리오가 없습니다</h2>
             <p className="text-spotify-silver text-[14px] font-medium leading-relaxed">
               포트폴리오를 먼저 만들고 공개 준비를 마쳐보세요. 공개 후 방문자가 생기면 이곳에서 통계를 확인할 수 있습니다.
             </p>
@@ -161,15 +161,15 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="min-h-screen bg-spotify-near-black text-white p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-spotify-green font-bold text-xs tracking-widest uppercase">
+          <div className="flex items-center gap-2 text-spotify-silver font-bold text-xs tracking-widest">
             <TrendingUp className="w-4 h-4" />
             포트폴리오 성과
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">분석 대시보드</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">분석 대시보드</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
                 aria-pressed={period === p}
                 aria-label={`최근 ${p.slice(0, -1)}일 분석 보기`}
                 className={`
-                  px-4 py-2 rounded-lg text-[13px] font-extrabold transition-all
+                  px-4 py-2 rounded-lg text-[13px] font-bold transition-all
                   ${period === p 
                     ? "bg-spotify-green text-black shadow-spotify-md scale-[1.02]"
                     : "text-spotify-silver hover:text-white hover:bg-white/5"}
@@ -232,9 +232,9 @@ export default function AnalyticsPage() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
                     <p className="text-[13px] font-bold text-spotify-silver">전체 조회</p>
-                    <h3 className="text-4xl font-black text-white">{summary.totalViews.toLocaleString()}</h3>
+                    <h3 className="text-4xl font-bold text-white">{summary.totalViews.toLocaleString()}</h3>
                   </div>
-                  <div className="p-3 bg-spotify-green/10 rounded-2xl group-hover:scale-110 transition-transform duration-500">
+                  <div className="p-3 bg-spotify-mid-dark rounded-2xl group-hover:scale-110 transition-transform duration-500">
                     <Users className="w-6 h-6 text-spotify-green" />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
                     <p className="text-[13px] font-bold text-spotify-silver">순 방문자</p>
-                    <h3 className="text-4xl font-black text-white">{summary.uniqueVisitors.toLocaleString()}</h3>
+                    <h3 className="text-4xl font-bold text-white">{summary.uniqueVisitors.toLocaleString()}</h3>
                   </div>
                   <div className="p-3 bg-white/5 rounded-xl group-hover:scale-105 transition-transform duration-300">
                     <MousePointer2 className="w-6 h-6 text-spotify-silver" />
@@ -260,7 +260,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
                     <p className="text-[13px] font-bold text-spotify-silver">링크 클릭</p>
-                    <h3 className="text-4xl font-black text-white">{summary.totalClicks.toLocaleString()}</h3>
+                    <h3 className="text-4xl font-bold text-white">{summary.totalClicks.toLocaleString()}</h3>
                   </div>
                   <div className="p-3 bg-white/5 rounded-xl group-hover:scale-105 transition-transform duration-300">
                     <BarChart3 className="w-6 h-6 text-spotify-silver" />
@@ -275,7 +275,7 @@ export default function AnalyticsPage() {
             <CardHeader className="p-8 pb-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle id="visitor-trend-title" className="text-2xl font-black text-white">방문자 추이</CardTitle>
+                  <CardTitle id="visitor-trend-title" className="text-2xl font-bold text-white">방문자 추이</CardTitle>
                   <CardDescription className="text-sm font-medium text-spotify-silver mt-1">
                     지난 {periodLabel}간의 일별 페이지 뷰 현황입니다.
                   </CardDescription>
@@ -376,7 +376,7 @@ export default function AnalyticsPage() {
             {/* Top Blocks */}
             <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
               <CardHeader className="p-8">
-                <CardTitle className="text-xl font-black text-white">인기 블록 (클릭 수)</CardTitle>
+                <CardTitle className="text-xl font-bold text-white">인기 섹션 (클릭 수)</CardTitle>
                 <CardDescription className="text-[13px] font-medium text-spotify-silver">
                   사용자들이 가장 많이 관심을 보인 섹션입니다.
                 </CardDescription>
@@ -394,20 +394,20 @@ export default function AnalyticsPage() {
                             {idx + 1}
                           </div>
                           <div>
-                            <h4 className="text-[15px] font-extrabold text-white group-hover:text-spotify-green transition-colors">
+                            <h4 className="text-[15px] font-bold text-white group-hover:text-spotify-green transition-colors">
                               {getBlockName(block.block_id)}
                             </h4>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[16px] font-black text-white">{block.count}</span>
+                          <span className="text-[16px] font-bold text-white">{block.count}</span>
                           <span className="text-[11px] font-bold text-spotify-silver">클릭</span>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="py-12 text-center space-y-3">
-                      <div className="flex justify-center"><Clock className="w-8 h-8 text-white/20" /></div>
+                      <div className="flex justify-center"><Clock className="w-8 h-8 text-white/40" /></div>
                       <p className="text-[13px] font-bold text-spotify-silver">아직 클릭 데이터가 없습니다.</p>
                     </div>
                   )}
@@ -418,7 +418,7 @@ export default function AnalyticsPage() {
             {/* Top Referrers */}
             <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
               <CardHeader className="p-8">
-                <CardTitle className="text-xl font-black text-white">주요 유입 경로</CardTitle>
+                <CardTitle className="text-xl font-bold text-white">주요 유입 경로</CardTitle>
                 <CardDescription className="text-[13px] font-medium text-spotify-silver">
                   사용자들이 어떤 경로를 통해 접속했는지 확인하세요.
                 </CardDescription>
@@ -429,21 +429,21 @@ export default function AnalyticsPage() {
                     summary.topReferrers.map((ref: { referrer: string; count: number }) => (
                       <div key={ref.referrer} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors group">
                         <div className="flex items-center gap-3">
-                          <div className="bg-[#121212] p-2 rounded-lg shadow-sm">
+                          <div className="bg-spotify-near-black p-2 rounded-lg shadow-sm">
                             <ExternalLink className="w-3.5 h-3.5 text-spotify-silver group-hover:text-spotify-green" />
                           </div>
                           <span className="text-[14px] font-bold text-white truncate max-w-[200px] md:max-w-[300px]">
                             {ref.referrer === '' ? '직접 방문' : ref.referrer}
                           </span>
                         </div>
-                        <Badge className="bg-white/5 border border-white/5 text-spotify-green font-extrabold px-3 py-1 text-[11px] shadow-sm">
+                        <Badge className="bg-white/5 border border-white/5 text-spotify-green font-bold px-3 py-1 text-[11px] shadow-sm">
                           {summary.totalViews ? (ref.count / summary.totalViews * 100).toFixed(0) : 0}%
                         </Badge>
                       </div>
                     ))
                   ) : (
                     <div className="py-12 text-center space-y-3">
-                      <div className="flex justify-center"><Clock className="w-8 h-8 text-white/20" /></div>
+                      <div className="flex justify-center"><Clock className="w-8 h-8 text-white/40" /></div>
                       <p className="text-[13px] font-bold text-spotify-silver">아직 유입 경로 데이터가 없습니다.</p>
                     </div>
                   )}
@@ -455,7 +455,7 @@ export default function AnalyticsPage() {
         ) : (
           <section className="max-w-xl py-12 sm:py-20" aria-labelledby="analytics-empty-title">
             <p className="mb-3 text-[14px] font-bold text-spotify-green">첫 방문자를 기다리는 중</p>
-            <h2 id="analytics-empty-title" className="text-[clamp(28px,4vw,40px)] font-black tracking-tight text-white">
+            <h2 id="analytics-empty-title" className="text-[clamp(28px,4vw,40px)] font-bold tracking-tight text-white">
               아직 방문 데이터가 없어요
             </h2>
             <p className="mt-4 max-w-lg text-[16px] font-medium leading-relaxed text-spotify-silver">

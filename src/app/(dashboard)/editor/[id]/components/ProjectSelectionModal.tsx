@@ -104,7 +104,7 @@ export default function ProjectSelectionModal({
             <Input
               id="project-search"
               placeholder="리포지토리 검색..."
-              className="pl-12 h-14 bg-spotify-dark-surface border border-white/5 rounded-full text-[16px] focus:border-spotify-green text-white placeholder:text-spotify-silver/30 transition-all"
+              className="pl-12 h-14 bg-spotify-dark-surface border border-white/5 rounded-full text-[16px] focus:border-spotify-green text-white placeholder:text-spotify-silver/60 transition-all"
               value={searchQuery}
               ref={searchInputRef}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -139,7 +139,7 @@ export default function ProjectSelectionModal({
 
               <div className="space-y-4">
                 <div className="pr-10">
-                  <h4 className="font-extrabold text-[17px] text-white group-hover:text-spotify-green transition-colors line-clamp-1">
+                  <h4 className="font-bold text-[17px] text-white group-hover:text-spotify-green transition-colors line-clamp-1">
                     {project.name}
                   </h4>
                   <p className="text-[14px] text-spotify-silver line-clamp-2 mt-2 leading-relaxed min-h-[40px]">
@@ -171,7 +171,7 @@ export default function ProjectSelectionModal({
                     <Label className="text-[11px] font-bold text-spotify-green uppercase tracking-wider flex items-center gap-2">
                       포트폴리오용 프로젝트 소개
                       <span className="px-1.5 py-0.5 rounded-md bg-spotify-green/10 text-spotify-green text-[10px]">
-                        Markdown
+                        서식 지원
                       </span>
                     </Label>
 
