@@ -100,6 +100,10 @@
   --sidebar-ring: #1ed760;
 }
 
+html {
+  overflow-x: clip;
+}
+
 .dark {
   /* Keep same as root for immersive dark experience */
   --background: #121212;

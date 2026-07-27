@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
+import { BarChart3, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -52,7 +52,7 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
 
   return (
     <header className="sticky top-0 z-40 w-full bg-spotify-near-black/70 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 md:px-10">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 md:px-10">
         <div className="flex items-center gap-2">
           {isGenerateFlow && (
             <div className="flex items-center">
@@ -106,10 +106,15 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
                 </Link>
               </Button>
             </div>
-          ) : !isGenerateFlow && (
-            <Link href="/dashboard#new-portfolio">
-              <Button size="sm" className="btn-pill-primary h-10 px-6 font-bold gap-2">
-                <Plus className="w-4 h-4" />
+          ) : !isGenerateFlow && !pathname.startsWith("/dashboard") && (
+            <Link href="/dashboard#new-portfolio" className="hidden md:block">
+              <Button
+                size="sm"
+                className="btn-pill-primary h-10 px-6 font-bold gap-2"
+                aria-label="새 포트폴리오 만들기"
+                title="새 포트폴리오 만들기"
+              >
+                <Plus className="w-4 h-4" aria-hidden="true" />
                 <span className="hidden sm:inline">새 포트폴리오</span>
               </Button>
             </Link>
@@ -118,10 +123,6 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
           <div className="h-6 w-px bg-white/10 mx-2 hidden sm:block" />
           
           <div className="flex items-center gap-1.5">
-            <Button variant="ghost" size="icon" className="hidden xs:flex h-9 w-9 rounded-full text-spotify-silver hover:text-white hover:bg-white/5">
-              <Bell className="h-4.5 w-4.5" />
-            </Button>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 overflow-hidden outline-none focus:ring-2 focus:ring-spotify-green/20">

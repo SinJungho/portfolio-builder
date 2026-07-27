@@ -61,7 +61,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-4 px-4 py-3 rounded-md transition-all duration-300 group no-underline",
+                      "flex items-center gap-4 px-4 py-3 rounded-md transition-all duration-300 group no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green",
                       isActive
                         ? "text-white"
                         : "text-spotify-silver hover:text-white",
@@ -122,7 +122,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
       </aside>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className={cn("md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 px-6 items-center justify-between z-50 safe-area-inset-bottom", isEditor ? "hidden" : "flex")}>
+      <div className={cn("md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 px-3 sm:px-6 items-center justify-between z-50 safe-area-inset-bottom", isEditor ? "hidden" : "flex")}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -131,7 +131,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
               key={item.label}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 min-w-[64px] transition-all no-underline",
+              "flex flex-1 flex-col items-center gap-1 transition-all no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green",
                 isActive ? "text-white" : "text-spotify-silver",
               )}
             >
@@ -156,7 +156,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
         {/* Mobile More / Sheet */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center gap-1 min-w-[64px] text-spotify-silver outline-none">
+            <button className="flex flex-1 flex-col items-center gap-1 text-spotify-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
               <Menu className="w-[22px] h-[22px] stroke-[2px]" />
               <span className="text-[10px] font-bold opacity-60">더보기</span>
             </button>
