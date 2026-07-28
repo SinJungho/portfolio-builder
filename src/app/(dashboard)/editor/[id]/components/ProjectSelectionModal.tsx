@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MarkdownEditor from "@/components/ui/MarkdownEditor";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
+import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
 import { Check, GitFork, Search, Star, X } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { type RawProject } from "@/types/project";
@@ -41,9 +42,13 @@ export default function ProjectSelectionModal({
     Record<string, string>
   >(() => initialCustomDescriptions);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isDirty =
+    JSON.stringify(tempSelectedIds) !== JSON.stringify(initialSelectedIds) ||
+    JSON.stringify(tempCustomDescriptions) !== JSON.stringify(initialCustomDescriptions);
+  const { requestClose, confirmOpen, setConfirmOpen } = useCloseGuard(isDirty, onClose);
   const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
     isOpen,
-    onClose,
+    requestClose,
     searchInputRef,
   );
 
@@ -73,7 +78,7 @@ export default function ProjectSelectionModal({
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
             aria-label="프로젝트 선택 닫기"
@@ -81,7 +86,7 @@ export default function ProjectSelectionModal({
             <X className="w-6 h-6 text-white" />
           </button>
           <h3 id="project-selection-title" className="text-[18px] font-bold text-white">
-            대표 리포지토리 선택 ({tempSelectedIds.length})
+            대표 프로젝트 선택 ({tempSelectedIds.length})
           </h3>
         </div>
         <Button
@@ -97,14 +102,14 @@ export default function ProjectSelectionModal({
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
         {/* 검색 폼 */}
         <div className="mb-8 space-y-4">
-          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">포트폴리오에 보여줄 리포지토리를 선택하세요. 선택한 프로젝트는 소개를 직접 다듬을 수 있어요.</p>
+          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">포트폴리오에 보여줄 프로젝트를 선택하세요. 선택한 프로젝트는 소개를 직접 다듬을 수 있어요.</p>
           <div className="relative">
             <Label htmlFor="project-search" className="sr-only">프로젝트 검색</Label>
             <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-spotify-silver" />
             <Input
               id="project-search"
-              placeholder="리포지토리 검색..."
-              className="pl-12 h-14 bg-spotify-dark-surface border border-white/5 rounded-full text-[16px] focus:border-spotify-green text-white placeholder:text-spotify-silver/60 transition-all"
+              placeholder="프로젝트 검색..."
+              className="pl-12 h-14 bg-spotify-dark-surface border border-white/5 rounded-full text-[16px] focus:border-spotify-green text-white placeholder:text-spotify-silver/80 transition-all"
               value={searchQuery}
               ref={searchInputRef}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -120,7 +125,7 @@ export default function ProjectSelectionModal({
             <Card
               key={project.id}
               className={`
-                relative p-6 rounded-[28px] border transition-all duration-300 group
+                relative p-6 rounded-3xl border transition-all duration-300 group
                 ${
                   tempSelectedIds.includes(project.id)
                     ? "border-spotify-green bg-spotify-green/5 ring-1 ring-spotify-green/30 text-white shadow-spotify"
@@ -139,11 +144,11 @@ export default function ProjectSelectionModal({
 
               <div className="space-y-4">
                 <div className="pr-10">
-                  <h4 className="font-bold text-[17px] text-white group-hover:text-spotify-green transition-colors line-clamp-1">
+                  <h4 className="font-bold text-[17px] text-white transition-colors line-clamp-1">
                     {project.name}
                   </h4>
                   <p className="text-[14px] text-spotify-silver line-clamp-2 mt-2 leading-relaxed min-h-[40px]">
-                    {project.description || "설명이 없는 프로젝트입니다."}
+                    {project.description || "설명이 없는 프로젝트예요."}
                   </p>
                 </div>
 
@@ -168,9 +173,9 @@ export default function ProjectSelectionModal({
                 {/* 프로젝트 상세 소개글 마크다운 에디터 영역 ( 선택 시에만 표시 ) */}
                 {tempSelectedIds.includes(project.id) && (
                   <div className="pt-4 border-t border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <Label className="text-[11px] font-bold text-spotify-green uppercase tracking-wider flex items-center gap-2">
+                    <Label className="text-[11px] font-bold text-spotify-silver tracking-wider flex items-center gap-2">
                       포트폴리오용 프로젝트 소개
-                      <span className="px-1.5 py-0.5 rounded-md bg-spotify-green/10 text-spotify-green text-[10px]">
+                      <span className="px-1.5 py-0.5 rounded-md bg-white/5 text-spotify-silver text-[10px]">
                         서식 지원
                       </span>
                     </Label>
@@ -192,8 +197,8 @@ export default function ProjectSelectionModal({
                     />
 
                     <p className="text-[11px] text-spotify-silver font-medium leading-relaxed">
-                      README 요약 대신 이 내용이 우선적으로 노출됩니다. 직접
-                      작성하거나 기존 마크다운 파일을 불러올 수 있습니다.
+                      README 요약 대신 이 내용이 우선적으로 노출돼요. 직접
+                      작성하거나 기존 마크다운 파일을 불러올 수 있어요.
                     </p>
                   </div>
                 )}
@@ -203,12 +208,13 @@ export default function ProjectSelectionModal({
           {filteredProjects.length === 0 && (
             <div className="col-span-full py-20 text-center">
               <p className="text-spotify-silver font-bold text-lg">
-                검색 결과가 없습니다.
+                검색 결과가 없어요.
               </p>
             </div>
           )}
         </div>
       </div>
+      <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={searchInputRef} />
     </div>
   );
 }

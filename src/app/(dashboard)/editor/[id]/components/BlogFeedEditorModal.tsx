@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
+import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
 import { Switch } from "@/components/ui/switch";
 import { X } from "lucide-react";
 import React, { useRef, useState } from "react";
@@ -30,9 +31,13 @@ export default function BlogFeedEditorModal({
     (initialConfig.show_thumbnail as boolean) ?? true,
   );
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const isDirty =
+    maxItems !== ((initialConfig.max_items as number) || 4) ||
+    showThumbnail !== ((initialConfig.show_thumbnail as boolean) ?? true);
+  const { requestClose, confirmOpen, setConfirmOpen } = useCloseGuard(isDirty, onClose);
   const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
     isOpen,
-    onClose,
+    requestClose,
     titleRef,
   );
 
@@ -51,7 +56,7 @@ export default function BlogFeedEditorModal({
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
             aria-label="블로그 피드 편집 닫기"
@@ -75,7 +80,7 @@ export default function BlogFeedEditorModal({
         <div className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="blog-max-items" className="text-xs font-bold text-spotify-silver">
-              최대 표시 개수
+              몇 개까지 보여줄까요?
             </Label>
             <Input
               id="blog-max-items"
@@ -83,21 +88,21 @@ export default function BlogFeedEditorModal({
               min="1"
               max="12"
               value={maxItems}
-              onChange={(e) => setMaxItems(parseInt(e.target.value) || 1)}
+              onChange={(e) => setMaxItems(Math.min(12, Math.max(1, parseInt(e.target.value) || 1)))}
               className="bg-spotify-dark-surface border-white/5 text-white h-12 rounded-xl focus:border-spotify-green"
             />
             <p className="text-[11px] text-spotify-silver pt-1">
-              한 번에 표시할 최신 블로그 글의 개수를 설정합니다. (1~12개)
+              최신 글부터 최대 12개까지 보여줄 수 있어요.
             </p>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-spotify-dark-surface border border-white/5 rounded-xl mt-4">
             <div className="space-y-0.5">
               <Label className="text-[14px] font-bold text-white">
-                썸네일 표시 여부
+                썸네일을 보여줄까요?
               </Label>
               <p className="text-[12px] text-spotify-silver">
-                블로그 포스트의 썸네일 이미지를 카드에 표시합니다.
+                블로그 포스트의 썸네일 이미지를 카드에 표시해요.
               </p>
             </div>
             <Switch
@@ -108,6 +113,7 @@ export default function BlogFeedEditorModal({
           </div>
         </div>
       </div>
+      <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
     </div>
   );
 }

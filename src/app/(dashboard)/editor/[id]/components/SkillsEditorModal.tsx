@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
+import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
 import { X, Plus, Trash2 } from "lucide-react";
 import React, { useRef, useState } from "react";
 import {
@@ -18,6 +19,20 @@ interface SkillItem {
   name: string;
   level: number;
 }
+
+// 0~100 숫자를 직접 적게 하는 대신 라벨 있는 단계로 고른다.
+// 저장 값은 숫자(level)로 유지해 공개 포트폴리오 차트 렌더링은 그대로 둔다.
+const SKILL_TIERS = [
+  { label: "학습 중", value: 30 },
+  { label: "익숙해요", value: 60 },
+  { label: "능숙해요", value: 85 },
+  { label: "전문가", value: 100 },
+] as const;
+
+const levelToTierValue = (level: number) =>
+  SKILL_TIERS.reduce((best, tier) =>
+    Math.abs(tier.value - level) < Math.abs(best.value - level) ? tier : best,
+  ).value;
 
 interface SkillsEditorModalProps {
   isOpen: boolean;
@@ -41,9 +56,13 @@ export default function SkillsEditorModal({
     (initialConfig.skills as SkillItem[]) || [],
   );
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const isDirty =
+    chartType !== ((initialConfig.chart_type as string) || "radar") ||
+    JSON.stringify(skills) !== JSON.stringify((initialConfig.skills as SkillItem[]) || []);
+  const { requestClose, confirmOpen, setConfirmOpen } = useCloseGuard(isDirty, onClose);
   const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
     isOpen,
-    onClose,
+    requestClose,
     titleRef,
   );
 
@@ -58,7 +77,7 @@ export default function SkillsEditorModal({
   };
 
   const addSkill = () => {
-    setSkills([...skills, { name: "", level: 50 }]);
+    setSkills([...skills, { name: "", level: 60 }]);
   };
 
   const removeSkill = (index: number) => {
@@ -80,7 +99,7 @@ export default function SkillsEditorModal({
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
             aria-label="기술 스택 편집 닫기"
@@ -104,7 +123,7 @@ export default function SkillsEditorModal({
         <div className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="skills-chart-type" className="text-xs font-bold text-spotify-silver">
-              차트 종류
+              어떤 차트로 보여줄까요?
             </Label>
             <Select value={chartType} onValueChange={setChartType}>
               <SelectTrigger id="skills-chart-type" className="w-full h-12 bg-spotify-dark-surface border-white/5 text-white rounded-xl focus:ring-spotify-green cursor-pointer">
@@ -147,23 +166,32 @@ export default function SkillsEditorModal({
                       className="bg-transparent border-white/10 text-white h-9 text-sm"
                     />
                   </div>
-                  <div className="w-[120px] space-y-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={skill.level}
-                      onChange={(e) =>
-                        updateSkill(index, "level", parseInt(e.target.value) || 0)
-                      }
-                      aria-label={`기술 ${index + 1} 숙련도 (0-100)`}
-                      className="bg-transparent border-white/10 text-white h-9 text-sm"
-                    />
+                  <div className="w-[130px] space-y-1 shrink-0">
+                    <Select
+                      value={String(levelToTierValue(skill.level))}
+                      onValueChange={(v) => updateSkill(index, "level", Number(v))}
+                    >
+                      <SelectTrigger
+                        aria-label={`기술 ${index + 1} 숙련도`}
+                        className="h-9 bg-transparent border-white/10 text-white text-sm rounded-lg cursor-pointer"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-spotify-dark-surface border-white/5 text-white rounded-xl">
+                        {SKILL_TIERS.map((tier) => (
+                          <SelectItem key={tier.value} value={String(tier.value)} className="focus:bg-white/5 cursor-pointer">
+                            {tier.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <button
+                    type="button"
                     onClick={() => removeSkill(index)}
-                    className="p-2 text-spotify-silver hover:text-spotify-negative hover:bg-spotify-negative/10 rounded-lg transition-colors cursor-pointer"
+                    className="p-2 text-spotify-silver hover:text-spotify-negative hover:bg-spotify-negative/10 rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
                     title="항목 삭제"
+                    aria-label={`기술 ${index + 1} 항목 삭제`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -171,13 +199,14 @@ export default function SkillsEditorModal({
               ))}
               {skills.length === 0 && (
                 <div className="text-center py-8 text-spotify-silver text-sm bg-spotify-dark-surface border border-white/5 rounded-xl">
-                  등록된 기술이 없습니다.
+                  등록된 기술이 없어요.
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+      <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
     </div>
   );
 }

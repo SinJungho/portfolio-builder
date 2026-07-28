@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
+import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
 import { X } from "lucide-react";
 import React, { useRef, useState } from "react";
 
@@ -34,9 +35,15 @@ export default function HeroEditorModal({
     (initialConfig.show_github_stats as boolean) ?? true,
   );
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const isDirty =
+    headline !== ((initialConfig.headline as string) || "") ||
+    subheadline !== ((initialConfig.subheadline as string) || "") ||
+    bio !== ((initialConfig.bio as string) || "") ||
+    showStats !== ((initialConfig.show_github_stats as boolean) ?? true);
+  const { requestClose, confirmOpen, setConfirmOpen } = useCloseGuard(isDirty, onClose);
   const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
     isOpen,
-    onClose,
+    requestClose,
     titleRef,
   );
 
@@ -57,7 +64,7 @@ export default function HeroEditorModal({
       <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
             type="button"
             aria-label="소개 화면 편집 닫기"
@@ -113,7 +120,7 @@ export default function HeroEditorModal({
               id="hero-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="본인에 대한 상세한 소개를 작성해주세요."
+              placeholder="본인에 대한 상세한 소개를 작성해 주세요."
               className="w-full bg-spotify-dark-surface border border-white/5 text-white p-4 rounded-xl focus:border-spotify-green outline-none min-h-[150px] resize-y"
             />
           </div>
@@ -121,10 +128,10 @@ export default function HeroEditorModal({
           <div className="flex items-center justify-between p-4 bg-spotify-dark-surface border border-white/5 rounded-xl mt-4">
             <div className="space-y-0.5">
               <Label className="text-[14px] font-bold text-white">
-                GitHub 통계 표시
+                GitHub 통계를 보여줄까요?
               </Label>
               <p className="text-[12px] text-spotify-silver">
-                커밋, PR 수 등의 통계를 소개 화면에 보여줍니다.
+                커밋, PR 수 등의 통계를 소개 화면에 보여줘요.
               </p>
             </div>
             <Switch
@@ -135,6 +142,7 @@ export default function HeroEditorModal({
           </div>
         </div>
       </div>
+      <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
     </div>
   );
 }
