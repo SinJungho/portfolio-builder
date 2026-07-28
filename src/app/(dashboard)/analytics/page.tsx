@@ -23,7 +23,7 @@ import { portfolioUrl } from "@/lib/portfolio-url";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, Copy, ExternalLink, Layout } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Area,
   AreaChart,
@@ -73,7 +73,7 @@ function getVisitorTrendSummary(stats: DailyStat[]) {
 }
 
 export default function AnalyticsPage() {
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
+  const [selectedId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
 
   // 1. Fetch Portfolios (Including blocks for ID translation)
@@ -84,12 +84,8 @@ export default function AnalyticsPage() {
     queryFn: () => getUserPortfolios(),
   });
 
-  // Set default selection
-  useEffect(() => {
-    if (portfolios && portfolios.length > 0 && !selectedPortfolioId) {
-      setSelectedPortfolioId(portfolios[0].id);
-    }
-  }, [portfolios, selectedPortfolioId]);
+  // 선택값이 없으면 첫 포트폴리오로 기본 선택 (effect 대신 파생)
+  const selectedPortfolioId = selectedId || portfolios?.[0]?.id || "";
 
   // 2. Fetch Summary
   const {
