@@ -79,7 +79,7 @@ export const ContactSettingsPanel = React.memo(function ContactSettingsPanel({
         </div>
       ) : (
         <div className="text-[13px] text-spotify-silver bg-spotify-near-black/50 p-4 rounded-2xl border border-dashed border-white/5 text-center font-normal">
-          연락처 블록을 찾을 수 없습니다.
+          연락처 섹션을 찾을 수 없습니다.
         </div>
       )}
     </div>

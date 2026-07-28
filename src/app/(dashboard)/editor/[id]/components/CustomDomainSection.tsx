@@ -3,6 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import {
   AlertCircle,
@@ -14,7 +25,7 @@ import {
   RefreshCw,
   Terminal,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 /**
@@ -59,18 +70,20 @@ function DNSRecordItem({
             {host}
           </code>
         </div>
-        <div
-          className="relative group cursor-pointer"
+        <button
+          type="button"
+          className="relative group text-left w-full cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green rounded-md"
           onClick={() => onCopy(value)}
+          aria-label={`${type} 레코드 값 ${value} 복사`}
         >
           <span className="text-spotify-silver block mb-1.5 font-medium">
             값 (Value/Target)
           </span>
-          <code className="text-spotify-green bg-spotify-green/10 border border-spotify-green/20 px-2 py-1 rounded-md block flex justify-between items-center overflow-hidden font-bold">
+          <code className="text-spotify-green bg-spotify-green/10 border border-spotify-green/20 px-2 py-1 rounded-md flex justify-between items-center overflow-hidden font-bold">
             <span className="truncate">{value}</span>{" "}
             <Copy className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
           </code>
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -82,6 +95,7 @@ function DNSRecordItem({
  */
 export default function CustomDomainSection() {
   const { customDomain, setCustomDomain } = usePortfolioStore();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   // 실제 DNS 검증 결과. 화면의 "연결 완료" 표시는 오직 이 값에서만 나온다.
@@ -89,10 +103,23 @@ export default function CustomDomainSection() {
     "unchecked" | "connected" | "pending" | "error"
   >("unchecked");
 
-  // 1. 도메인 연결 설정 핸들러
-  const handleConnectDomain = (domainValue: string) => {
-    setCustomDomain(domainValue || null)
-      .then(() => toast.success("도메인이 저장됐어요."))
+  // 스킴·경로를 벗겨 순수 호스트명만 남기고 형식 검증. 빈 값은 "" (연결 해제), 형식 오류는 null.
+  const normalizeDomain = (raw: string): string | null => {
+    let d = raw.trim().toLowerCase();
+    if (!d) return "";
+    d = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\.$/, "");
+    return /^(?=.{1,253}$)([a-z0-9](-?[a-z0-9])*\.)+[a-z]{2,}$/.test(d) ? d : null;
+  };
+
+  // 1. 도메인 연결 설정 핸들러 — 형식이 맞지 않으면 "저장됨" 타임라인에 진입시키지 않는다.
+  const handleConnectDomain = (raw: string) => {
+    const domain = normalizeDomain(raw);
+    if (domain === null) {
+      toast.error("올바른 도메인 형식이 아니에요. 예: www.yourdomain.com");
+      return;
+    }
+    setCustomDomain(domain || null)
+      .then(() => toast.success(domain ? "도메인이 저장됐어요." : "도메인 연결을 해제했어요."))
       .catch((err: Error) => toast.error(err.message));
   };
 
@@ -140,35 +167,33 @@ export default function CustomDomainSection() {
       <div className="space-y-2.5 pt-2 border-t border-white/5">
         <Label
           htmlFor="custom-domain"
-          className="text-[10px] font-bold uppercase text-spotify-silver tracking-wider"
+          className="text-[10px] font-bold text-spotify-silver tracking-wider"
         >
           커스텀 도메인 연결{" "}
-          <span className="text-[9px] text-spotify-silver/50 font-medium">
+          <span className="text-[10px] text-spotify-silver font-medium">
             (선택 사항)
           </span>
         </Label>
+        <p className="text-[11px] text-spotify-silver font-medium leading-relaxed">
+          연결하지 않아도 기본 주소로 지원서에 바로 쓸 수 있어요.
+        </p>
         <div className="flex gap-2">
           <Input
             id="custom-domain"
+            key={customDomain ?? "none"}
+            ref={inputRef}
             placeholder="www.yourdomain.com"
-            className="rounded-full h-9 bg-spotify-near-black border-white/5 focus:border-spotify-green text-white placeholder:text-spotify-silver/50 text-xs px-4"
+            className="rounded-full h-9 bg-spotify-near-black border-white/5 focus:border-spotify-green text-white placeholder:text-spotify-silver/80 text-xs px-4"
             defaultValue={customDomain || ""}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter") {
-                handleConnectDomain(e.currentTarget.value.trim());
+                handleConnectDomain(e.currentTarget.value);
               }
             }}
           />
           <Button
             className="btn-pill-primary h-9 px-4 text-xs font-bold"
-            onClick={() => {
-              const input = document.getElementById(
-                "custom-domain",
-              ) as HTMLInputElement;
-              if (input) {
-                handleConnectDomain(input.value.trim());
-              }
-            }}
+            onClick={() => handleConnectDomain(inputRef.current?.value ?? "")}
           >
             연결
           </Button>
@@ -192,16 +217,50 @@ export default function CustomDomainSection() {
                 />
                 도메인 연결 상태
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={isChecking}
-                className="h-7 text-spotify-silver hover:text-white hover:bg-white/5 text-[11px] font-bold rounded px-3 transition-colors disabled:opacity-50"
-                onClick={handleCheckDomainStatus}
-              >
-                <RefreshCw className={`w-3 h-3 mr-1.5 ${isChecking ? "animate-spin" : ""}`} />
-                {isChecking ? "확인 중..." : "상태 갱신"}
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isChecking}
+                  className="h-8 text-spotify-silver hover:text-white hover:bg-white/5 text-[11px] font-bold rounded-full px-3 transition-colors disabled:opacity-50"
+                  onClick={handleCheckDomainStatus}
+                >
+                  <RefreshCw className={`w-3 h-3 mr-1.5 ${isChecking ? "animate-spin" : ""}`} />
+                  {isChecking ? "확인 중..." : "상태 갱신"}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-spotify-negative hover:text-spotify-negative hover:bg-spotify-negative/10 text-[11px] font-bold rounded-full px-3 transition-colors"
+                    >
+                      연결 해제
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-[20px] font-bold text-white">
+                        연결을 해제할까요?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
+                        커스텀 도메인 연결이 끊겨요. 기본 주소는 그대로 쓸 수 있고, 다시 연결하려면 도메인을 재입력하면 돼요.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="pt-4">
+                      <AlertDialogCancel className="bg-transparent border border-white/10 text-white rounded-full h-11 font-bold px-6 hover:bg-white/5 transition-colors">
+                        취소
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleConnectDomain("")}
+                        className="!bg-transparent border border-spotify-negative/40 !text-spotify-negative hover:!bg-spotify-negative/10 rounded-full h-11 font-bold px-6 transition-colors"
+                      >
+                        연결 해제
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
 
             {/* 연결 타임라인 시각화 */}
@@ -301,11 +360,11 @@ export default function CustomDomainSection() {
               <div className="p-4 pt-0 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="text-[11px] text-spotify-silver leading-relaxed bg-spotify-announcement/10 p-3 rounded-lg border border-spotify-announcement/20">
                   <strong className="text-spotify-announcement block mb-1">
-                    ℹ️ DNS 레코드 등록 방법
+                    DNS 레코드 등록 방법
                   </strong>
                   도메인 구입처(가비아, 카페24, 클라우드플레어 등)의 DNS 관리
                   페이지에서 아래 두 가지 레코드 중 하나를 추가해 주세요. (A
-                  레코드 권장을 추천합니다.)
+                  레코드를 권장해요.)
                 </div>
 
                 <div className="space-y-3">
@@ -316,7 +375,7 @@ export default function CustomDomainSection() {
                     host="@"
                     value="76.76.21.21"
                     onCopy={(val: string) =>
-                      handleCopyToClipboard(val, "IP 주소가 복사되었습니다.")
+                      handleCopyToClipboard(val, "IP 주소를 복사했어요.")
                     }
                   />
 
@@ -327,7 +386,7 @@ export default function CustomDomainSection() {
                     host="www"
                     value="cname.vercel-dns.com"
                     onCopy={(val: string) =>
-                      handleCopyToClipboard(val, "CNAME 값이 복사되었습니다.")
+                      handleCopyToClipboard(val, "CNAME 값을 복사했어요.")
                     }
                   />
                 </div>

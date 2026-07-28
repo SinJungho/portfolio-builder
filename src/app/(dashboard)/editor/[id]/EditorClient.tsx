@@ -1,7 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { type Block, usePortfolioStore } from "@/stores/portfolioStore";
 import { useQuery } from "@tanstack/react-query";
@@ -30,12 +40,15 @@ import ProjectSelectionModal from "./components/ProjectSelectionModal";
 import HeroEditorModal from "./components/HeroEditorModal";
 import SkillsEditorModal from "./components/SkillsEditorModal";
 import BlogFeedEditorModal from "./components/BlogFeedEditorModal";
+import ContactEditorModal from "./components/ContactEditorModal";
 import { type RawProject } from "@/types/project";
 import { type PortfolioInitialData } from "@/types/portfolio";
 import {
   getPortfolioState,
   portfolioStateLabel,
 } from "@/lib/portfolio-state";
+import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
+import { blockDisplayName, blockDescription } from "@/lib/block-labels";
 import {
   type EditorDestination,
   type PortfolioReadinessItem,
@@ -69,14 +82,6 @@ const blockTypeIcons: Record<string, React.ReactNode> = {
   blog_feed: <Rss className="w-5 h-5 text-current" />,
 };
 
-const blockTypeLabels: Record<string, string> = {
-  hero: "소개",
-  project_grid: "프로젝트",
-  skills: "기술 스택",
-  contact: "연락처",
-  blog_feed: "블로그",
-};
-
 type SidebarTab = "blocks" | "publish" | "design";
 
 export default function EditorClient({
@@ -93,7 +98,6 @@ export default function EditorClient({
     initialize,
     toggleBlock,
     reorderBlocks,
-    updateOptionalField,
     deleteBlock,
     updateBlockConfig,
     addBlock,
@@ -136,6 +140,7 @@ export default function EditorClient({
   const [isEditingHero, setIsEditingHero] = useState<boolean>(false);
   const [isEditingSkills, setIsEditingSkills] = useState<boolean>(false);
   const [isEditingBlogFeed, setIsEditingBlogFeed] = useState<boolean>(false);
+  const [isEditingContact, setIsEditingContact] = useState<boolean>(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
@@ -143,6 +148,8 @@ export default function EditorClient({
   >({});
   const [saveError, setSaveError] = useState<{ message: string; retry: () => void } | null>(null);
   const [lastBlockOrder, setLastBlockOrder] = useState<Block[] | null>(null);
+  // 이번 세션에서 방금 공개했을 때만 축하 카드를 노출한다(이미 공개된 포트폴리오 재진입 시엔 조용히).
+  const [justPublished, setJustPublished] = useState(false);
 
   const { data: rawProjects } = useQuery<RawProject[]>({
     queryKey: ["raw-projects"],
@@ -183,17 +190,6 @@ export default function EditorClient({
   const contactBlock = blocks.find((b: Block) => b.block_type === "contact");
   const portfolioState = getPortfolioState(isPublished, blocks.length);
   const readinessItems = getPortfolioReadiness(blocks);
-
-  const handleOptionalChange = (field: string, value: string) => {
-    if (!contactBlock) return;
-    setSaveError(null);
-    updateOptionalField(contactBlock.id, { [field]: value })
-      .then(() => toast.success("연락처 정보가 저장되었습니다."))
-      .catch(() => {
-        setSaveError({ message: "연락처 정보를 저장하지 못했습니다.", retry: () => handleOptionalChange(field, value) });
-        toast.error("연락처 정보를 저장하지 못했습니다. 다시 시도해주세요.");
-      });
-  };
 
   const handleTabChange = (tab: SidebarTab) => {
     startTransition(() => {
@@ -251,9 +247,10 @@ export default function EditorClient({
 
     try {
       await setPublished(true);
-      toast.success("공개되었습니다. 이제 링크를 복사해 지원서에 넣어보세요.");
+      setJustPublished(true);
+      toast.success("공개했어요. 이제 링크를 복사해 지원서에 넣어보세요.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "공개하지 못했습니다.";
+      const message = error instanceof Error ? error.message : "공개하지 못했어요.";
       setSaveError({ message, retry: handlePublish });
       toast.error(message);
     }
@@ -263,18 +260,13 @@ export default function EditorClient({
     setSaveError(null);
     try {
       await setPublished(false);
-      toast.success("공개를 중지했습니다. 편집 내용은 그대로 보관돼요.");
+      setJustPublished(false);
+      toast.success("공개를 중지했어요. 편집 내용은 그대로 보관돼요.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "공개를 중지하지 못했습니다.";
+      const message = error instanceof Error ? error.message : "공개를 중지하지 못했어요.";
       setSaveError({ message, retry: handleUnpublish });
       toast.error(message);
     }
-  };
-
-  const focusContactField = () => {
-    setIsPreviewing(false);
-    handleTabChange("publish");
-    window.setTimeout(() => document.getElementById("email")?.focus(), 0);
   };
 
   const handleReadinessAction = async (destination: EditorDestination) => {
@@ -297,9 +289,17 @@ export default function EditorClient({
     }
 
     if (destination === "contact") {
-      if (contactBlock && !contactBlock.is_visible) await toggleBlock(contactBlock.id);
-      if (!contactBlock) await addBlock("contact");
-      focusContactField();
+      if (contactBlock) {
+        if (!contactBlock.is_visible) await toggleBlock(contactBlock.id);
+        setIsPreviewing(false);
+        openProjectEditor(contactBlock);
+      } else {
+        const newContactBlock = await addBlock("contact");
+        if (newContactBlock) {
+          setIsPreviewing(false);
+          openProjectEditor(newContactBlock);
+        }
+      }
       return;
     }
 
@@ -331,11 +331,19 @@ export default function EditorClient({
       setIsEditingSkills(true);
     } else if (block.block_type === "blog_feed") {
       setIsEditingBlogFeed(true);
+    } else if (block.block_type === "contact") {
+      setIsEditingContact(true);
     }
   };
 
   useEffect(() => {
     if (!focusItem || handledFocusItem.current === focusItem) return;
+    // 애널리틱스에서 오는 blocks/publish 딥링크는 해당 사이드바 탭으로 전환한다.
+    if (focusItem === "blocks" || focusItem === "publish") {
+      handledFocusItem.current = focusItem;
+      handleTabChange(focusItem);
+      return;
+    }
     if (!["hero", "projects", "contact"].includes(focusItem)) return;
     handledFocusItem.current = focusItem;
     void handleReadinessAction(focusItem as EditorDestination);
@@ -357,7 +365,7 @@ export default function EditorClient({
       }).then(() => {
         setIsEditingProjects(false);
         setEditingBlockId(null);
-        toast.success("대표 리포지토리 설정이 업데이트되었습니다.");
+        toast.success("대표 프로젝트 설정을 업데이트했어요.");
       });
     }
   };
@@ -368,8 +376,9 @@ export default function EditorClient({
       setIsEditingHero(false);
       setIsEditingSkills(false);
       setIsEditingBlogFeed(false);
+      setIsEditingContact(false);
       setEditingBlockId(null);
-      toast.success("섹션 설정이 업데이트되었습니다.");
+      toast.success("섹션 설정을 업데이트했어요.");
     });
   };
 
@@ -385,6 +394,7 @@ export default function EditorClient({
     <div className="flex flex-col h-screen w-full bg-spotify-near-black overflow-hidden text-white">
       {/* 상단 헤더 영역 */}
       <header className="h-14 border-b border-white/5 bg-spotify-near-black flex items-center justify-between px-6 shrink-0 z-20">
+        <h1 className="sr-only">포트폴리오 편집</h1>
         <Link
           href="/dashboard"
           className="flex items-center gap-2 text-[14px] font-bold text-spotify-silver hover:text-white transition-colors"
@@ -433,7 +443,7 @@ export default function EditorClient({
               onKeyDown={(event) => handleTabKeyDown(event, "publish")}
               className={`flex-1 cursor-pointer rounded-full py-2.5 text-[13px] font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green ${
                 sidebarTab === "publish"
-                  ? "bg-spotify-green text-black shadow-spotify-md"
+                  ? "bg-white text-black shadow-spotify-md"
                   : "bg-spotify-mid-dark text-white hover:bg-spotify-dark-surface"
               }`}
               type="button"
@@ -498,8 +508,6 @@ export default function EditorClient({
             ) : sidebarTab === "publish" ? (
               <SettingsPanel
                 initialData={initialData}
-                contactBlock={contactBlock}
-                handleOptionalChange={handleOptionalChange}
                 portfolioState={portfolioState}
                 isSaving={isSaving}
                 onPublish={handlePublish}
@@ -509,7 +517,9 @@ export default function EditorClient({
                 onPreview={openPreview}
                 previewOpened={previewOpened}
                 hasReviewedPreview={hasReviewedPreview}
+                hasReviewedOnce={reviewedPreviewSignature !== null}
                 onReviewPreview={confirmPreviewReview}
+                justPublished={justPublished}
               />
             ) : (
               <DesignPanel />
@@ -533,7 +543,7 @@ export default function EditorClient({
             <span className="text-[11px] font-bold text-spotify-silver">{isPublished ? "공개됨" : "초안 미리보기"}</span>
             <div className="bg-spotify-mid-dark border border-white/5 rounded-full px-4 py-1 text-[11px] text-spotify-silver font-mono flex items-center gap-2 shadow-inner">
               <Globe className="w-3.5 h-3.5 text-spotify-silver/50" />
-              {initialData?.slug}.portfolioforge.app
+              {initialData.slug ? portfolioUrlLabel(initialData.slug) : "주소 준비 중"}
             </div>
           </div>
 
@@ -591,6 +601,17 @@ export default function EditorClient({
         isOpen={isEditingBlogFeed}
         onClose={() => {
           setIsEditingBlogFeed(false);
+          setEditingBlockId(null);
+        }}
+        onSave={handleSaveBlockConfig}
+        initialConfig={blocks.find((b: Block) => b.id === editingBlockId)?.config || {}}
+        isSaving={isSaving}
+      />
+
+      <ContactEditorModal
+        isOpen={isEditingContact}
+        onClose={() => {
+          setIsEditingContact(false);
           setEditingBlockId(null);
         }}
         onSave={handleSaveBlockConfig}
@@ -664,7 +685,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
         </SortableContext>
       </DndContext>
       {blocks.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/5 bg-spotify-near-black/20 rounded-[20px] gap-3">
+        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/5 bg-spotify-near-black/20 rounded-2xl gap-3">
           <div className="p-3 bg-white/5 rounded-full text-spotify-silver">
             <Grid className="w-6 h-6" />
           </div>
@@ -676,13 +697,13 @@ const BlocksPanel = React.memo(function BlocksPanel({
 
       <div className="pt-6 border-t border-white/5 mt-6">
         <div className="flex flex-col gap-1 mb-4 px-1">
-          <h4 className="text-[15px] font-bold text-white">새 섹션 추가</h4>
+          <h3 className="text-[15px] font-bold text-white">새 섹션 추가</h3>
           <p className="text-[12px] text-spotify-silver font-medium">
             내 포트폴리오를 더 풍성하게 만들어보세요.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {Object.keys(blockTypeLabels).map((type: string) => {
+          {Object.keys(blockDisplayName).map((type: string) => {
             const isUnique = type === "hero" || type === "contact";
             const alreadyExists =
               isUnique && blocks.some((b: Block) => b.block_type === type);
@@ -693,21 +714,26 @@ const BlocksPanel = React.memo(function BlocksPanel({
                 onClick={() => addBlock(type)}
                 disabled={isSaving || alreadyExists}
                 className={`
-                  flex items-center gap-2 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all border cursor-pointer
+                  flex flex-col items-start gap-1 px-3 py-3 rounded-xl text-left transition-all border cursor-pointer
                   ${
                     alreadyExists
-                      ? "bg-spotify-near-black border-white/5 text-spotify-silver/30 cursor-not-allowed"
-                      : "bg-spotify-near-black border-white/5 text-white hover:border-spotify-green hover:text-spotify-green hover:bg-spotify-mid-dark active:scale-95"
+                      ? "bg-spotify-near-black border-white/5 text-spotify-silver/50 cursor-not-allowed"
+                      : "bg-spotify-near-black border-white/5 text-white hover:border-spotify-green hover:bg-spotify-mid-dark active:scale-95 group"
                   }
                 `}
                 type="button"
               >
-                {alreadyExists ? (
-                  <Check className="w-3.5 h-3.5" />
-                ) : (
-                  <Plus className="w-3.5 h-3.5" />
-                )}
-                {blockTypeLabels[type]}
+                <span className={`flex items-center gap-2 text-[12px] font-bold ${alreadyExists ? "" : "group-hover:text-spotify-green"}`}>
+                  {alreadyExists ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5" />
+                  )}
+                  {blockDisplayName[type]}
+                </span>
+                <span className={`text-[11px] font-medium leading-snug ${alreadyExists ? "text-spotify-silver/50" : "text-spotify-silver"}`}>
+                  {alreadyExists ? "이미 추가됨" : blockDescription[type]}
+                </span>
               </button>
             );
           })}
@@ -719,8 +745,6 @@ const BlocksPanel = React.memo(function BlocksPanel({
 
 interface SettingsPanelProps {
   initialData: PortfolioInitialData;
-  contactBlock: Block | undefined;
-  handleOptionalChange: (field: string, value: string) => void;
   portfolioState: ReturnType<typeof getPortfolioState>;
   isSaving: boolean;
   onPublish: () => void;
@@ -730,13 +754,13 @@ interface SettingsPanelProps {
   onPreview: () => void;
   previewOpened: boolean;
   hasReviewedPreview: boolean;
+  hasReviewedOnce: boolean;
   onReviewPreview: () => void;
+  justPublished: boolean;
 }
 
 const SettingsPanel = React.memo(function SettingsPanel({
   initialData,
-  contactBlock,
-  handleOptionalChange,
   portfolioState,
   isSaving,
   onPublish,
@@ -746,88 +770,209 @@ const SettingsPanel = React.memo(function SettingsPanel({
   onPreview,
   previewOpened,
   hasReviewedPreview,
+  hasReviewedOnce,
   onReviewPreview,
+  justPublished,
 }: SettingsPanelProps) {
   const publishedPath = initialData.slug ? `/${initialData.slug}` : null;
   const nextItem = readinessItems.find((item) => !item.complete);
 
+  // 진행도 분모는 준비 항목 수로 통일한다(대시보드 카드·모바일 상태바와 동일한 X/Y).
+  // 미리보기 확인은 별도의 마지막 관문으로 두고 숫자에는 포함하지 않는다.
+  const totalSteps = readinessItems.length;
+  const completedSteps = readinessItems.filter((item) => item.complete).length;
+  const progressPct = Math.round((completedSteps / totalSteps) * 100);
+  const previewIsNext = !nextItem && !hasReviewedPreview;
+  const readyToPublish = !nextItem && hasReviewedPreview;
+  // 한 번 확인한 뒤 내용을 바꿔 미리보기가 다시 잠긴 상태. 공개 버튼이 조용히 사라지는 대신
+  // "왜 또 잠겼는지"를 카피로 설명해 마감 직전 불안(다 됐는데 왜?)을 줄인다.
+  const previewStale = previewIsNext && hasReviewedOnce;
+  const readinessLead =
+    portfolioState === "published"
+      ? "공개 중이에요. 필요한 준비를 모두 마쳤어요."
+      : completedSteps === 0
+        ? "GitHub에서 불러온 내용으로 시작해요. 아래를 채우면 지원서에 넣을 링크가 완성돼요."
+        : readyToPublish
+          ? "준비가 끝났어요. 링크를 만들어 지원서에 넣어보세요."
+          : previewStale
+            ? "내용을 바꿨네요. 바뀐 모습으로 미리보기만 한 번 더 확인하면 바로 공개할 수 있어요."
+            : previewIsNext
+              ? "마지막으로 미리보기만 확인하면 공개할 수 있어요."
+            : totalSteps - completedSteps === 1
+              ? "거의 다 왔어요. 한 가지만 더 채우면 공개할 수 있어요."
+              : "좋아요, 순조롭게 채워지고 있어요. 남은 항목을 이어가 볼까요?";
+
+  const copyPublishedLink = () => {
+    if (!initialData.slug) return;
+    navigator.clipboard.writeText(portfolioUrl(initialData.slug));
+    toast.success("지원서용 링크를 복사했어요.");
+  };
+
   return (
     <div className="space-y-6">
-      <div className="bg-spotify-dark-surface border border-white/5 rounded-[24px] p-6 shadow-spotify text-white space-y-6">
-        <div className="space-y-1">
-          <h3 className="text-[16px] font-bold text-white flex items-center gap-2">
-            <Globe className="w-4 h-4 text-spotify-green" />
-            공개 준비도
-          </h3>
-          <p className="text-[12px] text-spotify-silver font-medium">
-            채용 담당자가 빠르게 읽을 수 있는지 확인한 뒤 공개하세요.
+      {justPublished && portfolioState === "published" && (
+        <div className="rounded-3xl border border-spotify-green/30 bg-spotify-green/[0.07] p-6 shadow-spotify text-white space-y-5 animate-in fade-in zoom-in-95 duration-500 motion-reduce:animate-none">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-spotify-green text-black">
+              <Check className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-[17px] font-bold tracking-tight text-white">공개됐어요 🎉</h2>
+              <p className="text-[12px] font-medium text-spotify-silver">이제 이 링크만 지원서에 붙여넣으면 끝이에요.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-black/30 px-3 py-2.5">
+            <Globe className="w-4 h-4 shrink-0 text-spotify-green" />
+            <span className="truncate font-mono text-[13px] font-bold text-white">
+              {initialData.slug ? portfolioUrlLabel(initialData.slug) : "주소 준비 중"}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" className="btn-pill-primary h-11 flex-1 text-[13px]" onClick={copyPublishedLink}>
+              <Copy className="w-4 h-4" /> 지원서용 링크 복사
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11 rounded-full bg-white/10 px-4 text-[13px] font-bold text-white hover:bg-white/15"
+              onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug), "_blank")}
+            >
+              <ArrowUpRight className="w-4 h-4" /> 열기
+            </Button>
+          </div>
+        </div>
+      )}
+      {portfolioState !== "published" && completedSteps > 0 && (
+        // 첫 진입의 감정 프레임: 빈 체크리스트가 아니라 "GitHub가 이미 채워둔 것"을 먼저 보여준다.
+        // completedSteps === 0(진짜 빈 상태)에서는 근거 없는 안심이 되므로 숨긴다(정직한 증거 원칙).
+        <div className="rounded-3xl border border-spotify-green/20 bg-spotify-green/[0.06] p-5 text-white flex items-start gap-3.5 animate-in fade-in duration-500 motion-reduce:animate-none">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-spotify-green/15 text-spotify-green">
+            <Sparkles className="h-[18px] w-[18px]" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <p className="text-[15px] font-bold tracking-tight text-white">이미 대부분 채워져 있어요</p>
+            <p className="text-[12px] text-spotify-silver font-medium leading-relaxed">
+              {totalSteps - completedSteps > 0
+                ? `GitHub에서 불러온 내용으로 ${completedSteps}개를 채웠어요. ${totalSteps - completedSteps}개만 확인하면 지원서에 넣을 링크가 완성돼요.`
+                : "GitHub에서 불러온 내용으로 준비를 마쳤어요. 미리보기만 확인하면 공개할 수 있어요."}
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="bg-spotify-dark-surface border border-white/5 rounded-3xl p-6 shadow-spotify text-white space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[16px] font-bold text-white flex items-center gap-2">
+              <Globe className="w-4 h-4 text-spotify-green" />
+              공개 준비
+            </h2>
+            <span className="text-[12px] font-bold text-spotify-silver tabular-nums" aria-hidden="true">
+              {completedSteps}/{totalSteps}
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="공개 준비도"
+            aria-valuemin={0}
+            aria-valuemax={totalSteps}
+            aria-valuenow={completedSteps}
+            className="h-1.5 overflow-hidden rounded-full bg-white/10"
+          >
+            <div
+              className="h-full rounded-full bg-spotify-green transition-[width] duration-500 ease-out motion-reduce:transition-none"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <p className="text-[12px] text-spotify-silver font-medium leading-relaxed">
+            {readinessLead}
           </p>
         </div>
 
-        <ul className="space-y-2" aria-label="공개 전 확인 항목">
-          {readinessItems.map((item) => (
-            <li key={item.label} className="flex items-center gap-3 text-[12px] font-bold">
-              <Check className={`h-4 w-4 shrink-0 ${item.complete ? "text-spotify-green" : "text-white/40"}`} aria-hidden="true" />
-              <span className={item.complete ? "text-white" : "text-spotify-silver"}>{item.label}</span>
-              {item.complete ? (
-                <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto h-7 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10"
-                  onClick={() => onReadinessAction(item.destination)}
-                >
-                  {item.action}
-                </Button>
-              )}
-            </li>
-          ))}
-          <li className="flex items-center gap-3 text-[12px] font-bold">
-            <Check className={`h-4 w-4 shrink-0 ${hasReviewedPreview ? "text-spotify-green" : "text-white/40"}`} aria-hidden="true" />
-            <span className={hasReviewedPreview ? "text-white" : "text-spotify-silver"}>미리보기 확인</span>
+        <ul className="-mx-2 space-y-0.5" aria-label="공개 전 확인 항목">
+          {readinessItems.map((item) => {
+            const isNext = !item.complete && item.id === nextItem?.id;
+            return (
+              <li key={item.label} className={`flex items-center gap-3 rounded-xl px-2 py-2 text-[12px] font-bold transition-colors ${isNext ? "bg-white/[0.06]" : ""}`}>
+                {item.complete ? (
+                  <Check className="h-4 w-4 shrink-0 text-spotify-green" aria-hidden="true" />
+                ) : (
+                  <span className={`h-4 w-4 shrink-0 rounded-full border-2 ${isNext ? "border-spotify-green" : "border-white/25"}`} aria-hidden="true" />
+                )}
+                <span className={item.complete ? "text-white" : isNext ? "text-white" : "text-spotify-silver"}>{item.label}</span>
+                {item.complete ? (
+                  <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
+                ) : isNext ? (
+                  // 한 번에 하나의 행동만 노출 — 나머지 미완료 항목은 목록으로만 보여 인지 부하를 낮춘다.
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-8 rounded-full bg-white/10 px-3 text-[11px] font-bold text-white hover:bg-white/15"
+                    onClick={() => onReadinessAction(item.destination)}
+                  >
+                    {item.action}
+                  </Button>
+                ) : (
+                  <span className="ml-auto text-[11px] font-medium text-spotify-silver">나중에</span>
+                )}
+              </li>
+            );
+          })}
+          <li className={`flex items-center gap-3 rounded-xl px-2 py-2 text-[12px] font-bold transition-colors ${previewIsNext ? "bg-white/[0.06]" : ""}`}>
+            {hasReviewedPreview ? (
+              <Check className="h-4 w-4 shrink-0 text-spotify-green" aria-hidden="true" />
+            ) : (
+              <span className={`h-4 w-4 shrink-0 rounded-full border-2 ${previewIsNext ? "border-spotify-green" : "border-white/25"}`} aria-hidden="true" />
+            )}
+            <span className={hasReviewedPreview ? "text-white" : previewIsNext ? "text-white" : "text-spotify-silver"}>미리보기 확인</span>
             {hasReviewedPreview ? (
               <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
-            ) : (
+            ) : previewIsNext ? (
+              // 준비 항목을 모두 마친 뒤에만 미리보기 액션을 노출 — 한 번에 하나의 행동 원칙 유지.
               <div className="ml-auto flex items-center gap-2">
-                <Button type="button" variant="ghost" size="sm" className="h-7 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={onPreview}>
+                <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={onPreview}>
                   <Eye className="h-3.5 w-3.5" /> 미리보기 열기
                 </Button>
-                <Button type="button" variant="ghost" size="sm" className="h-7 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" disabled={!previewOpened} onClick={onReviewPreview}>
+                <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10 disabled:opacity-40" disabled={!previewOpened} onClick={onReviewPreview}>
                   확인했어요
                 </Button>
               </div>
+            ) : (
+              <span className="ml-auto text-[11px] font-medium text-spotify-silver">나중에</span>
             )}
           </li>
         </ul>
 
-        {portfolioState !== "published" && (
-          <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-4">
-            <p className="text-[12px] text-spotify-silver">
-              {nextItem ? `${nextItem.label}을(를) 먼저 채워보세요.` : hasReviewedPreview ? "공개할 준비가 됐어요." : "미리보기를 열고 확인해 주세요."}
+        {readyToPublish && portfolioState !== "published" && (
+          <div className="space-y-3 border-t border-white/5 pt-5">
+            <p className="text-[13px] font-bold leading-relaxed text-white">
+              준비가 끝났어요. 이제 지원서에 넣을 링크를 만들 차례예요.
             </p>
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="shrink-0 h-9 rounded-full px-4 text-[12px] font-bold text-white hover:bg-white/10"
-              onClick={() => nextItem ? onReadinessAction(nextItem.destination) : hasReviewedPreview ? onPublish() : onPreview()}
+              className="btn-pill-primary h-12 w-full text-[14px]"
+              disabled={isSaving}
+              onClick={onPublish}
             >
-              {nextItem ? nextItem.action : hasReviewedPreview ? "공개하기" : <><Eye className="h-3.5 w-3.5" /> 미리보기</>}
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Globe className="w-4 h-4" aria-hidden="true" />
+              )}
+              포트폴리오 공개하기
             </Button>
           </div>
         )}
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-bold uppercase text-spotify-silver tracking-wider">
+          <Label className="text-[10px] font-bold text-spotify-silver tracking-wider">
             기본 주소
           </Label>
           <div className="flex flex-col gap-3 p-3 bg-white/5 border border-white/5 rounded-xl">
             <div className="flex items-center gap-2 min-w-0">
               <Globe className="w-4 h-4 text-spotify-green shrink-0" />
               <span className="text-[13px] font-bold text-white font-mono truncate">
-                {initialData?.slug}.portfolioforge.app
+                {initialData.slug ? portfolioUrlLabel(initialData.slug) : "주소 준비 중"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -838,30 +983,49 @@ const SettingsPanel = React.memo(function SettingsPanel({
               </span>
               {portfolioState === "published" && publishedPath ? (
                 <>
-                  <Button variant="ghost" size="sm" className="h-7 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={() => {
-                    navigator.clipboard.writeText(new URL(publishedPath, window.location.origin).href);
-                    toast.success("공개 링크를 복사했습니다.");
-                  }}>
-                    <Copy className="w-3 h-3" /> 링크 복사
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={() => window.open(publishedPath, "_blank")}>
-                    <ArrowUpRight className="w-3 h-3" /> 열기
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" disabled={isSaving} onClick={onUnpublish}>
-                    공개 중지
-                  </Button>
+                  {/* 방금 공개한 직후엔 위 성공 카드가 복사/열기를 제공하므로 여기선 중복을 접고 공개 중지만 남긴다. */}
+                  {!justPublished && (
+                    <>
+                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={copyPublishedLink}>
+                        <Copy className="w-3 h-3" /> 지원서용 링크 복사
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug), "_blank")}>
+                        <ArrowUpRight className="w-3 h-3" /> 열기
+                      </Button>
+                    </>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" disabled={isSaving}>
+                        공개 중지
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-[20px] font-bold text-white">
+                          공개를 중지할까요?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
+                          링크가 즉시 비공개돼요. 편집한 내용은 그대로 보관되고, 언제든 다시 공개할 수 있어요.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="pt-4">
+                        <AlertDialogCancel className="bg-transparent border border-white/10 text-white rounded-full h-11 font-bold px-6 hover:bg-white/5 transition-colors">
+                          취소
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={onUnpublish}
+                          className="!bg-transparent border border-spotify-negative/40 !text-spotify-negative hover:!bg-spotify-negative/10 rounded-full h-11 font-bold px-6 transition-colors"
+                        >
+                          공개 중지
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </>
-              ) : nextItem ? (
-                <Button size="sm" className="h-9 rounded-full px-4 text-[11px] font-bold text-white hover:bg-white/10" variant="ghost" disabled={isSaving} onClick={() => onReadinessAction(nextItem.destination)}>
-                  {nextItem.action}
-                </Button>
-              ) : portfolioState === "preview" ? (
-                <Button size="sm" className="btn-pill-primary h-9 px-4 text-[11px]" disabled={isSaving || !hasReviewedPreview} onClick={onPublish}>
-                  공개하기
-                </Button>
-              ) : (
+              ) : portfolioState === "draft" ? (
                 <span className="text-[11px] font-medium text-spotify-silver">섹션을 추가하면 공개할 수 있어요.</span>
-              )}
+              ) : null}
             </div>
           </div>
           {portfolioState === "published" && (
@@ -871,82 +1035,6 @@ const SettingsPanel = React.memo(function SettingsPanel({
           )}
         </div>
       </div>
-
-      <div className="bg-spotify-dark-surface border border-white/5 rounded-[24px] p-5 shadow-spotify space-y-5 text-white">
-        <div className="space-y-1">
-          <h3 className="text-[16px] font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-spotify-green" />
-            연락처 보완
-          </h3>
-        </div>
-        {contactBlock ? (
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-xs font-bold text-spotify-silver"
-              >
-                이메일
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="contact@example.com"
-                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-spotify-silver/50 text-xs px-5 h-10"
-                defaultValue={(contactBlock.config?.email as string) || ""}
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
-                  handleOptionalChange("email", e.target.value)
-                }
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="linkedin"
-                className="text-xs font-bold text-spotify-silver"
-              >
-                LinkedIn URL
-              </Label>
-              <Input
-                id="linkedin"
-                type="url"
-                placeholder="https://linkedin.com/in/..."
-                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-spotify-silver/50 text-xs px-5 h-10"
-                defaultValue={
-                  (contactBlock.config?.linkedin_url as string) || ""
-                }
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
-                  handleOptionalChange("linkedin_url", e.target.value)
-                }
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="website"
-                className="text-xs font-bold text-spotify-silver"
-              >
-                개인 웹사이트
-              </Label>
-              <Input
-                id="website"
-                type="url"
-                placeholder="https://..."
-                className="rounded-full bg-spotify-near-black border border-white/5 text-white focus:border-spotify-green placeholder:text-spotify-silver/50 text-xs px-5 h-10"
-                defaultValue={
-                  (contactBlock.config?.website_url as string) || ""
-                }
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
-                  handleOptionalChange("website_url", e.target.value)
-                }
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="text-[12px] text-spotify-silver bg-spotify-near-black p-4 rounded-xl text-center font-medium">
-            아직 연락처 섹션이 없어요.
-          </div>
-        )}
-      </div>
-
     </div>
   );
 });

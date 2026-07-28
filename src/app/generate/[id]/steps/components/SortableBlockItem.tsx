@@ -18,14 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import React from "react";
-
-const blockTypeLabels: Record<string, string> = {
-  hero: "소개",
-  project_grid: "프로젝트",
-  skills: "기술 스택",
-  contact: "연락처",
-  blog_feed: "블로그",
-};
+import { blockDisplayName } from "@/lib/block-labels";
 
 interface SortableBlockItemProps<T = unknown> {
   block: T & {
@@ -81,8 +74,8 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
           type="button"
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 text-spotify-silver hover:text-white hover:bg-white/5 rounded transition-colors"
-          aria-label="블록 순서 변경"
+          className="cursor-grab active:cursor-grabbing p-2.5 text-spotify-silver hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          aria-label="섹션 순서 변경"
           title="스페이스바와 방향키 또는 드래그로 순서 변경"
         >
           <GripVertical className="w-5 h-5" />
@@ -96,7 +89,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
 
         <div className="space-y-1 overflow-hidden min-w-0 flex-1">
           <h3 className="font-bold text-[17px] text-white truncate">
-            {blockTypeLabels[block.block_type] || block.block_type}
+            {blockDisplayName[block.block_type] || block.block_type}
           </h3>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             {block.is_ai_generated && (
@@ -110,7 +103,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
                 className="group/edit inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-spotify-green/10 hover:bg-spotify-green text-spotify-green hover:text-black rounded-full text-[12px] font-bold transition-all duration-300 active:scale-95 whitespace-nowrap cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5 transition-transform group-hover/edit:rotate-45" />
-                <span>{block.block_type === "project_grid" ? "프로젝트 설정" : "블록 편집"}</span>
+                <span>{block.block_type === "project_grid" ? "프로젝트 설정" : "섹션 편집"}</span>
               </button>
             )}
           </div>
@@ -125,7 +118,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
               checked={block.is_visible}
               onCheckedChange={() => onToggle(block.id)}
               className="data-[state=checked]:bg-spotify-green scale-100 cursor-pointer"
-              aria-label={`${blockTypeLabels[block.block_type] || block.block_type} 블록 표시`}
+              aria-label={`${blockDisplayName[block.block_type] || block.block_type} 섹션 표시`}
             />
           </div>
         </div>
@@ -133,17 +126,21 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
         <div className="flex items-center">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="p-2.5 text-spotify-silver hover:text-spotify-negative hover:bg-spotify-negative/10 rounded-xl transition-all cursor-pointer">
+              <button
+                type="button"
+                aria-label={`${blockDisplayName[block.block_type] || block.block_type} 섹션 삭제`}
+                className="p-2.5 text-spotify-silver hover:text-spotify-negative hover:bg-spotify-negative/10 rounded-xl transition-all cursor-pointer"
+              >
                 <Trash2 className="w-5 h-5" />
               </button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="w-[90vw] max-w-[400px] rounded-[32px] border border-white/5 bg-spotify-dark-surface shadow-spotify p-8 z-50 text-white">
+            <AlertDialogContent className="w-[90vw] max-w-[400px] rounded-3xl border border-white/5 bg-spotify-dark-surface shadow-spotify p-8 z-50 text-white">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-[20px] font-extrabold text-white">
-                  블록을 완전히 삭제할까요?
+                  섹션을 완전히 삭제할까요?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-[15px] font-medium leading-relaxed text-spotify-silver font-normal">
-                  이 블록과 관련된 모든 설정이 영구적으로 삭제됩니다. 보이지
+                  이 섹션과 관련된 모든 설정이 영구적으로 삭제됩니다. 보이지
                   않게만 하고 싶다면 스위치를 꺼주세요.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -153,9 +150,9 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => onDelete(block.id)}
-                  className="w-full sm:w-auto bg-spotify-negative hover:bg-spotify-negative/80 text-white rounded-full h-11 font-bold px-6 shadow-lg shadow-spotify-negative/20 order-1 sm:order-2 cursor-pointer"
+                  className="w-full sm:w-auto !bg-spotify-negative-strong hover:!bg-spotify-negative-strong-hover text-white rounded-full h-11 font-bold px-6 order-1 sm:order-2 cursor-pointer"
                 >
-                  네, 삭제할게요
+                  삭제
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

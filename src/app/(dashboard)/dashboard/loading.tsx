@@ -1,7 +1,8 @@
 /**
  * 대시보드 로딩 스켈레톤.
- * 실제 page.tsx 레이아웃(여정 스텝 + 다음 한 가지 카드 + 포트폴리오 목록)과
+ * 실제 page.tsx의 공통 레이아웃(헤드라인 + 다음 한 가지 카드 + 포트폴리오 목록)과
  * Spotify 다크 토큰을 그대로 따라, 로드 완료 시 레이아웃이 튀지 않도록 맞춘다.
+ * 4단계 여정 스트립은 첫 사용자 전용이라 스켈레톤에 넣지 않는다(재방문자 시프트 방지).
  */
 export default function DashboardLoading() {
   return (
@@ -12,20 +13,9 @@ export default function DashboardLoading() {
       {/* 상단: 여정 안내 + 다음 한 가지 + 동기화 상태 */}
       <div className="flex flex-col gap-6">
         <div className="max-w-3xl space-y-4">
-          <div className="space-y-3">
-            <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse" />
+          <div className="space-y-2">
             <div className="h-8 w-72 max-w-full rounded-lg bg-white/10 animate-pulse" />
             <div className="h-4 w-full max-w-md rounded-md bg-white/5 animate-pulse" />
-          </div>
-
-          {/* 4단계 여정 스텝 (슬림 진행 스트립) */}
-          <div className="flex items-stretch gap-2">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="flex-1 space-y-1.5">
-                <div className="h-1 rounded-full bg-white/10 animate-pulse" />
-                <div className="h-3 w-4/5 rounded bg-white/5 animate-pulse" />
-              </div>
-            ))}
           </div>
 
           {/* 다음 한 가지 카드 */}

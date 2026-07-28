@@ -18,6 +18,7 @@ import {
   getPortfolioState,
   portfolioStateLabel,
 } from "@/lib/portfolio-state";
+import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -27,7 +28,6 @@ import {
   Copy,
   Edit2,
   Github,
-  Loader2,
   Plus,
   RefreshCw,
   Trash2,
@@ -36,6 +36,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import DashboardLoading from "./loading";
 
 type DashboardPortfolio = {
   id: string;
@@ -71,7 +72,7 @@ export default function DashboardPage() {
         body: JSON.stringify({}),
       });
       if (!res.ok) {
-        throw new Error("생성에 실패했습니다.");
+        throw new Error("포트폴리오를 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
       }
       return res.json();
     },
@@ -86,11 +87,11 @@ export default function DashboardPage() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/portfolios/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("삭제에 실패했습니다.");
+      if (!res.ok) throw new Error("삭제하지 못했어요. 다시 시도해 주세요.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
-      toast.success("포트폴리오가 삭제되었습니다.");
+      toast.success("포트폴리오를 삭제했어요.");
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -101,10 +102,10 @@ export default function DashboardPage() {
     mutationFn: async () => {
       const res = await fetch("/api/integrations/github/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ force: true }) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "동기화를 시작하지 못했습니다.");
+      if (!res.ok) throw new Error(data.error || "동기화를 시작하지 못했어요.");
       return data as { job_id: string };
     },
-    onSuccess: ({ job_id }) => { setSyncError(null); setSyncJobId(job_id); toast.success("GitHub 동기화를 시작했습니다."); },
+    onSuccess: ({ job_id }) => { setSyncError(null); setSyncJobId(job_id); toast.success("GitHub 동기화를 시작했어요."); },
     onError: (error: Error) => { setSyncError(error.message); toast.error(error.message); },
   });
 
@@ -113,7 +114,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       const res = await fetch(`/api/integrations/github/sync/${syncJobId}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "동기화 상태를 확인하지 못했습니다.");
+      if (!res.ok) throw new Error(data.error || "동기화 상태를 확인하지 못했어요.");
       return data;
     },
     enabled: Boolean(syncJobId),
@@ -124,26 +125,17 @@ export default function DashboardPage() {
     if (!syncJob || !syncJobId) return;
     if (syncJob.status === "completed") {
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
-      toast.success("GitHub 동기화가 완료되었습니다.");
+      toast.success("GitHub 동기화를 마쳤어요.");
     } else if (syncJob.status === "failed") {
-      toast.error(syncJob.error || "GitHub 동기화에 실패했습니다.");
+      toast.error(syncJob.error || "GitHub 동기화에 실패했어요.");
     }
   }, [queryClient, syncJob, syncJobId]);
 
   if (isLoading) {
     return (
-      <div
-        role="status"
-        aria-live="polite"
-        className="flex flex-col items-center justify-center min-h-[50vh] gap-4 w-full text-center"
-      >
-        <Loader2
-          aria-hidden="true"
-          className="animate-spin w-10 h-10 text-spotify-green"
-        />
-        <span className="text-spotify-silver text-sm font-bold animate-pulse tracking-spotify uppercase">
-          포트폴리오 목록을 불러오는 중...
-        </span>
+      <div role="status" aria-live="polite">
+        <span className="sr-only">포트폴리오 목록을 불러오는 중</span>
+        <DashboardLoading />
       </div>
     );
   }
@@ -154,7 +146,7 @@ export default function DashboardPage() {
         <Alert variant="destructive" className="flex items-center justify-between gap-4 bg-spotify-negative/10 border-spotify-negative/20 text-spotify-negative rounded-2xl">
           <div className="flex items-center gap-3">
             <AlertTriangle aria-hidden="true" className="h-4 w-4" />
-            <AlertDescription className="font-bold">포트폴리오를 불러오지 못했습니다. 다시 시도해 주세요.</AlertDescription>
+            <AlertDescription className="font-bold">포트폴리오를 불러오지 못했어요. 다시 시도해 주세요.</AlertDescription>
           </div>
           <Button variant="outline" onClick={() => refetch()} className="shrink-0 border-spotify-negative/30 bg-transparent text-spotify-negative hover:bg-spotify-negative/10 hover:text-spotify-negative">
             다시 시도
@@ -166,7 +158,7 @@ export default function DashboardPage() {
 
   const { portfolios, github_connected, github_synced_at } = data;
   const syncFailure = syncJob?.status === "failed"
-    ? syncJob.error || "GitHub 동기화에 실패했습니다."
+    ? syncJob.error || "GitHub 동기화에 실패했어요."
     : syncError;
   const githubSyncDate = github_synced_at ? new Date(github_synced_at) : null;
   const hasGithubSync = Boolean(githubSyncDate && !Number.isNaN(githubSyncDate.getTime()));
@@ -187,9 +179,9 @@ export default function DashboardPage() {
   const journeyMessage = !github_connected
     ? "GitHub 연동을 확인하면 프로젝트를 포트폴리오 초안으로 만들 수 있어요."
     : portfolios.length === 0
-      ? "GitHub 프로젝트를 불러와 초안을 만들면 약 1분 뒤에 검토를 시작할 수 있어요."
+      ? "GitHub 프로젝트를 불러와 초안을 만들면 약 1분 뒤에 이어서 다듬을 수 있어요."
       : hasReadyDraft
-        ? "필수 정보를 모두 채웠어요. 공개 전 검토를 마치고 링크를 공유해 보세요."
+        ? "필수 정보를 모두 채웠어요. 공개 전 확인을 마치고 링크를 공유해 보세요."
         : hasPublishedPortfolio && !hasDraft
           ? "공개 링크가 준비됐어요. 지원서에 복사해 바로 공유할 수 있어요."
           : "가장 진행된 초안을 먼저 마무리하면 지원서용 링크를 만들 수 있어요.";
@@ -200,19 +192,20 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <div className="max-w-3xl space-y-4">
           <div className="space-y-2">
-            <p className="text-[12px] font-bold tracking-spotify text-spotify-silver">지원서 링크 준비</p>
-            <h2 className="text-[32px] font-bold tracking-tight text-white">
-              {hasPublishedPortfolio && !hasDraft ? "공개 링크가 준비됐어요" : "지원서에 넣을 링크를 만들어요"}
-            </h2>
+            <h1 className="text-[32px] font-bold tracking-tight text-white">
+              {hasPublishedPortfolio && !hasDraft ? "공개 링크가 준비됐어요" : "이미 만든 것만으로 충분해요"}
+            </h1>
             <p className="text-spotify-silver text-[16px] font-semibold">
               {journeyMessage}
             </p>
           </div>
+          {/* 4단계 여정은 오리엔테이션이 가장 필요한 첫 사용자에게만 — 초안이 생기면 아래 '다음 한 가지'가 단일 행동을 안내한다. */}
+          {portfolios.length === 0 && (
           <ol aria-label="포트폴리오 준비 단계" className="flex items-stretch gap-2">
             {[
               "GitHub 확인",
               "AI 초안 만들기",
-              "공개 전 검토",
+              "공개 전 확인",
               "링크 공유",
             ].map((step, index) => {
               const stepNumber = index + 1;
@@ -222,22 +215,23 @@ export default function DashboardPage() {
               return (
                 <li key={step} className="flex-1 space-y-1.5" aria-current={isCurrent ? "step" : undefined}>
                   <div className={`h-1 rounded-full ${isComplete ? "bg-spotify-green" : isCurrent ? "bg-white" : "bg-white/10"}`} />
-                  <span className={`block text-[11px] font-bold leading-tight ${isCurrent ? "text-white" : isComplete ? "text-spotify-silver" : "text-spotify-silver/50"}`}>
+                  <span className={`block text-[11px] font-bold leading-tight ${isCurrent ? "text-white" : "text-spotify-silver"}`}>
                     <span className="mr-1 opacity-60">{stepNumber}</span>{step}
                   </span>
                 </li>
               );
             })}
           </ol>
+          )}
           {mostAdvancedDraft && (
             <div className="flex flex-col gap-3 rounded-2xl bg-spotify-dark-surface p-4 shadow-spotify-md sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[12px] font-bold text-spotify-green">다음 한 가지</p>
-                <p className="mt-1 text-[15px] font-bold text-white">{mostAdvancedDraft.portfolio.title || mostAdvancedDraft.portfolio.slug} {nextDraftItem ? `· ${nextDraftItem.label}` : "· 공개 전 검토"}</p>
+                <p className="mt-1 text-[15px] font-bold text-white">{mostAdvancedDraft.portfolio.title || mostAdvancedDraft.portfolio.slug} {nextDraftItem ? `· ${nextDraftItem.label}` : "· 공개 전 확인"}</p>
               </div>
               <Link href={`/editor/${mostAdvancedDraft.portfolio.id}${nextDraftItem ? `?focus=${nextDraftItem.destination}` : ""}`} className="w-full sm:w-auto">
                 <Button className="btn-pill-primary h-10 w-full px-5 text-[12px] sm:w-auto">
-                  {nextDraftItem ? nextDraftItem.action : "공개 전 검토하기"}
+                  {nextDraftItem ? nextDraftItem.action : "공개 전 확인하기"}
                 </Button>
               </Link>
             </div>
@@ -279,7 +273,7 @@ export default function DashboardPage() {
             className="w-full p-4 sm:p-5 bg-spotify-negative/10 border border-spotify-negative/30 rounded-2xl text-spotify-negative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
           >
             <div className="min-w-0">
-              <p className="font-bold">GitHub 동기화에 실패했습니다.</p>
+              <p className="font-bold">GitHub 동기화에 실패했어요.</p>
               <p className="mt-1 text-sm text-spotify-silver break-words">원인: {syncFailure}</p>
             </div>
             <div className="flex w-full sm:w-auto flex-wrap gap-2">
@@ -295,15 +289,15 @@ export default function DashboardPage() {
           <div
             role="status"
             aria-live="polite"
-            className={`flex flex-wrap items-center gap-3 text-[13px] font-bold px-5 py-2.5 rounded-full border shadow-spotify-md ${
+            className={`flex flex-wrap items-center gap-2.5 text-[13px] font-bold rounded-full ${
               isSyncStale
-                ? "border-spotify-warning/30 bg-spotify-warning/10 text-spotify-warning"
-                : "border-white/5 bg-spotify-mid-dark text-spotify-silver"
+                ? "border border-spotify-warning/30 bg-spotify-warning/10 text-spotify-warning px-5 py-2.5 shadow-spotify-md"
+                : "text-spotify-silver px-1.5 py-1"
             }`}
           >
             <div
               className={`h-2 w-2 rounded-full ${
-                isSyncStale ? "bg-spotify-warning" : "bg-spotify-green animate-pulse shadow-[0_0_8px_rgba(30,215,96,0.5)]"
+                isSyncStale ? "bg-spotify-warning" : "bg-spotify-green animate-pulse"
               }`}
               aria-hidden="true"
             />
@@ -323,7 +317,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 포트폴리오 목록 섹션 */}
-      <section aria-labelledby="portfolio-section-title" className="space-y-8">
+      <section id="new-portfolio" aria-labelledby="portfolio-section-title" className="space-y-8">
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <h2
             id="portfolio-section-title"
@@ -334,7 +328,7 @@ export default function DashboardPage() {
         </div>
 
         {portfolios.length === 0 ? (
-          <div id="new-portfolio" className="flex flex-col items-center justify-center p-16 md:p-24 bg-spotify-dark-surface rounded-2xl gap-8 text-center shadow-spotify">
+          <div className="flex flex-col items-center justify-center p-16 md:p-24 bg-spotify-dark-surface rounded-2xl gap-8 text-center shadow-spotify">
             <div
               className="p-8 bg-spotify-mid-dark rounded-full text-spotify-green shadow-spotify-md"
               aria-hidden="true"
@@ -347,7 +341,7 @@ export default function DashboardPage() {
               </h3>
               <p className="text-spotify-silver text-[16px] font-medium max-w-sm leading-relaxed">
                 {github_connected
-                  ? "GitHub 프로젝트를 불러와 지원서에 쓸 포트폴리오 초안을 만들어요. 약 1분 걸립니다."
+                  ? "GitHub 프로젝트를 불러와 지원서에 쓸 포트폴리오 초안을 만들어요. 약 1분이면 돼요."
                   : "먼저 GitHub 연동을 확인해 주세요. 연동 후 프로젝트를 불러와 포트폴리오를 만들 수 있어요."}
               </p>
             </div>
@@ -390,7 +384,8 @@ export default function DashboardPage() {
                 const completeCount = readiness.filter((item) => item.complete).length;
                 const nextItem = readiness.find((item) => !item.complete);
                 const stateLabel = state === "preview" && nextItem ? "작성 중" : portfolioStateLabel[state];
-                const publicUrl = p.slug ? `${window.location.origin}/${p.slug}` : null;
+                const publicUrl = p.slug ? portfolioUrl(p.slug) : null;
+                const publicLabel = p.slug ? portfolioUrlLabel(p.slug) : "주소 준비 중";
 
                 return (
                   <li
@@ -400,7 +395,7 @@ export default function DashboardPage() {
                   <div className="p-7 flex-1 flex flex-col items-start gap-5">
                     <div className="flex w-full items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-[22px] text-white truncate mb-2 group-hover:text-spotify-green transition-colors">
+                        <h3 className="font-bold text-[22px] text-white truncate mb-2 group-hover:text-white transition-colors">
                           {p.title || p.slug}
                         </h3>
                         <div className="flex items-center gap-2.5">
@@ -413,7 +408,7 @@ export default function DashboardPage() {
                           />
                           <span className="text-[12px] font-medium text-spotify-silver truncate tracking-tight">
                             <span className="sr-only">공개 URL: </span>
-                            {state === "published" && publicUrl ? publicUrl : `${p.slug}.portfolioforge.app`}
+                            {publicLabel}
                           </span>
                         </div>
                       </div>
@@ -455,7 +450,7 @@ export default function DashboardPage() {
                         구성한 섹션 {p._count.blocks}개
                       </span>
                     </div>
-                    {state !== "published" && <div className="w-full space-y-2"><div className="flex items-center justify-between text-[12px] font-bold"><span className="text-white">공개 준비 {completeCount}/{readiness.length} 완료</span><span className="text-spotify-silver">{nextItem ? `다음: ${nextItem.action}` : "다음: 공개 전 검토하기"}</span></div><div role="progressbar" aria-label={`${p.title || p.slug} 공개 준비도`} aria-valuemin={0} aria-valuemax={readiness.length} aria-valuenow={completeCount} className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-spotify-green" style={{ width: `${(completeCount / readiness.length) * 100}%` }} /></div></div>}
+                    {state !== "published" && <div className="w-full space-y-2"><div className="flex items-center justify-between text-[12px] font-bold"><span className="text-white">공개 준비 {completeCount}/{readiness.length} 완료</span><span className="text-spotify-silver">{nextItem ? `다음: ${nextItem.action}` : "다음: 공개 전 확인하기"}</span></div><div role="progressbar" aria-label={`${p.title || p.slug} 공개 준비도`} aria-valuemin={0} aria-valuemax={readiness.length} aria-valuenow={completeCount} className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-spotify-green" style={{ width: `${(completeCount / readiness.length) * 100}%` }} /></div></div>}
                   </div>
 
                   <div className="p-4 pt-0">
@@ -470,12 +465,12 @@ export default function DashboardPage() {
                           onClick={async () => {
                             try {
                               await navigator.clipboard.writeText(publicUrl || "");
-                              toast.success("지원서용 링크를 복사했습니다.");
+                              toast.success("지원서용 링크를 복사했어요.");
                             } catch {
-                              toast.error("링크를 복사하지 못했습니다. 다시 시도해 주세요.");
+                              toast.error("링크를 복사하지 못했어요. 다시 시도해 주세요.");
                             }
                           }}
-                          className="flex-[1.4] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-spotify-green hover:brightness-110 transition-all rounded-full disabled:opacity-50"
+                          className="flex-[1.4] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-spotify-green hover:brightness-110 transition-all rounded-full disabled:opacity-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-black"
                           aria-label={`${p.title || p.slug} 지원서용 링크 복사`}
                         >
                           <Copy className="w-4 h-4" aria-hidden="true" />
@@ -485,18 +480,18 @@ export default function DashboardPage() {
                       <Link
                         href={`/editor/${p.id}${nextItem ? `?focus=${nextItem.destination}` : ""}`}
                         prefetch={false}
-                        className={`flex-1 flex items-center justify-center gap-2 text-[13px] font-bold ${state === "published" ? "text-spotify-silver hover:text-white" : "text-black bg-white hover:bg-spotify-near-white shadow-spotify-md"} transition-all rounded-full`}
-                        aria-label={`${p.title || p.slug} ${state === "published" ? "다듬기" : nextItem ? nextItem.action : "공개 전 검토하기"}`}
+                        className={`flex-1 flex items-center justify-center gap-2 text-[13px] font-bold ${state === "published" ? "text-spotify-silver hover:text-white" : "text-black bg-white hover:bg-spotify-near-white shadow-spotify-md"} transition-all rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-spotify-green`}
+                        aria-label={`${p.title || p.slug} ${state === "published" ? "다듬기" : nextItem ? nextItem.action : "공개 전 확인하기"}`}
                       >
                         <Edit2 className="w-4 h-4" aria-hidden="true" />
-                        {state === "published" ? "다듬기" : nextItem ? nextItem.action : "공개 전 검토하기"}
+                        {state === "published" ? "다듬기" : nextItem ? nextItem.action : "공개 전 확인하기"}
                       </Link>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <button
                             type="button"
                             disabled={deleteMutation.isPending}
-                            className="w-12 flex items-center justify-center text-spotify-silver hover:text-spotify-negative transition-all rounded-full"
+                            className="w-12 flex items-center justify-center text-spotify-silver hover:text-spotify-negative transition-all rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-spotify-green"
                             aria-label={`${p.title || p.slug} 포트폴리오 삭제`}
                           >
                             <Trash2
@@ -505,14 +500,14 @@ export default function DashboardPage() {
                             />
                           </button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-[24px] shadow-spotify">
+                        <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-[22px] font-bold text-white">
                               포트폴리오를 삭제할까요?
                             </AlertDialogTitle>
                             <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
-                              이 작업은 되돌릴 수 없습니다. 포트폴리오와 관련된
-                              모든 데이터가 영구적으로 삭제됩니다.
+                              되돌릴 수 없어요. 포트폴리오와 관련된
+                              모든 데이터가 영구적으로 삭제돼요.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter className="pt-4">
@@ -522,7 +517,7 @@ export default function DashboardPage() {
                             <AlertDialogAction
                               onClick={() => deleteMutation.mutate(p.id)}
                               variant="destructive"
-                              className="!bg-[#e91429] hover:!bg-[#c31022] active:scale-95 transition-all text-white rounded-full h-12 font-bold px-8 shadow-spotify-md border-none cursor-pointer"
+                              className="!bg-spotify-negative-strong hover:!bg-spotify-negative-strong-hover active:scale-95 transition-all text-white rounded-full h-12 font-bold px-8 shadow-spotify-md border-none cursor-pointer"
                             >
                               삭제
                             </AlertDialogAction>
@@ -535,10 +530,9 @@ export default function DashboardPage() {
                 );
               },
             )}
-            <li className="order-last md:order-first list-none">
+            <li className="list-none">
               <button
                 type="button"
-                id="new-portfolio"
                 disabled={!github_connected || createMutation.isPending}
                 onClick={() => github_connected && createMutation.mutate()}
                 className="group w-full relative flex min-h-32 items-center justify-center gap-4 rounded-xl border border-white/10 bg-spotify-dark-surface px-5 py-4 shadow-spotify-md transition-all duration-300 hover:border-white/20 hover:bg-spotify-mid-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green disabled:opacity-50 md:min-h-[300px] md:flex-col md:p-8"
