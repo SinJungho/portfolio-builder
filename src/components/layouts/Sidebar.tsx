@@ -9,7 +9,6 @@ import {
   LogOut,
   Menu,
   Settings,
-  Sparkles,
   User,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -26,8 +25,8 @@ const navItems = [
 ];
 
 const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-spotify-green text-black shadow-[0_4px_12px_rgba(30,215,96,0.3)] shrink-0">
-    <Sparkles className="h-5 w-5 stroke-[2.5px]" />
+  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white shrink-0">
+    <span className="text-[15px] font-bold leading-none">P</span>
   </div>
 );
 

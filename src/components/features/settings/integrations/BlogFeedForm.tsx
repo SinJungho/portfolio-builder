@@ -49,7 +49,7 @@ export function BlogFeedForm({ onConnect, isPending }: BlogFeedFormProps) {
   return (
     <form
       onSubmit={handleConnectSubmit}
-      className="mt-2 p-4 bg-white/5 border border-white/5 rounded-[24px] space-y-4 animate-in slide-in-from-top-2 duration-300"
+      className="mt-2 p-4 bg-white/5 border border-white/5 rounded-2xl space-y-4 animate-in slide-in-from-top-2 duration-300"
       noValidate
     >
       <div className="space-y-4">
@@ -64,7 +64,7 @@ export function BlogFeedForm({ onConnect, isPending }: BlogFeedFormProps) {
             <Input
               id="rss-feed"
               placeholder="https://velog.io/@username/rss"
-              className={`w-full h-11 bg-spotify-near-black border text-white rounded-xl placeholder:text-spotify-silver/30 ${
+              className={`w-full h-11 bg-spotify-near-black border text-white rounded-xl placeholder:text-spotify-silver/80 ${
                 validationError
                   ? "border-spotify-negative focus:border-spotify-negative"
                   : "border-white/5 focus:border-spotify-green"
@@ -108,7 +108,7 @@ export function BlogFeedForm({ onConnect, isPending }: BlogFeedFormProps) {
       </div>
       <div
         id="rss-guide-info"
-        className="text-[12px] text-spotify-silver/60 leading-relaxed font-medium pt-2 border-t border-white/5"
+        className="text-[12px] text-spotify-silver leading-relaxed font-medium pt-2 border-t border-white/5"
       >
         <p className="mb-2 flex items-center gap-1.5 text-white/80">
           <Lightbulb

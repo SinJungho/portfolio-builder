@@ -25,7 +25,7 @@ export function SettingsNav({ activeSection, onSectionChange }: SettingsNavProps
               aria-current={activeSection === section.id ? "page" : undefined}
               className={`w-full text-left px-5 py-3 rounded-full text-[14px] font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green ${
                 activeSection === section.id
-                  ? "bg-spotify-green text-black"
+                  ? "bg-white text-black"
                   : "text-spotify-silver hover:bg-white/5 hover:text-white"
               }`}
             >

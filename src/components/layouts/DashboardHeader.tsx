@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, ChevronLeft, Sparkles, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
+import { BarChart3, ChevronLeft, Copy, ExternalLink, Check, LayoutDashboard, Settings, LogOut, User, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -17,10 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
+import { usePortfolioStore } from "@/stores/portfolioStore";
 
 const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-spotify-green text-black shadow-[0_4px_12px_rgba(30,215,96,0.3)] shrink-0">
-    <Sparkles className="h-5 w-5 stroke-[2.5px]" />
+  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white shrink-0">
+    <span className="text-[15px] font-bold leading-none">P</span>
   </div>
 );
 
@@ -39,14 +41,17 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
   const step = searchParams.get("step");
   const isAdjustStep = isGenerateFlow && step === "adjust";
   const portfolioId = pathname.split("/")[2];
+  // 생성/조정 단계에서 스토어에 초기화된 실제 공개 slug을 사용한다(라우트 id가 아니라).
+  const storeSlug = usePortfolioStore((state) => state.slug);
+  const publicSlug = storeSlug || portfolioId;
 
   if (pathname.startsWith("/editor/")) return null;
 
   const handleCopy = () => {
-    const pubUrl = `${window.location.origin}/${portfolioId}`;
+    const pubUrl = portfolioUrl(publicSlug);
     navigator.clipboard.writeText(pubUrl);
     setCopied(true);
-    toast.success("링크가 복사되었습니다.");
+    toast.success("지원서용 링크를 복사했어요.");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -72,18 +77,18 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
 
           {!isGenerateFlow && <div className="h-4 w-px bg-white/10 mx-4 hidden lg:block" />}
 
-          <h1 className={cn("hidden lg:block text-[15px] font-bold text-spotify-silver", !isGenerateFlow && "lg:block")}>
+          <p className={cn("hidden lg:block text-[15px] font-bold text-spotify-silver", !isGenerateFlow && "lg:block")}>
             {isGenerateFlow ? (isAdjustStep ? "디자인 및 상세 조정" : "포트폴리오 생성") : pageTitle}
-          </h1>
+          </p>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
           {isAdjustStep ? (
             <div className="flex items-center gap-2">
               <div className="hidden lg:flex flex-col items-end mr-3">
-                <span className="text-[9px] font-bold text-spotify-silver tracking-spotify leading-none mb-1">공개 주소</span>
+                <span className="text-[10px] font-bold text-spotify-silver tracking-spotify leading-none mb-1">공개 주소</span>
                 <span className="font-mono text-[11px] font-medium text-spotify-green truncate max-w-[150px]">
-                  {portfolioId}.portfolioforge.app
+                  {portfolioUrlLabel(publicSlug)}
                 </span>
               </div>
               <Button 
@@ -93,14 +98,14 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
                 className="btn-pill h-10 px-5 border-white/10 hover:bg-white/5 bg-transparent font-bold gap-2 text-white"
               >
                 {copied ? <Check className="w-4 h-4 text-spotify-green" /> : <Copy className="w-4 h-4" />}
-                <span className="hidden sm:inline">{copied ? "복사됨" : "링크 복사"}</span>
+                <span className="hidden sm:inline">{copied ? "복사됨" : "지원서용 링크 복사"}</span>
               </Button>
               <Button 
                 size="sm" 
                 asChild 
                 className="btn-pill-primary h-10 px-6 font-bold"
               >
-                <Link href={`/${portfolioId}`} target="_blank" className="flex items-center gap-2">
+                <Link href={`/${publicSlug}`} target="_blank" className="flex items-center gap-2">
                   <span className="hidden sm:inline">결과 보기</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
