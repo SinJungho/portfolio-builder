@@ -199,28 +199,35 @@ export async function generatePortfolio(params: {
       .sort((a, b) => b.level - a.level)
       .slice(0, 8);
 
-    // AI subheadline
+    // AI 히어로 소개 — 한 줄 소개(subheadline)와 상세 소개(bio)를 한 번의 호출로 함께 생성해
+    // 사용자가 빈 히어로가 아니라 "거의 완성된" 상태로 시작하게 한다. 실패 시 기존 동작으로 폴백.
     const bio = user.github_bio || "";
     let subheadline = bio.substring(0, 50);
+    let heroBio = bio;
 
     try {
       const skillsStr = skills.map(s => s.name).join(", ");
+      const projectsStr = topProjects.map(p => p.name).join(", ");
       const userGoal = goal ? `목표: ${goal}\n` : "";
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "당신은 개발자 포트폴리오 전문가입니다."
+          content: "당신은 개발자 포트폴리오 전문가입니다. 반드시 JSON 형식으로만 응답합니다."
         }, {
           role: "user",
-          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`,
+          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n대표 프로젝트: ${projectsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 포트폴리오 소개를 한국어로 작성해줘. 다음 JSON 필드로 응답:\n- subheadline: 직군 + 핵심 기술 + 강점 형태의 한 줄 소개 (50자 이내)\n- bio: 어떤 개발자이고 무엇을 잘하는지 2~3문장으로 자연스럽게 (200자 이내)`,
         }],
+        response_format: { type: "json_object" },
       });
-      if (completion.choices[0]?.message?.content) {
-        subheadline = completion.choices[0].message.content;
-      }
+      const parsed = JSON.parse(completion.choices[0]?.message?.content || "{}") as {
+        subheadline?: string;
+        bio?: string;
+      };
+      if (parsed.subheadline?.trim()) subheadline = parsed.subheadline.trim();
+      if (parsed.bio?.trim()) heroBio = parsed.bio.trim();
     } catch (e) {
-      console.error("OpenAI subheadline error:", e);
+      console.error("OpenAI hero intro error:", e);
     }
 
     await updateJobProgress(jobId, { progress: 30 });
@@ -235,7 +242,7 @@ export async function generatePortfolio(params: {
       config: {
         headline: user.name || user.github_login || "Developer",
         subheadline,
-        bio: user.github_bio || "",
+        bio: heroBio,
         show_github_stats: true,
       },
       is_visible: true,

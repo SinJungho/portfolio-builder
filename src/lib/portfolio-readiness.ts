@@ -58,7 +58,12 @@ export const getPortfolioReadiness = (
     {
       id: "contact",
       label: "연락처",
-      complete: hasText(contact?.email) || hasText(contact?.linkedin_url) || hasText(contact?.website_url),
+      // GitHub 링크만 있어도 채용 담당자가 연락할 수단이 있으므로 완료로 인정 (생성기가 github_url을 항상 채움)
+      complete:
+        hasText(contact?.github_url) ||
+        hasText(contact?.email) ||
+        hasText(contact?.linkedin_url) ||
+        hasText(contact?.website_url),
       action: "연락처 추가하기",
       destination: "contact",
     },
