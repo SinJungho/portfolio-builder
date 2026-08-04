@@ -2,25 +2,29 @@
 
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import { THEMES } from "@/preview/themes";
 import { getContrastRatio } from "@/utils/accessibility";
 
 export default function AccessibilityAlert() {
-  const { theme, designTokens } = usePortfolioStore();
+  const { theme, designTokens, setDesignTokens } = usePortfolioStore();
 
   const currentTheme = THEMES[theme] || THEMES.minimal;
   const primaryColor =
     (designTokens?.primaryColor as string) || currentTheme?.accent || "#1ed760";
 
-  // 배경 및 텍스트 요소 간의 웹 접근성(A11y) 명도 대비 검증
+  // 링크와 포커스 링 등 배경 위 기능 요소의 대비를 검사한다.
   const contrastBg = getContrastRatio(primaryColor, currentTheme.bg);
-  const contrastText = getContrastRatio(primaryColor, currentTheme.text);
-  const contrastMuted = getContrastRatio(primaryColor, currentTheme.textMuted);
-
-  const hasA11yIssue =
-    contrastBg < 4.5 || contrastText < 4.5 || contrastMuted < 4.5;
+  const contrastCard = getContrastRatio(
+    primaryColor,
+    currentTheme.cardBg,
+    currentTheme.bg,
+  );
+  const hasCustomPrimaryColor = typeof designTokens?.primaryColor === "string" &&
+    designTokens.primaryColor !== currentTheme.accent;
+  const hasA11yIssue = hasCustomPrimaryColor && (contrastBg < 3 || contrastCard < 3);
 
   if (!hasA11yIssue) return null;
 
@@ -35,14 +39,10 @@ export default function AccessibilityAlert() {
         </div>
         <div className="space-y-2">
           <AlertTitle className="text-[16px] font-bold tracking-tight">
-            가독성이 낮을 수 있습니다
+            강조 색상이 배경에서 잘 보이지 않을 수 있어요
           </AlertTitle>
           <AlertDescription className="text-[13px] font-medium leading-relaxed opacity-90">
-            현재 선택한 컬러는 테마 색상과 대비가 낮아 텍스트를 읽기 어려울 수
-            있습니다.
-            <span className="block mt-1 sm:inline sm:ml-1 underline underline-offset-4 decoration-spotify-warning/30 font-bold">
-              최소 4.5:1 이상의 대비도를 권장합니다.
-            </span>
+            링크, 포커스 표시, 진행 상태가 배경에 묻힐 수 있어요. 이 경고는 공개를 막지 않아요.
             <div className="flex gap-4 mt-3 pt-3 border-t border-spotify-warning/10">
               <div className="text-[11px] font-bold tracking-spotify text-spotify-warning/80">
                 명도 대비율:
@@ -50,7 +50,7 @@ export default function AccessibilityAlert() {
               <div className="flex gap-3 text-[12px] font-mono font-bold">
                 <span
                   className={
-                    contrastBg < 4.5
+                    contrastBg < 3
                       ? "text-spotify-negative"
                       : "text-spotify-green"
                   }
@@ -59,24 +59,24 @@ export default function AccessibilityAlert() {
                 </span>
                 <span
                   className={
-                    contrastText < 4.5
+                    contrastCard < 3
                       ? "text-spotify-negative"
                       : "text-spotify-green"
                   }
                 >
-                  텍스트: {contrastText.toFixed(1)}
-                </span>
-                <span
-                  className={
-                    contrastMuted < 4.5
-                      ? "text-spotify-negative"
-                      : "text-spotify-green"
-                  }
-                >
-                  보조: {contrastMuted.toFixed(1)}
+                  카드: {contrastCard.toFixed(1)}
                 </span>
               </div>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-4 h-9 rounded-full border-spotify-warning/40 bg-transparent px-4 text-[12px] font-bold text-spotify-warning hover:bg-spotify-warning/10 hover:text-spotify-warning"
+              onClick={() => setDesignTokens({ primaryColor: undefined })}
+            >
+              테마 기본 색상 사용
+            </Button>
           </AlertDescription>
         </div>
       </div>

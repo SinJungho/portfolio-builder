@@ -63,6 +63,15 @@ describe('getContrastRatio', () => {
     const ratio = getContrastRatio('invalid', '#FFFFFF')
     expect(ratio).toBe(1)
   })
+
+  it('rgba 색상은 배경색에 합성해 대비도를 계산한다', () => {
+    const ratio = getContrastRatio(
+      '#A78BFA',
+      'rgba(255,255,255,0.04)',
+      '#09090B',
+    )
+    expect(ratio).toBeGreaterThan(3)
+  })
 })
 
 describe('getContrastVerdict', () => {
