@@ -18,6 +18,15 @@ export default function ThemeSelector() {
         recommendedThemeIds.includes(themeItem.id),
       );
   const hiddenThemeCount = Object.keys(THEMES).length - recommendedThemeIds.length;
+  const themeIds = themes.map((themeItem) => themeItem.id);
+
+  const moveTheme = (currentId: string, direction: 1 | -1) => {
+    const currentIndex = themeIds.indexOf(currentId);
+    const nextIndex = (currentIndex + direction + themeIds.length) % themeIds.length;
+    const nextId = themeIds[nextIndex];
+    if (nextId) setTheme(nextId);
+    requestAnimationFrame(() => document.getElementById(`theme-${nextId}`)?.focus());
+  };
 
   return (
     <section className="space-y-6" aria-labelledby="theme-selector-heading">
@@ -30,27 +39,40 @@ export default function ThemeSelector() {
             id="theme-selector-heading"
             className="text-[20px] font-bold text-white tracking-tight"
           >
-            테마 스타일
+          포트폴리오 분위기
           </h3>
         </div>
         <span className="text-[11px] font-bold text-spotify-silver bg-white/5 px-3 py-1 rounded-full tracking-spotify">
-          기본 프리셋
+          결과를 보고 선택해요
         </span>
       </header>
 
       <div
-        className="grid grid-cols-2 gap-4"
+        className="grid grid-cols-1 gap-4"
         role="radiogroup"
         aria-labelledby="theme-selector-heading"
       >
         {themes.map((themeItem: ThemeTokens) => (
           <button
             key={themeItem.id}
+            id={`theme-${themeItem.id}`}
+            type="button"
             role="radio"
             aria-checked={theme === themeItem.id}
+            tabIndex={theme === themeItem.id ? 0 : -1}
             onClick={() => setTheme(themeItem.id)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+                event.preventDefault();
+                moveTheme(themeItem.id, 1);
+              }
+              if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+                event.preventDefault();
+                moveTheme(themeItem.id, -1);
+              }
+            }}
             className={`
-              group relative flex flex-col gap-5 p-6 rounded-xl transition-all duration-300 text-left overflow-hidden border border-transparent
+              group relative flex flex-col gap-4 p-4 rounded-2xl transition-all duration-200 text-left overflow-hidden border border-transparent
               ${
                 theme === themeItem.id
                   ? "bg-spotify-mid-dark shadow-spotify-md border-white/10"
@@ -61,8 +83,7 @@ export default function ThemeSelector() {
           >
             <div className="flex items-start justify-between gap-3 z-10 w-full">
               <div className="min-w-0">
-                <span
-                  className={`block text-[15px] font-bold ${
+                <span className={`block text-[15px] font-bold ${
                     theme === themeItem.id
                       ? "text-spotify-green"
                       : "text-spotify-silver group-hover:text-white"
@@ -83,19 +104,26 @@ export default function ThemeSelector() {
                 </div>
               )}
             </div>
-            <div className="flex gap-1.5 h-6 w-full z-10" aria-hidden="true">
-              <div
-                className="flex-1 rounded-md border border-white/5"
-                style={{ backgroundColor: themeItem.bg }}
-              />
-              <div
-                className="flex-1 rounded-md border border-white/5"
-                style={{ backgroundColor: themeItem.accent }}
-              />
-              <div
-                className="flex-1 rounded-md border border-white/5"
-                style={{ backgroundColor: themeItem.text }}
-              />
+            <div
+              className="rounded-xl border p-3 space-y-3"
+              style={{ backgroundColor: themeItem.bg, color: themeItem.text, borderColor: themeItem.cardBorder }}
+              aria-hidden="true"
+            >
+              <div className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-50">예시 미리보기</div>
+              <div className="flex items-center justify-between gap-2 text-[10px] font-bold opacity-70">
+                <span>김민준</span>
+                <span>Frontend Developer</span>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[13px] font-bold">만든 일을 한눈에 보여줘요</div>
+                <div className="text-[10px] opacity-70">대표 프로젝트와 기술을 빠르게 확인할 수 있어요.</div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold opacity-70">대표 프로젝트 3개</span>
+                <span className="rounded-full px-2 py-1 text-[9px] font-bold" style={{ backgroundColor: themeItem.ctaBg, color: themeItem.ctaText }}>
+                  자세히 보기
+                </span>
+              </div>
             </div>
           </button>
         ))}
@@ -106,9 +134,7 @@ export default function ThemeSelector() {
         aria-expanded={showAllThemes}
         onClick={() => setShowAllThemes((showAll) => !showAll)}
       >
-        {showAllThemes
-          ? "추천 테마만 보기"
-          : `다른 테마 ${hiddenThemeCount}개 보기`}
+        {showAllThemes ? "추천 분위기만 보기" : `다른 분위기 ${hiddenThemeCount}개 보기`}
       </button>
     </section>
   );

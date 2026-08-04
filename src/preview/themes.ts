@@ -34,11 +34,18 @@ export interface ThemeTokens {
   fontClass?: string;
 }
 
+export const DEFAULT_PORTFOLIO_THEME = "minimal";
+export const DEFAULT_DESIGN_TOKENS = {
+  fontFamily: "pretendard",
+  spacing: "normal",
+  borderRadius: "md",
+} as const;
+
 export const THEMES: Record<string, ThemeTokens> = {
   spotify: {
     id: "spotify",
-    label: "Spotify",
-    description: "근-블랙 몰입형 다크 · 기능적 그린 액센트",
+    label: "개성 강조형",
+    description: "강한 대비와 다크한 분위기로 프로젝트를 돋보이게 해요",
     bg: "#121212",
     text: "#FFFFFF",
     textMuted: "#B3B3B3", // #121212 대비 ≈ 8.9:1 (AA 통과)
@@ -56,8 +63,8 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   minimal: {
     id: "minimal",
-    label: "Minimal",
-    description: "깔끔한 화이트 테마 · 기능적 블루 액센트",
+    label: "채용 기본형",
+    description: "한눈에 읽히는 밝은 화면과 균형 잡힌 정보 구조예요",
     bg: "#F7F8FA", // 카드(#FFFFFF)와 명도 분리 — 플랫 엘리베이션(그림자 없이 면으로 구분)
     text: "#191F28",
     textMuted: "#5E6875", // #F7F8FA 대비 ≈ 4.7:1 (AA 통과)
@@ -75,8 +82,8 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   midnight: {
     id: "midnight",
-    label: "Midnight",
-    description: "바이올렛 액센트의 다크 테마",
+    label: "차분한 다크형",
+    description: "어두운 화면에서 기술적인 인상을 차분하게 전달해요",
     bg: "#09090B",
     text: "#FAFAFA",
     textMuted: "#808088", // #09090B 대비 ≈ 5.1:1 (AA 통과)
@@ -94,8 +101,8 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   ocean: {
     id: "ocean",
-    label: "Ocean",
-    description: "시원한 블루 액센트의 라이트 테마",
+    label: "맑고 시원한 형",
+    description: "가벼운 색감과 선명한 블루로 산뜻하게 보여줘요",
     bg: "#F8FDFF",
     text: "#0C4A6E",
     textMuted: "#3D7A93", // #F8FDFF 대비 ≈ 4.7:1 (AA 통과)
@@ -113,8 +120,8 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   forest: {
     id: "forest",
-    label: "Forest",
-    description: "자연스러운 에메랄드 액센트의 라이트 테마",
+    label: "차분한 그린형",
+    description: "부드러운 색감으로 안정감 있는 인상을 만들어요",
     bg: "#F8FDF9",
     text: "#14532D",
     textMuted: "#47755A", // #F8FDF9 대비 ≈ 5.2:1 (AA 통과)
@@ -132,8 +139,8 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   sunset: {
     id: "sunset",
-    label: "Sunset",
-    description: "따뜻한 오렌지 액센트의 라이트 테마",
+    label: "따뜻한 포인트형",
+    description: "오렌지 포인트로 친근하고 기억에 남게 보여줘요",
     bg: "#FFF8F0", // 카드(#FFFFFF)와 명도 분리 — 플랫 엘리베이션
     text: "#431407",
     textMuted: "#8A6A5A", // #FFF8F0 대비 ≈ 4.6:1 (AA 통과)
@@ -169,6 +176,31 @@ export function resolveTheme(themeKey: string): ThemeTokens {
 
 /** 테마 목록 (선택 UI용) */
 export const THEME_LIST = Object.values(THEMES);
+
+const DESIGN_CHOICE_LABELS: Record<string, Record<string, string>> = {
+  fontFamily: {
+    inter: "깔끔하고 현대적인 인상",
+    pretendard: "한글을 가장 편하게 읽기",
+    "fira-code": "기술적인 인상",
+    playfair: "제목을 우아하게 강조하기",
+  },
+  spacing: {
+    compact: "한 화면에 더 많이 보기",
+    normal: "균형 있게 읽기",
+    relaxed: "여유 있게 집중하기",
+  },
+  borderRadius: {
+    none: "또렷하고 단정하게",
+    sm: "절제된 곡선",
+    md: "균형 잡힌 기본형",
+    lg: "부드럽고 친근하게",
+    full: "캡슐형으로 강하게 강조하기",
+  },
+};
+
+export function getDesignChoiceLabel(key: string, value: string): string {
+  return DESIGN_CHOICE_LABELS[key]?.[value] || value;
+}
 
 /** hex(#RGB 또는 #RRGGBB)의 WCAG 상대휘도. 파싱 실패 시 null. */
 function luminance(hex: string): number | null {

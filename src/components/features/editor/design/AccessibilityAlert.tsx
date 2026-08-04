@@ -42,7 +42,7 @@ export default function AccessibilityAlert() {
             강조 색상이 배경에서 잘 보이지 않을 수 있어요
           </AlertTitle>
           <AlertDescription className="text-[13px] font-medium leading-relaxed opacity-90">
-            링크, 포커스 표시, 진행 상태가 배경에 묻힐 수 있어요. 이 경고는 공개를 막지 않아요.
+            링크, 포커스 표시, 진행 상태는 배경과 3:1 이상 차이 나야 잘 보여요. 이 경고는 공개를 막지 않아요.
             <div className="flex gap-4 mt-3 pt-3 border-t border-spotify-warning/10">
               <div className="text-[11px] font-bold tracking-spotify text-spotify-warning/80">
                 명도 대비율:
