@@ -58,7 +58,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
   immer((set, get) => ({
     portfolioId: null,
     blocks: [],
-    theme: "minimal",
+    theme: "spotify",
     isPublished: false,
     publishedUrl: null,
     designTokens: {},
