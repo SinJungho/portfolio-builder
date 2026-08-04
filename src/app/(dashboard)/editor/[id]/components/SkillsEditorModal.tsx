@@ -3,10 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
-import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
-import { X, Plus, Trash2 } from "lucide-react";
-import React, { useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -14,19 +10,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
+import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
+import { X, Plus, Trash2 } from "lucide-react";
+import React, { useRef, useState } from "react";
 
 interface SkillItem {
   name: string;
   level: number;
 }
 
-// 0~100 숫자를 직접 적게 하는 대신 라벨 있는 단계로 고른다.
-// 저장 값은 숫자(level)로 유지해 공개 포트폴리오 차트 렌더링은 그대로 둔다.
 const SKILL_TIERS = [
-  { label: "학습 중", value: 30 },
-  { label: "익숙해요", value: 60 },
-  { label: "능숙해요", value: 85 },
-  { label: "전문가", value: 100 },
+  { label: "기초", value: 30 },
+  { label: "사용 가능", value: 60 },
+  { label: "능숙", value: 85 },
 ] as const;
 
 const levelToTierValue = (level: number) =>
@@ -49,15 +46,11 @@ export default function SkillsEditorModal({
   initialConfig,
   isSaving,
 }: SkillsEditorModalProps) {
-  const [chartType, setChartType] = useState<string>(
-    (initialConfig.chart_type as string) || "radar",
-  );
   const [skills, setSkills] = useState<SkillItem[]>(
     (initialConfig.skills as SkillItem[]) || [],
   );
   const titleRef = useRef<HTMLHeadingElement>(null);
   const isDirty =
-    chartType !== ((initialConfig.chart_type as string) || "radar") ||
     JSON.stringify(skills) !== JSON.stringify((initialConfig.skills as SkillItem[]) || []);
   const { requestClose, confirmOpen, setConfirmOpen } = useCloseGuard(isDirty, onClose);
   const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
@@ -71,7 +64,6 @@ export default function SkillsEditorModal({
   const handleSave = () => {
     onSave({
       ...initialConfig,
-      chart_type: chartType,
       skills,
     });
   };
@@ -121,21 +113,6 @@ export default function SkillsEditorModal({
 
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
         <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="skills-chart-type" className="text-xs font-bold text-spotify-silver">
-              어떤 차트로 보여줄까요?
-            </Label>
-            <Select value={chartType} onValueChange={setChartType}>
-              <SelectTrigger id="skills-chart-type" className="w-full h-12 bg-spotify-dark-surface border-white/5 text-white rounded-xl focus:ring-spotify-green cursor-pointer">
-                <SelectValue placeholder="차트 종류를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent className="bg-spotify-dark-surface border-white/5 text-white rounded-xl">
-                <SelectItem value="radar" className="focus:bg-white/5 cursor-pointer">레이더형</SelectItem>
-                <SelectItem value="bar" className="focus:bg-white/5 cursor-pointer">막대형</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-bold text-spotify-silver">
@@ -166,20 +143,22 @@ export default function SkillsEditorModal({
                       className="bg-transparent border-white/10 text-white h-9 text-sm"
                     />
                   </div>
-                  <div className="w-[130px] space-y-1 shrink-0">
+                  <div className="w-[130px] shrink-0">
                     <Select
                       value={String(levelToTierValue(skill.level))}
-                      onValueChange={(v) => updateSkill(index, "level", Number(v))}
+                      onValueChange={(value) =>
+                        updateSkill(index, "level", Number(value))
+                      }
                     >
                       <SelectTrigger
                         aria-label={`기술 ${index + 1} 숙련도`}
-                        className="h-9 bg-transparent border-white/10 text-white text-sm rounded-lg cursor-pointer"
+                        className="h-9 rounded-lg border-white/10 bg-transparent text-sm text-white"
                       >
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-spotify-dark-surface border-white/5 text-white rounded-xl">
+                      <SelectContent className="rounded-xl border-white/5 bg-spotify-dark-surface text-white">
                         {SKILL_TIERS.map((tier) => (
-                          <SelectItem key={tier.value} value={String(tier.value)} className="focus:bg-white/5 cursor-pointer">
+                          <SelectItem key={tier.value} value={String(tier.value)}>
                             {tier.label}
                           </SelectItem>
                         ))}
