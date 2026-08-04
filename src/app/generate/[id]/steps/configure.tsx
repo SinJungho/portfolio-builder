@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { type RawProject } from "@/types/project";
+import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 
 export default function ConfigureStep({
   portfolioId,
@@ -40,15 +41,20 @@ export default function ConfigureStep({
       if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
       
-      // 지정된 대표 프로젝트가 없는 경우, featured 프로젝트 우선 혹은 상위 4개 프로젝트 자동 매핑
+      // 지정된 대표 프로젝트가 없으면 featured 프로젝트 또는 상위 프로젝트를 선택한다.
       if (selectedIds.length === 0) {
         const featured = (data as RawProject[])
           .filter((p: RawProject) => p.is_featured)
-          .map((p: RawProject) => p.id);
+          .map((p: RawProject) => p.id)
+          .slice(0, MAX_FEATURED_PROJECTS);
         if (featured.length > 0) {
           setSelectedIds(featured);
         } else {
-          setSelectedIds((data as RawProject[]).slice(0, 4).map((p: RawProject) => p.id));
+          setSelectedIds(
+            (data as RawProject[])
+              .slice(0, MAX_FEATURED_PROJECTS)
+              .map((p: RawProject) => p.id),
+          );
         }
       }
       return data;
@@ -84,6 +90,10 @@ export default function ConfigureStep({
   });
 
   const toggleProject = (id: string) => {
+    if (!selectedIds.includes(id) && selectedIds.length >= MAX_FEATURED_PROJECTS) {
+      toast.info(`대표 프로젝트는 최대 ${MAX_FEATURED_PROJECTS}개까지 선택할 수 있어요.`);
+      return;
+    }
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
@@ -113,7 +123,7 @@ export default function ConfigureStep({
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-[19px] font-bold text-white">
-              프로젝트 선택 ({selectedIds.length})
+              프로젝트 선택 ({selectedIds.length}/{MAX_FEATURED_PROJECTS})
             </h3>
             <div className="relative w-48 md:w-64">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-spotify-silver" />

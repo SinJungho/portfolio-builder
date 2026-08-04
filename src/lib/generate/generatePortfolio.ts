@@ -4,6 +4,7 @@ import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { type AISummary } from "@/types/project";
 import OpenAI from "openai";
 import { revalidatePath } from "next/cache";
+import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -46,7 +47,9 @@ export async function generatePortfolio(params: {
 
     if (projectIds && projectIds.length > 0) {
       // Use manually selected projects
-      const selectedProjects = rawProjects.filter(p => projectIds.includes(p.id));
+      const selectedProjects = rawProjects.filter((p) =>
+        projectIds.slice(0, MAX_FEATURED_PROJECTS).includes(p.id),
+      );
       topProjects = selectedProjects
         .map(p => {
           let score = p.ai_score;
@@ -93,7 +96,7 @@ export async function generatePortfolio(params: {
 
       topProjects = projectsWithScore
         .sort((a, b) => b.calculatedScore - a.calculatedScore)
-        .slice(0, 4);
+        .slice(0, MAX_FEATURED_PROJECTS);
     }
 
     // Language aggregation
@@ -272,7 +275,7 @@ export async function generatePortfolio(params: {
       block_type: "skills",
       position: 2,
       config: {
-        chart_type: "radar",
+        chart_type: "bar",
         skills,
       },
       is_visible: true,
@@ -289,10 +292,12 @@ export async function generatePortfolio(params: {
       contactConfig.email = user.email;
     }
 
+    // 연락(채용 문의) 블록은 페이지 마지막에 — peak-end. 블로그 피드가 뒤에 오면
+    // 마무리 CTA가 글 목록에 묻히므로, 블로그(position 3)보다 뒤(position 4)에 배치.
     portfolioBlocksData.push({
       portfolio_id: portfolioId,
       block_type: "contact",
-      position: 3,
+      position: 4,
       config: contactConfig as Prisma.InputJsonValue,
       is_visible: true,
       is_ai_generated: true,
@@ -311,7 +316,7 @@ export async function generatePortfolio(params: {
       portfolioBlocksData.push({
         portfolio_id: portfolioId,
         block_type: "blog_feed",
-        position: 4,
+        position: 3, // 연락 블록(4)보다 앞 — 연락 CTA가 항상 페이지 마지막
         config: {
           integration_provider: blogIntegrations[0].provider,
           max_items: 3,

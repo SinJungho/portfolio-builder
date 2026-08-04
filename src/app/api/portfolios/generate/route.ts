@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redis, ratelimit, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { generatePortfolio } from "@/lib/generate/generatePortfolio";
+import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 
 export const maxDuration = 60;
 
@@ -33,11 +34,20 @@ export async function POST(req: Request) {
 
     const portfolio_id = json.portfolio_id as string;
     const auto_publish = (json.auto_publish as boolean) ?? false;
-    const project_ids = json.project_ids as string[] | undefined;
+    const project_ids = Array.isArray(json.project_ids) &&
+      json.project_ids.every((id): id is string => typeof id === "string")
+      ? json.project_ids
+      : undefined;
     const ai_focus = json.ai_focus as string | undefined;
 
     if (!portfolio_id) {
       return NextResponse.json({ error: "portfolio_id is required" }, { status: 400 });
+    }
+    if (project_ids && project_ids.length > MAX_FEATURED_PROJECTS) {
+      return NextResponse.json(
+        { error: `대표 프로젝트는 최대 ${MAX_FEATURED_PROJECTS}개까지 선택할 수 있습니다.` },
+        { status: 400 },
+      );
     }
 
     const portfolio = await prisma.portfolio.findUnique({

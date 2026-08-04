@@ -9,6 +9,7 @@ import { useDialogAccessibility } from "@/components/common/useDialogAccessibili
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
 import { Check, GitFork, Search, Star, X } from "lucide-react";
 import React, { useRef, useState } from "react";
+import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 import { type RawProject } from "@/types/project";
 
 interface ProjectSelectionModalProps {
@@ -33,17 +34,18 @@ export default function ProjectSelectionModal({
   rawProjects,
   isSaving,
 }: ProjectSelectionModalProps) {
+  const initialFeaturedIds = initialSelectedIds.slice(0, MAX_FEATURED_PROJECTS);
   // 모달 내부에서만 동작하는 로컬 상태들 ( Keystroke 렉 차단의 핵심 )
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(
-    () => initialSelectedIds,
+    () => initialFeaturedIds,
   );
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
     Record<string, string>
   >(() => initialCustomDescriptions);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isDirty =
-    JSON.stringify(tempSelectedIds) !== JSON.stringify(initialSelectedIds) ||
+    JSON.stringify(tempSelectedIds) !== JSON.stringify(initialFeaturedIds) ||
     JSON.stringify(tempCustomDescriptions) !== JSON.stringify(initialCustomDescriptions);
   const { requestClose, confirmOpen, setConfirmOpen } = useCloseGuard(isDirty, onClose);
   const { dialogRef, handleDialogKeyDown } = useDialogAccessibility(
@@ -64,7 +66,9 @@ export default function ProjectSelectionModal({
     setTempSelectedIds((prevIds: string[]) =>
       prevIds.includes(id)
         ? prevIds.filter((item: string) => item !== id)
-        : [...prevIds, id],
+        : prevIds.length < MAX_FEATURED_PROJECTS
+          ? [...prevIds, id]
+          : prevIds,
     );
   };
 
@@ -86,7 +90,7 @@ export default function ProjectSelectionModal({
             <X className="w-6 h-6 text-white" />
           </button>
           <h3 id="project-selection-title" className="text-[18px] font-bold text-white">
-            대표 프로젝트 선택 ({tempSelectedIds.length})
+            대표 프로젝트 선택 ({tempSelectedIds.length}/{MAX_FEATURED_PROJECTS})
           </h3>
         </div>
         <Button
@@ -102,7 +106,7 @@ export default function ProjectSelectionModal({
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
         {/* 검색 폼 */}
         <div className="mb-8 space-y-4">
-          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">포트폴리오에 보여줄 프로젝트를 선택하세요. 선택한 프로젝트는 소개를 직접 다듬을 수 있어요.</p>
+          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">채용 담당자에게 보여줄 대표 프로젝트를 최대 3개 선택하세요. 선택한 순서대로 공개돼요.</p>
           <div className="relative">
             <Label htmlFor="project-search" className="sr-only">프로젝트 검색</Label>
             <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-spotify-silver" />
@@ -134,7 +138,7 @@ export default function ProjectSelectionModal({
               `}
             >
               {/* 선택 여부 체크박스 표시 */}
-              <button type="button" onClick={() => toggleTempProject(project.id)} aria-pressed={tempSelectedIds.includes(project.id)} aria-label={`${project.name} ${tempSelectedIds.includes(project.id) ? "선택 해제" : "선택"}`} className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-full border border-white/5 bg-spotify-near-black transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
+              <button type="button" onClick={() => toggleTempProject(project.id)} disabled={!tempSelectedIds.includes(project.id) && tempSelectedIds.length >= MAX_FEATURED_PROJECTS} aria-pressed={tempSelectedIds.includes(project.id)} aria-label={`${project.name} ${tempSelectedIds.includes(project.id) ? "선택 해제" : "선택"}`} className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-full border border-white/5 bg-spotify-near-black transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
                 {tempSelectedIds.includes(project.id) && (
                   <span className="h-6 w-6 rounded-full bg-spotify-green flex items-center justify-center animate-in zoom-in-50 duration-200">
                     <Check className="w-4 h-4 text-black" strokeWidth={3} />
