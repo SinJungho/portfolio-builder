@@ -43,12 +43,13 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
   const portfolioId = pathname.split("/")[2];
   // 생성/조정 단계에서 스토어에 초기화된 실제 공개 slug을 사용한다(라우트 id가 아니라).
   const storeSlug = usePortfolioStore((state) => state.slug);
+  const customDomain = usePortfolioStore((state) => state.customDomain);
   const publicSlug = storeSlug || portfolioId;
 
   if (pathname.startsWith("/editor/")) return null;
 
   const handleCopy = () => {
-    const pubUrl = portfolioUrl(publicSlug);
+    const pubUrl = portfolioUrl(publicSlug, customDomain);
     navigator.clipboard.writeText(pubUrl);
     setCopied(true);
     toast.success("지원서용 링크를 복사했어요.");
@@ -88,7 +89,7 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
               <div className="hidden lg:flex flex-col items-end mr-3">
                 <span className="text-[10px] font-bold text-spotify-silver tracking-spotify leading-none mb-1">공개 주소</span>
                 <span className="font-mono text-[11px] font-medium text-spotify-green truncate max-w-[150px]">
-                  {portfolioUrlLabel(publicSlug)}
+                  {portfolioUrlLabel(publicSlug, customDomain)}
                 </span>
               </div>
               <Button 
@@ -105,7 +106,7 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
                 asChild 
                 className="btn-pill-primary h-10 px-6 font-bold"
               >
-                <Link href={`/${publicSlug}`} target="_blank" className="flex items-center gap-2">
+                <Link href={portfolioUrl(publicSlug, customDomain)} target="_blank" className="flex items-center gap-2">
                   <span className="hidden sm:inline">결과 보기</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>

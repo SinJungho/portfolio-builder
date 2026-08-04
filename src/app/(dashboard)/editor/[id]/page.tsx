@@ -29,7 +29,9 @@ export default async function EditorPage(props: {
     blocks: blocks as unknown as Block[],
     theme: portfolio.theme,
     isPublished: portfolio.is_published,
-    publishedUrl: portfolio.slug ? portfolioUrl(portfolio.slug) : null,
+    publishedUrl: portfolio.slug
+      ? portfolioUrl(portfolio.slug, portfolio.custom_domain)
+      : null,
   };
 
   return <EditorClient initialData={initialData} />;

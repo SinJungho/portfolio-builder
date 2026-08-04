@@ -139,7 +139,9 @@ export default function AnalyticsPage() {
     if (!selectedPortfolio?.slug) return;
 
     try {
-      await navigator.clipboard.writeText(portfolioUrl(selectedPortfolio.slug));
+      await navigator.clipboard.writeText(
+        portfolioUrl(selectedPortfolio.slug, selectedPortfolio.custom_domain),
+      );
       toast.success("지원서용 링크를 복사했어요.");
     } catch {
       toast.error("링크를 복사하지 못했어요. 다시 시도해 주세요.");
