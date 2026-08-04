@@ -25,4 +25,15 @@ describe("portfolio readiness", () => {
     expect(isPortfolioReady(completeBlocks)).toBe(true);
     expect(isPortfolioReady([{ block_type: "hero", is_visible: false, config: completeBlocks[0].config }, ...completeBlocks.slice(1)])).toBe(false);
   });
+
+  it("does not mark a missing selected project as ready when project data is available", () => {
+    const blocks = [
+      ...completeBlocks.slice(0, 1),
+      { block_type: "project_grid", is_visible: true, config: { project_ids: ["missing-project"] } },
+      ...completeBlocks.slice(2),
+    ];
+
+    expect(getPortfolioReadiness(blocks, ["project-1"]).find((item) => item.id === "projects")?.complete).toBe(false);
+    expect(isPortfolioReady(blocks, ["project-1"])).toBe(false);
+  });
 });

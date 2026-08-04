@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { getMissingPortfolioReadiness, isPortfolioReady } from "@/lib/portfolio-readiness";
+import {
+  getMissingPortfolioReadiness,
+  getSelectedProjectIds,
+  isPortfolioReady,
+} from "@/lib/portfolio-readiness";
 
 export async function GET(
   _req: Request,
@@ -37,12 +41,26 @@ export async function GET(
       ...block,
       config: block.config as Record<string, unknown>,
     }));
+    const projectIds = getSelectedProjectIds(readinessBlocks);
+    const availableProjectIds = projectIds.length
+      ? (await prisma.rawProject.findMany({
+          where: {
+            id: { in: projectIds },
+            user_id: portfolio.user_id,
+            is_fork: false,
+          },
+          select: { id: true },
+        })).map((project) => project.id)
+      : [];
 
     return NextResponse.json({
       is_published: portfolio.is_published,
       published_url: portfolio.slug ? `/${portfolio.slug}` : null,
-      is_ready: isPortfolioReady(readinessBlocks),
-      missing_items: getMissingPortfolioReadiness(readinessBlocks),
+      is_ready: isPortfolioReady(readinessBlocks, availableProjectIds),
+      missing_items: getMissingPortfolioReadiness(
+        readinessBlocks,
+        availableProjectIds,
+      ),
     });
   } catch (error: unknown) {
     console.error("GET /api/portfolios/[id]/status error:", error);

@@ -103,6 +103,10 @@ export async function GET() {
         blocks: { select: { block_type: true, is_visible: true, config: true } },
       },
     });
+    const availableProjects = await prisma.rawProject.findMany({
+      where: { user_id: user.id, is_fork: false },
+      select: { id: true },
+    });
 
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
@@ -117,6 +121,7 @@ export async function GET() {
 
     return NextResponse.json({
       portfolios,
+      available_project_ids: availableProjects.map((project) => project.id),
       user: dbUser,
       github_connected: Boolean(integration),
       github_synced_at: integration?.synced_at || null,

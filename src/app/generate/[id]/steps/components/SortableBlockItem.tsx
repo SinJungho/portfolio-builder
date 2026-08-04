@@ -32,6 +32,7 @@ interface SortableBlockItemProps<T = unknown> {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onOpenProjectEditor: (block: T) => void;
+  onFocusBlock?: (id: string) => void;
 }
 
 export const SortableBlockItem = React.memo(function SortableBlockItem<
@@ -42,6 +43,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
   onToggle,
   onDelete,
   onOpenProjectEditor,
+  onFocusBlock,
 }: SortableBlockItemProps<T>) {
   const {
     attributes,
@@ -63,6 +65,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
     <div
       ref={setNodeRef}
       style={style}
+      onFocus={() => onFocusBlock?.(block.id)}
       className={`
         group flex flex-col p-5 sm:p-6 border rounded-[24px] bg-spotify-dark-surface transition-all duration-300 gap-5 relative text-white border-white/5
         ${!block.is_visible ? "opacity-40 grayscale bg-spotify-mid-dark/50" : "shadow-spotify hover:bg-spotify-mid-dark"}
@@ -97,13 +100,19 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
                 AI 생성
               </span>
             )}
-            {["project_grid", "hero", "skills", "blog_feed"].includes(block.block_type) && block.is_visible && (
+            {["project_grid", "hero", "skills", "blog_feed", "contact"].includes(block.block_type) && block.is_visible && (
               <button
                 onClick={() => onOpenProjectEditor(block)}
                 className="group/edit inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-spotify-green/10 hover:bg-spotify-green text-spotify-green hover:text-black rounded-full text-[12px] font-bold transition-all duration-300 active:scale-95 whitespace-nowrap cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5 transition-transform group-hover/edit:rotate-45" />
-                <span>{block.block_type === "project_grid" ? "프로젝트 설정" : "섹션 편집"}</span>
+                <span>
+                  {block.block_type === "project_grid"
+                    ? "프로젝트 설정"
+                    : block.block_type === "contact"
+                      ? "연락처 편집"
+                      : "섹션 편집"}
+                </span>
               </button>
             )}
           </div>

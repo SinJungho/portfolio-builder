@@ -83,6 +83,11 @@ const blockTypeIcons: Record<string, React.ReactNode> = {
 };
 
 type SidebarTab = "blocks" | "publish" | "design";
+type PreviewProject = RawProject & {
+  html_url: string | null;
+  ai_summary: string | null;
+  ai_tags: string[];
+};
 
 export default function EditorClient({
   initialData,
@@ -95,6 +100,7 @@ export default function EditorClient({
     designTokens,
     isSaving,
     isPublished,
+    customDomain,
     initialize,
     toggleBlock,
     reorderBlocks,
@@ -119,6 +125,7 @@ export default function EditorClient({
   const [isPending, startTransition] = useTransition();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("publish");
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
   const previewReviewStorageKey = `portfolio-preview-reviewed:${initialData.portfolioId}`;
   const previewSignature = JSON.stringify({ blocks, theme, designTokens });
   const [openedPreviewSignature, setOpenedPreviewSignature] = useState<string | null>(null);
@@ -142,6 +149,7 @@ export default function EditorClient({
   const [isEditingBlogFeed, setIsEditingBlogFeed] = useState<boolean>(false);
   const [isEditingContact, setIsEditingContact] = useState<boolean>(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [previewHighlightedBlockId, setPreviewHighlightedBlockId] = useState<string | null>(null);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
     Record<string, string>
@@ -160,6 +168,39 @@ export default function EditorClient({
     },
     enabled: init,
   });
+
+  const previewBlocks = React.useMemo(() => {
+    if (!rawProjects) return deferredBlocks;
+
+    const projectsById = new Map<string, PreviewProject>(
+      rawProjects.map((project) => [project.id, {
+        ...project,
+        html_url: project.html_url ?? null,
+        ai_summary: project.ai_summary ?? null,
+        ai_tags: project.ai_tags ?? [],
+      }]),
+    );
+
+    return deferredBlocks.map((block) => {
+      if (block.block_type !== "project_grid") return block;
+
+      const projectIds = Array.isArray(block.config.project_ids)
+        ? block.config.project_ids.filter(
+            (projectId): projectId is string => typeof projectId === "string",
+          )
+        : [];
+
+      return {
+        ...block,
+        config: {
+          ...block.config,
+          projectsData: projectIds
+            .map((projectId) => projectsById.get(projectId))
+            .filter((project): project is PreviewProject => project !== undefined),
+        },
+      };
+    });
+  }, [deferredBlocks, rawProjects]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -189,7 +230,10 @@ export default function EditorClient({
 
   const contactBlock = blocks.find((b: Block) => b.block_type === "contact");
   const portfolioState = getPortfolioState(isPublished, blocks.length);
-  const readinessItems = getPortfolioReadiness(blocks);
+  const readinessItems = getPortfolioReadiness(
+    blocks,
+    rawProjects?.map((project) => project.id) ?? [],
+  );
 
   const handleTabChange = (tab: SidebarTab) => {
     startTransition(() => {
@@ -223,6 +267,10 @@ export default function EditorClient({
   const openPreview = () => {
     setOpenedPreviewSignature(previewSignature);
     setIsPreviewing(true);
+    requestAnimationFrame(() => {
+      previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      previewRef.current?.focus({ preventScroll: true });
+    });
   };
 
   const confirmPreviewReview = () => {
@@ -318,6 +366,7 @@ export default function EditorClient({
   };
 
   const openProjectEditor = (block: Block) => {
+    setPreviewHighlightedBlockId(block.id);
     setEditingBlockId(block.id);
     if (block.block_type === "project_grid") {
       setTempSelectedIds((block.config.project_ids as string[]) || []);
@@ -502,12 +551,14 @@ export default function EditorClient({
                 toggleBlock={toggleBlock}
                 deleteBlock={deleteBlock}
                 openProjectEditor={openProjectEditor}
+                highlightPreviewBlock={setPreviewHighlightedBlockId}
                 isSaving={isSaving}
                 addBlock={addBlock}
               />
             ) : sidebarTab === "publish" ? (
               <SettingsPanel
                 initialData={initialData}
+                customDomain={customDomain}
                 portfolioState={portfolioState}
                 isSaving={isSaving}
                 onPublish={handlePublish}
@@ -538,23 +589,26 @@ export default function EditorClient({
               handleTabChange("publish");
             }}
           />
-          <div className="w-full max-w-[1000px] bg-spotify-dark-surface rounded-t-2xl md:rounded-2xl overflow-hidden shadow-spotify mx-6 relative animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div ref={previewRef} tabIndex={-1} aria-label="포트폴리오 미리보기" className="w-full max-w-[1000px] bg-spotify-dark-surface rounded-t-2xl md:rounded-2xl overflow-hidden shadow-spotify mx-6 relative animate-in fade-in slide-in-from-bottom-8 duration-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green">
           <div className="h-10 bg-spotify-near-black border-b border-white/5 flex items-center justify-between px-4 shrink-0">
             <span className="text-[11px] font-bold text-spotify-silver">{isPublished ? "공개됨" : "초안 미리보기"}</span>
             <div className="bg-spotify-mid-dark border border-white/5 rounded-full px-4 py-1 text-[11px] text-spotify-silver font-mono flex items-center gap-2 shadow-inner">
               <Globe className="w-3.5 h-3.5 text-spotify-silver/50" />
-              {initialData.slug ? portfolioUrlLabel(initialData.slug) : "주소 준비 중"}
+              {initialData.slug ? portfolioUrlLabel(initialData.slug, customDomain) : "주소 준비 중"}
             </div>
           </div>
 
             {/* 실시간으로 연동되는 뷰포트 영역 (Deferred Value를 통해 인풋 타이핑 반응성 보존) */}
             <div className="w-full h-full min-h-[800px] overflow-hidden bg-white">
               <PortfolioPreview
-                blocks={deferredBlocks}
+                blocks={previewBlocks}
                 theme={deferredTheme}
                 designTokens={deferredDesignTokens}
-                slug={initialData?.slug || undefined}
+                // slug 미전달 — PDF 내보내기 버튼은 position:fixed라 에디터 프레임을 뚫고 뷰포트에 고정됨.
+                // 내보내기는 게시 페이지 전용 액션이므로 에디터 프리뷰에선 렌더하지 않음.
+                slug={undefined}
                 portfolioId={initialData?.portfolioId}
+                highlightedBlockId={previewHighlightedBlockId}
               />
             </div>
           </div>
@@ -633,6 +687,7 @@ interface BlocksPanelProps {
   toggleBlock: (id: string) => Promise<void>;
   deleteBlock: (id: string) => Promise<void>;
   openProjectEditor: (block: Block) => void;
+  highlightPreviewBlock: (id: string) => void;
   isSaving: boolean;
   addBlock: (blockType: string) => Promise<Block | undefined>;
 }
@@ -644,6 +699,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
   toggleBlock,
   deleteBlock,
   openProjectEditor,
+  highlightPreviewBlock,
   isSaving,
   addBlock,
 }: BlocksPanelProps) {
@@ -679,6 +735,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
                 onToggle={toggleBlock}
                 onDelete={deleteBlock}
                 onOpenProjectEditor={openProjectEditor}
+                onFocusBlock={highlightPreviewBlock}
               />
             ))}
           </div>
@@ -745,6 +802,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
 
 interface SettingsPanelProps {
   initialData: PortfolioInitialData;
+  customDomain: string | null;
   portfolioState: ReturnType<typeof getPortfolioState>;
   isSaving: boolean;
   onPublish: () => void;
@@ -761,6 +819,7 @@ interface SettingsPanelProps {
 
 const SettingsPanel = React.memo(function SettingsPanel({
   initialData,
+  customDomain,
   portfolioState,
   isSaving,
   onPublish,
@@ -774,7 +833,9 @@ const SettingsPanel = React.memo(function SettingsPanel({
   onReviewPreview,
   justPublished,
 }: SettingsPanelProps) {
-  const publishedPath = initialData.slug ? `/${initialData.slug}` : null;
+  const publishedPath = initialData.slug
+    ? portfolioUrl(initialData.slug, customDomain)
+    : null;
   const nextItem = readinessItems.find((item) => !item.complete);
 
   // 진행도 분모는 준비 항목 수로 통일한다(대시보드 카드·모바일 상태바와 동일한 X/Y).
@@ -804,7 +865,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
 
   const copyPublishedLink = () => {
     if (!initialData.slug) return;
-    navigator.clipboard.writeText(portfolioUrl(initialData.slug));
+    navigator.clipboard.writeText(portfolioUrl(initialData.slug, customDomain));
     toast.success("지원서용 링크를 복사했어요.");
   };
 
@@ -824,7 +885,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
           <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-black/30 px-3 py-2.5">
             <Globe className="w-4 h-4 shrink-0 text-spotify-green" />
             <span className="truncate font-mono text-[13px] font-bold text-white">
-              {initialData.slug ? portfolioUrlLabel(initialData.slug) : "주소 준비 중"}
+              {initialData.slug ? portfolioUrlLabel(initialData.slug, customDomain) : "주소 준비 중"}
             </span>
           </div>
           <div className="flex gap-2">
@@ -835,7 +896,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
               type="button"
               variant="ghost"
               className="h-11 rounded-full bg-white/10 px-4 text-[13px] font-bold text-white hover:bg-white/15"
-              onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug), "_blank")}
+              onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug, customDomain), "_blank")}
             >
               <ArrowUpRight className="w-4 h-4" /> 열기
             </Button>
@@ -931,7 +992,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
               // 준비 항목을 모두 마친 뒤에만 미리보기 액션을 노출 — 한 번에 하나의 행동 원칙 유지.
               <div className="ml-auto flex items-center gap-2">
                 <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={onPreview}>
-                  <Eye className="h-3.5 w-3.5" /> 미리보기 열기
+                  <Eye className="h-3.5 w-3.5" /> 미리보기로 이동
                 </Button>
                 <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10 disabled:opacity-40" disabled={!previewOpened} onClick={onReviewPreview}>
                   확인했어요
@@ -972,7 +1033,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
             <div className="flex items-center gap-2 min-w-0">
               <Globe className="w-4 h-4 text-spotify-green shrink-0" />
               <span className="text-[13px] font-bold text-white font-mono truncate">
-                {initialData.slug ? portfolioUrlLabel(initialData.slug) : "주소 준비 중"}
+                {initialData.slug ? portfolioUrlLabel(initialData.slug, customDomain) : "주소 준비 중"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -989,7 +1050,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
                       <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={copyPublishedLink}>
                         <Copy className="w-3 h-3" /> 지원서용 링크 복사
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug), "_blank")}>
+                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug, customDomain), "_blank")}>
                         <ArrowUpRight className="w-3 h-3" /> 열기
                       </Button>
                     </>

@@ -42,6 +42,7 @@ type DashboardPortfolio = {
   id: string;
   title: string | null;
   slug: string | null;
+  custom_domain: string | null;
   theme: string;
   is_published: boolean;
   created_at: string | Date;
@@ -157,6 +158,7 @@ export default function DashboardPage() {
   }
 
   const { portfolios, github_connected, github_synced_at } = data;
+  const availableProjectIds = (data.available_project_ids as string[] | undefined) ?? [];
   const syncFailure = syncJob?.status === "failed"
     ? syncJob.error || "GitHub 동기화에 실패했어요."
     : syncError;
@@ -164,14 +166,14 @@ export default function DashboardPage() {
   const hasGithubSync = Boolean(githubSyncDate && !Number.isNaN(githubSyncDate.getTime()));
   const hasDraft = portfolios.some((portfolio: { is_published: boolean }) => !portfolio.is_published);
   const hasReadyDraft = portfolios.some((portfolio: { is_published: boolean; blocks: { block_type: string; is_visible: boolean; config: Record<string, unknown> }[] }) =>
-    !portfolio.is_published && getPortfolioReadiness(portfolio.blocks).every((item) => item.complete),
+    !portfolio.is_published && getPortfolioReadiness(portfolio.blocks, availableProjectIds).every((item) => item.complete),
   );
   const hasPublishedPortfolio = portfolios.some((portfolio: { is_published: boolean }) => portfolio.is_published);
   const mostAdvancedDraft = (portfolios as DashboardPortfolio[])
     .filter((portfolio) => !portfolio.is_published)
     .map((portfolio) => ({
       portfolio,
-      readiness: getPortfolioReadiness(portfolio.blocks),
+      readiness: getPortfolioReadiness(portfolio.blocks, availableProjectIds),
     }))
     .sort((a, b) => b.readiness.filter((item) => item.complete).length - a.readiness.filter((item) => item.complete).length)[0];
   const nextDraftItem = mostAdvancedDraft?.readiness.find((item) => !item.complete);
@@ -362,7 +364,7 @@ export default function DashboardPage() {
           >
             {/* 기존 포트폴리오 카드 리스트 */}
             {[...portfolios].sort((a, b) => {
-              const progress = (portfolio: typeof a) => getPortfolioReadiness(portfolio.blocks).filter((item) => item.complete).length;
+              const progress = (portfolio: typeof a) => getPortfolioReadiness(portfolio.blocks, availableProjectIds).filter((item) => item.complete).length;
               if (a.is_published !== b.is_published) return Number(a.is_published) - Number(b.is_published);
               return progress(b) - progress(a);
             }).map(
@@ -370,6 +372,7 @@ export default function DashboardPage() {
                 id: string;
                 title: string | null;
                 slug: string | null;
+                custom_domain: string | null;
                 theme: string;
                 is_published: boolean;
                 created_at: string | Date;
@@ -380,12 +383,16 @@ export default function DashboardPage() {
                   p.is_published,
                   p._count.blocks,
                 );
-                const readiness = getPortfolioReadiness(p.blocks);
+                const readiness = getPortfolioReadiness(p.blocks, availableProjectIds);
                 const completeCount = readiness.filter((item) => item.complete).length;
                 const nextItem = readiness.find((item) => !item.complete);
                 const stateLabel = state === "preview" && nextItem ? "작성 중" : portfolioStateLabel[state];
-                const publicUrl = p.slug ? portfolioUrl(p.slug) : null;
-                const publicLabel = p.slug ? portfolioUrlLabel(p.slug) : "주소 준비 중";
+                    const publicUrl = p.slug
+                      ? portfolioUrl(p.slug, p.custom_domain)
+                      : null;
+                    const publicLabel = p.slug
+                      ? portfolioUrlLabel(p.slug, p.custom_domain)
+                      : "주소 준비 중";
 
                 return (
                   <li
