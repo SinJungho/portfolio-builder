@@ -79,7 +79,7 @@ export class PortfolioService {
       data: {
         user_id: userId,
         slug: finalSlug,
-        theme: data.theme || 'minimalist',
+        theme: data.theme || 'minimal',
         generation_mode: 'auto',
         auto_published: false,
       },

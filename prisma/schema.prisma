@@ -124,7 +124,7 @@ model Portfolio {
   user_id          String    @db.Uuid
   slug             String    @db.VarChar(100)
   title            String?   @db.VarChar(255)
-  theme            String    @default("minimalist") @db.VarChar(50)
+  theme            String    @default("minimal") @db.VarChar(50)
   design_tokens    Json?
   generation_mode  String    @default("auto") @db.VarChar(20)
   auto_published   Boolean   @default(true)

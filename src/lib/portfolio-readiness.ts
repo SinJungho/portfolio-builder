@@ -14,6 +14,17 @@ export type PortfolioReadinessItem = {
   destination: EditorDestination;
 };
 
+export type PortfolioReadinessGroup = {
+  id: "intro" | "projects" | "contact";
+  label: string;
+  description: string;
+  action: string;
+  destination: EditorDestination;
+  complete: boolean;
+  items: PortfolioReadinessItem[];
+  missingItems: PortfolioReadinessItem[];
+};
+
 const hasText = (value: unknown) =>
   typeof value === "string" && value.trim().length > 0;
 
@@ -91,6 +102,52 @@ export const getPortfolioReadiness = (
       destination: "contact",
     },
   ];
+};
+
+export const getPortfolioReadinessGroups = (
+  items: PortfolioReadinessItem[],
+): PortfolioReadinessGroup[] => {
+  const definitions = [
+    {
+      id: "intro" as const,
+      label: "소개",
+      description: "이름과 강점을 한눈에 보여줘요.",
+      action: "소개 작성하기",
+      destination: "hero" as const,
+      itemIds: ["hero-headline", "hero-subheadline", "hero-bio"],
+    },
+    {
+      id: "projects" as const,
+      label: "대표 작업",
+      description: "가장 자신 있는 GitHub 프로젝트를 골라요.",
+      action: "프로젝트 고르기",
+      destination: "projects" as const,
+      itemIds: ["projects"],
+    },
+    {
+      id: "contact" as const,
+      label: "연락처",
+      description: "채용 담당자가 연락할 방법을 남겨요.",
+      action: "연락처 추가하기",
+      destination: "contact" as const,
+      itemIds: ["contact"],
+    },
+  ];
+
+  return definitions.map((definition) => {
+    const groupItems = items.filter((item) => definition.itemIds.includes(item.id));
+    const missingItems = groupItems.filter((item) => !item.complete);
+    return {
+      id: definition.id,
+      label: definition.label,
+      description: definition.description,
+      action: definition.action,
+      destination: definition.destination,
+      complete: groupItems.length > 0 && missingItems.length === 0,
+      items: groupItems,
+      missingItems,
+    };
+  });
 };
 
 export const getMissingPortfolioReadiness = (

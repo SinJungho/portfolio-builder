@@ -8,7 +8,7 @@ describe("portfolio publication flow", () => {
     expect(getPortfolioState(false, 0)).toBe("draft");
     expect(getPortfolioState(false, 1)).toBe("preview");
     expect(getPortfolioState(true, 1)).toBe("published");
-    expect(portfolioStateLabel.preview).toBe("공개 준비됨");
+    expect(portfolioStateLabel.preview).toBe("미리보기");
     expect(portfolioStateLabel.published).toBe("공개됨");
   });
 });

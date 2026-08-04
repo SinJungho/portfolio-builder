@@ -1,6 +1,7 @@
 import {
   getMissingPortfolioReadiness,
   getPortfolioReadiness,
+  getPortfolioReadinessGroups,
   isPortfolioReady,
 } from "../portfolio-readiness";
 
@@ -35,5 +36,26 @@ describe("portfolio readiness", () => {
 
     expect(getPortfolioReadiness(blocks, ["project-1"]).find((item) => item.id === "projects")?.complete).toBe(false);
     expect(isPortfolioReady(blocks, ["project-1"])).toBe(false);
+  });
+
+  it("groups field-level checks into the three user-facing preparation steps", () => {
+    const groups = getPortfolioReadinessGroups(getPortfolioReadiness(completeBlocks));
+
+    expect(groups.map((group) => [group.id, group.complete])).toEqual([
+      ["intro", true],
+      ["projects", true],
+      ["contact", true],
+    ]);
+
+    const incomplete = getPortfolioReadinessGroups(getPortfolioReadiness([
+      { block_type: "hero", is_visible: true, config: { headline: "개발자", subheadline: "", bio: "" } },
+      ...completeBlocks.slice(1),
+    ]));
+
+    expect(incomplete[0]?.missingItems.map((item) => item.id)).toEqual([
+      "hero-subheadline",
+      "hero-bio",
+    ]);
+    expect(incomplete[0]?.action).toBe("소개 작성하기");
   });
 });

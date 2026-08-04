@@ -10,6 +10,6 @@ export function getPortfolioState(
 
 export const portfolioStateLabel: Record<PortfolioState, string> = {
   draft: "초안",
-  preview: "공개 준비됨",
+  preview: "미리보기",
   published: "공개됨",
 };

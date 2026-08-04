@@ -537,7 +537,7 @@ export default function DashboardPage() {
                 );
               },
             )}
-            <li className="list-none">
+            <li className="list-none order-last md:order-first">
               <button
                 type="button"
                 disabled={!github_connected || createMutation.isPending}
