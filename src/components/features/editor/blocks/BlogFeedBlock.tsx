@@ -13,7 +13,7 @@ interface BlogFeedBlockProps {
 }
 
 export default function BlogFeedBlock({ config }: BlogFeedBlockProps) {
-  // 실제 데이터 연동 전까지는 플레이스홀더 성격으로 둡니다.
+  // 실제 포스트 연동 전에는 플레이스홀더를 렌더링한다.
   return (
     <section className="w-full py-16 px-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-2 mb-10">

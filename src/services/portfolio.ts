@@ -96,7 +96,7 @@ export class PortfolioService {
       where: { slug },
       include: {
         user: {
-          select: { name: true },
+          select: { name: true, github_login: true },
         },
       },
     });
@@ -131,6 +131,13 @@ export class PortfolioService {
       projects.forEach((proj: RawProject) => projectsMap.set(proj.id, proj));
     }
 
+    // 히어로 GitHub 스탯 — non-fork 레포 수·스타 합계를 매 로드 집계(최신 반영, write-time 박제 방지).
+    const githubAgg = await prisma.rawProject.aggregate({
+      where: { user_id: portfolio.user_id, is_fork: false },
+      _count: { id: true },
+      _sum: { stargazers_count: true },
+    });
+
     // 각 블록의 config를 안전하게 객체로 정의하고, 프로젝트 및 블로그 피드를 결합합니다.
     const blocks: Block[] = await Promise.all(
       rawBlocks.map(async (block: PortfolioBlock) => {
@@ -141,6 +148,14 @@ export class PortfolioService {
           : "hero";
 
         const newConfig: Record<string, unknown> = { ...config };
+
+        // 히어로에 GitHub 신원·스탯 주입 — 아바타 사진과 스타/리포 증거가 첫 화면에 렌더되도록.
+        // contributions는 저장 컬럼이 없어 생략(HeroBlock이 0·미설정 스탯을 자동 숨김).
+        if (block.block_type === "hero") {
+          newConfig.github_login = portfolio.user?.github_login ?? undefined;
+          newConfig.github_repos_count = githubAgg._count.id;
+          newConfig.github_stars_count = githubAgg._sum.stargazers_count ?? 0;
+        }
 
         // 프로젝트 데이터 Populate (일괄 조회해 둔 Map에서 신속하게 획득)
         if (block.block_type === "project_grid" && Array.isArray(config.project_ids)) {
@@ -184,6 +199,7 @@ export class PortfolioService {
         seo_title: portfolio.seo_title,
         seo_description: portfolio.seo_description,
         og_image_url: portfolio.og_image_url,
+        custom_domain: portfolio.custom_domain, // JSON-LD canonical URL이 커스텀 도메인을 반영하도록
         user: portfolio.user,
       },
       blocks,

@@ -76,7 +76,7 @@ export const BlockConfigSchema = z.discriminatedUnion("block_type", [
   z.object({
     block_type: z.literal("contact"),
     config: z.object({
-      github_url: z.string().url(),
+      github_url: z.string().url().optional().or(z.literal("")),
       email: z.string().email().optional().or(z.literal("")),
       linkedin_url: z.string().url().optional().or(z.literal("")),
       website_url: z.string().url().optional().or(z.literal("")),

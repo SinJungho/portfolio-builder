@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { GitFork, Star, Code2 } from "lucide-react";
+import { Activity, Star, Code2, ArrowRight } from "lucide-react";
 import type { ThemeTokens } from "../themes";
-import { useScrollReveal } from "../hooks/useScrollReveal";
 
 interface HeroBlockProps {
   config: {
@@ -18,170 +17,158 @@ interface HeroBlockProps {
     github_contributions?: number;
   };
   theme: ThemeTokens;
+  showContactLink?: boolean;
+  showProjectsLink?: boolean;
 }
 
-export default function HeroBlock({ config, theme: t }: HeroBlockProps) {
+// 큰 수를 k 단위로 축약한다.
+const formatCount = (n: number) =>
+  n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n);
+
+export default function HeroBlock({ config, theme: t, showContactLink, showProjectsLink }: HeroBlockProps) {
   const { headline, subheadline, bio, show_github_stats, github_login } = config;
 
-  const avatarUrl = github_login
-    ? `https://github.com/${github_login}.png`
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(headline)}&size=200`;
+  const [avatarError, setAvatarError] = useState(false);
+  // GitHub 아바타가 없거나 로드에 실패하면 이니셜을 표시한다.
+  const showGithubAvatar = Boolean(github_login) && !avatarError;
+  // 첫 문자를 안전하게 추출해 대체 아바타에 사용한다.
+  const initial = Array.from(headline.trim())[0] || "?";
 
-  const { ref: badgeRef, style: badgeStyle } = useScrollReveal("fadeIn");
-  const { ref: headingRef, style: headingStyle } = useScrollReveal("fadeUp");
-  const { ref: bioRevealRef, style: bioRevealStyle } = useScrollReveal("fadeUp");
-  const { ref: statsRevealRef, style: statsRevealStyle } = useScrollReveal("fadeUp");
-  const { ref: avatarRevealRef, style: avatarRevealStyle } = useScrollReveal("scaleIn");
-
+  // 값이 없거나 기준 미만인 통계는 표시하지 않는다.
   const stats = [
-    { icon: Code2, label: "리포지토리", value: config.github_repos_count ?? "–" },
-    { icon: Star, label: "받은 스타", value: config.github_stars_count ?? "–" },
-    { icon: GitFork, label: "기여 횟수", value: config.github_contributions ?? "–" },
-  ];
+    { icon: Code2, label: "리포지토리", value: config.github_repos_count, min: 3 },
+    { icon: Star, label: "받은 스타", value: config.github_stars_count, min: 1 },
+    { icon: Activity, label: "기여 횟수", value: config.github_contributions, min: 1 },
+  ].filter(
+    (stat): stat is { icon: typeof Code2; label: string; value: number; min: number } =>
+      typeof stat.value === "number" && stat.value >= stat.min,
+  );
+  const hasGithubStats = stats.length > 0;
+
+  const showStats = Boolean(show_github_stats && github_login && hasGithubStats);
 
   return (
-    <section className="relative min-h-[85vh] flex items-center -mx-6 md:-mx-8 px-6 md:px-8 overflow-hidden">
-      {/* Ambient Glow — 3-layer mesh */}
-      <div
-        className="absolute top-[-30%] left-[-10%] w-[60%] h-[80%] rounded-full blur-[140px] opacity-50 pointer-events-none"
-        style={{ backgroundColor: t.glowColor }}
-      />
-      <div
-        className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[60%] rounded-full blur-[120px] opacity-30 pointer-events-none"
-        style={{ backgroundColor: t.heroGlow }}
-      />
-      <div
-        className="absolute top-[20%] right-[30%] w-[30%] h-[30%] rounded-full blur-[100px] opacity-20 pointer-events-none"
-        style={{ backgroundColor: t.accent }}
-      />
+    <section
+      className="relative flex items-center -mx-6 md:-mx-8 px-6 md:px-8 overflow-hidden md:min-h-[52vh]"
+    >
 
-      <div className="relative w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-20 py-16">
-        {/* ── Text Content ── */}
+      <div className="relative w-full max-w-[1100px] mx-auto flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20 py-14 md:py-16">
         <div className="flex-1 space-y-8 text-center lg:text-left">
-          {/* Status Badge */}
-          <div ref={badgeRef} style={badgeStyle}>
-            <div
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-[13px] font-semibold tracking-wide"
-              style={{ backgroundColor: t.accentSoft, color: t.accent }}
-            >
-              <span
-                className="relative w-2 h-2 rounded-full"
-                style={{ backgroundColor: t.accent }}
-              >
-                <span
-                  className="absolute inset-0 rounded-full animate-ping"
-                  style={{ backgroundColor: t.accent, opacity: 0.4 }}
-                />
-              </span>
-              새로운 기회를 찾고 있어요
-            </div>
-          </div>
-
-          {/* Name & Title */}
-          <div ref={headingRef} style={headingStyle} className="space-y-4">
+          <div className="space-y-4">
             <h1
-              className="text-[clamp(44px,7vw,72px)] font-extrabold leading-[1.02] tracking-[-3px]"
+              className="text-[clamp(44px,7vw,72px)] font-extrabold leading-[1.02] tracking-[-1px] break-words"
               style={{ color: t.text }}
             >
               {headline}
             </h1>
-            <div className="overflow-hidden">
-              <h2
-                className="text-xl md:text-2xl font-semibold tracking-[-0.5px]"
-                style={{
-                  background: t.accentGradient,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {subheadline}
-              </h2>
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div ref={bioRevealRef} style={bioRevealStyle}>
             <p
-              className="text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto lg:mx-0"
+              className="text-xl md:text-2xl font-semibold tracking-[-0.5px]"
               style={{ color: t.textMuted }}
             >
-              {bio}
+              {subheadline}
             </p>
           </div>
 
-          {/* GitHub Stats Row */}
-          {show_github_stats && github_login && (
-            <div ref={statsRevealRef} style={statsRevealStyle}>
-              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="flex items-center gap-3 px-5 py-3.5 backdrop-blur-md"
-                    style={{
-                      backgroundColor: t.cardBg,
-                      border: `1px solid ${t.cardBorder}`,
-                      borderRadius: "16px",
-                      boxShadow: t.cardShadow,
-                    }}
-                  >
-                    <stat.icon
-                      className="w-4 h-4 shrink-0"
-                      style={{ color: stat.label === "Total Stars" ? "#F59E0B" : t.accent }}
-                    />
-                    <div className="flex flex-col">
-                      <span
-                        className="text-[11px] font-bold uppercase tracking-[1.5px]"
-                        style={{ color: t.textMuted }}
-                      >
-                        {stat.label}
-                      </span>
-                      <span
-                        className="text-[18px] font-extrabold tracking-tight leading-tight"
-                        style={{ color: t.text }}
-                      >
-                        {stat.value}
-                      </span>
-                    </div>
+          <p
+            className="text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto lg:mx-0"
+            style={{ color: t.textMuted }}
+          >
+            {bio}
+          </p>
+
+          {(showProjectsLink || showContactLink) && (
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+              {showProjectsLink && (
+                <a
+                  href="#projects"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full px-6 py-3 text-sm font-bold transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4"
+                  style={{ backgroundColor: t.ctaBg, color: t.ctaText, outlineColor: t.accent }}
+                >
+                  프로젝트 보기
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              )}
+              {showContactLink && (
+                <a
+                  href="#contact"
+                  // 보조 CTA는 테마별 대비를 위해 중립 색상을 사용한다.
+                  className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4"
+                  style={{
+                    backgroundColor: t.cardBg,
+                    color: t.text,
+                    border: `1px solid ${t.cardBorder}`,
+                    outlineColor: t.accent,
+                  }}
+                >
+                  연락처 보기
+                </a>
+              )}
+            </div>
+          )}
+
+          {showStats && (
+            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+              {stats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="flex items-center gap-3 px-5 py-3.5"
+                  style={{
+                    backgroundColor: t.cardBg,
+                    border: `1px solid ${t.cardBorder}`,
+                    borderRadius: t.cardRadius,
+                  }}
+                >
+                  <stat.icon
+                    className="w-4 h-4 shrink-0"
+                    style={{ color: t.textMuted }}
+                  />
+                  <div className="flex flex-col">
+                    <span
+                      className="text-[11px] font-bold uppercase tracking-[1.5px]"
+                      style={{ color: t.textMuted }}
+                    >
+                      {stat.label}
+                    </span>
+                    <span
+                      className="text-[18px] font-extrabold tracking-tight leading-tight"
+                      style={{ color: t.text }}
+                    >
+                      {formatCount(stat.value)}
+                    </span>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* ── Avatar ── */}
-        <div ref={avatarRevealRef} style={avatarRevealStyle} className="shrink-0 relative">
-          {/* Glow ring */}
+        <div className="shrink-0 relative">
           <div
-            className="absolute -inset-4 rounded-full opacity-25 blur-2xl"
-            style={{ background: t.accentGradient }}
-          />
-          {/* Gradient border ring */}
-          <div
-            className="relative p-1 rounded-full"
-            style={{ background: t.accentGradient }}
+            className="relative w-36 h-36 md:w-60 md:h-60 rounded-full overflow-hidden group flex items-center justify-center"
+            style={{
+              backgroundColor: t.surfaceBg,
+              border: `1px solid ${t.cardBorder}`,
+            }}
           >
-            <div className="relative w-52 h-52 md:w-64 md:h-64 rounded-full overflow-hidden group"
-              style={{ backgroundColor: t.bg }}
-            >
+            {showGithubAvatar ? (
               <Image
-                src={avatarUrl}
+                src={`https://github.com/${github_login}.png`}
                 alt={headline}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
-                unoptimized={true}
+                unoptimized
+                onError={() => setAvatarError(true)}
               />
-            </div>
+            ) : (
+              <span
+                className="text-6xl md:text-7xl font-extrabold select-none"
+                style={{ color: t.textMuted }}
+                aria-hidden="true"
+              >
+                {initial}
+              </span>
+            )}
           </div>
-          {/* Online indicator */}
-          <div
-            className="absolute bottom-4 right-4 w-5 h-5 rounded-full border-[3px]"
-            style={{
-              backgroundColor: "#22C55E",
-              borderColor: t.bg,
-            }}
-          />
         </div>
       </div>
 
