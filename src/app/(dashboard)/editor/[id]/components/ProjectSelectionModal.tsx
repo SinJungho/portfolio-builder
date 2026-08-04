@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import MarkdownEditor from "@/components/ui/MarkdownEditor";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
-import { Check, GitFork, Search, Star, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, GitFork, Search, Star, X } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 import { type RawProject } from "@/types/project";
@@ -70,6 +70,17 @@ export default function ProjectSelectionModal({
           ? [...prevIds, id]
           : prevIds,
     );
+  };
+
+  const moveTempProject = (id: string, direction: -1 | 1) => {
+    setTempSelectedIds((prevIds) => {
+      const index = prevIds.indexOf(id);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= prevIds.length) return prevIds;
+      const nextIds = [...prevIds];
+      [nextIds[index], nextIds[nextIndex]] = [nextIds[nextIndex], nextIds[index]];
+      return nextIds;
+    });
   };
 
   const handleSave = () => {
@@ -137,6 +148,30 @@ export default function ProjectSelectionModal({
                 }
               `}
             >
+              {tempSelectedIds.includes(project.id) && (
+                <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-spotify-green/15 px-2 py-1 text-[10px] font-bold text-spotify-green">
+                  <span>대표 {String(tempSelectedIds.indexOf(project.id) + 1).padStart(2, "0")}</span>
+                  <button
+                    type="button"
+                    onClick={() => moveTempProject(project.id, -1)}
+                    disabled={tempSelectedIds.indexOf(project.id) === 0}
+                    aria-label={`${project.name} 순서 위로 이동`}
+                    className="rounded-full p-0.5 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green disabled:opacity-30"
+                  >
+                    <ChevronUp className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveTempProject(project.id, 1)}
+                    disabled={tempSelectedIds.indexOf(project.id) === tempSelectedIds.length - 1}
+                    aria-label={`${project.name} 순서 아래로 이동`}
+                    className="rounded-full p-0.5 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green disabled:opacity-30"
+                  >
+                    <ChevronDown className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+
               {/* 선택 여부 체크박스 표시 */}
               <button type="button" onClick={() => toggleTempProject(project.id)} disabled={!tempSelectedIds.includes(project.id) && tempSelectedIds.length >= MAX_FEATURED_PROJECTS} aria-pressed={tempSelectedIds.includes(project.id)} aria-label={`${project.name} ${tempSelectedIds.includes(project.id) ? "선택 해제" : "선택"}`} className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-full border border-white/5 bg-spotify-near-black transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
                 {tempSelectedIds.includes(project.id) && (

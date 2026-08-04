@@ -157,9 +157,13 @@ export default function CustomDomainSection() {
   }, [customDomain]);
 
   // 3. 클립보드 값 복사 핸들러
-  const handleCopyToClipboard = (value: string, successMessage: string) => {
-    navigator.clipboard.writeText(value);
-    toast.success(successMessage);
+  const handleCopyToClipboard = async (value: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
+    } catch {
+      toast.error("복사하지 못했어요. 값을 직접 선택해 복사해주세요.");
+    }
   };
 
   return (

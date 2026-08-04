@@ -11,7 +11,13 @@ import SkillsBlock from "./blocks/SkillsBlock";
 import { hasContactMethod } from "./contact";
 import { FONT_STACK, HEADING_FONT_OVERRIDE, previewFontClass } from "./fonts";
 import { sanitizeCss } from "./sanitize-css";
-import { accentForSurface, readableTextOn, resolveTheme, type ThemeTokens } from "./themes";
+import {
+  accentForSurface,
+  DEFAULT_DESIGN_TOKENS,
+  readableTextOn,
+  resolveTheme,
+  type ThemeTokens,
+} from "./themes";
 
 import { cn } from "@/lib/utils";
 import { FileDown, Loader2 } from "lucide-react";
@@ -79,6 +85,8 @@ interface PortfolioPreviewProps {
   slug?: string;
   portfolioId?: string;
   highlightedBlockId?: string | null;
+  previewViewport?: "desktop" | "tablet" | "mobile";
+  onSelectBlock?: (block: Block) => void;
 }
 
 interface PdfExportButtonProps {
@@ -96,21 +104,24 @@ export default function PortfolioPreview({
   slug,
   portfolioId,
   highlightedBlockId,
+  previewViewport = "desktop",
+  onSelectBlock,
 }: PortfolioPreviewProps) {
   const searchParams = useSearchParams();
   const isExporting = searchParams.get("export") === "true";
   const [isExportPending, setIsExportPending] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const resolvedDesignTokens = { ...DEFAULT_DESIGN_TOKENS, ...(designTokens || {}) };
 
   const baseTheme = resolveTheme(theme);
-  const primaryColor = designTokens?.primaryColor || baseTheme.accent;
+  const primaryColor = resolvedDesignTokens.primaryColor || baseTheme.accent;
   // 포커스 링·프로그레스 채움처럼 배경 위 가느다란 기능 요소엔 대비 보장색 사용 —
   // 옅은 커스텀 색은 배경 대비 3:1 미달 시 테마 기본 액센트로 대체(포커스 링 소실 방지, WCAG 2.4.7).
   // 채움(CTA 배경)은 그 위 텍스트가 readableTextOn으로 파생되므로 사용자 색을 그대로 유지.
   // 포커스 링·프로그레스 채움은 페이지 배경(bg)뿐 아니라 카드 표면(cardBg) 위에도 렌더되므로
   // 두 표면 모두에서 3:1을 만족해야 한다. bg→cardBg로 체이닝해 더 빡빡한 쪽까지 통과하지 못하면
   // 테마 기본 액센트로 대체(둘 중 하나라도 미달이면 폴백).
-  const functionalAccent = designTokens?.primaryColor
+  const functionalAccent = resolvedDesignTokens.primaryColor
     ? accentForSurface(
         accentForSurface(primaryColor, baseTheme.bg, baseTheme.accent),
         baseTheme.cardBg,
@@ -123,25 +134,25 @@ export default function PortfolioPreview({
     accent: functionalAccent, // 포커스 링 등 얇은 기능선 — 대비 보장
     ctaBg: primaryColor, // 채움 — 사용자 색 유지(텍스트는 ctaText로 대비 확보)
     // 커스텀 색 위 CTA 텍스트는 휘도로 파생 — 다크 색 선택 시 다크-온-다크 방지
-    ctaText: designTokens?.primaryColor ? readableTextOn(primaryColor) : baseTheme.ctaText,
+    ctaText: resolvedDesignTokens.primaryColor ? readableTextOn(primaryColor) : baseTheme.ctaText,
     // 태그는 항상 무채색(테마 기본값) — 그린/커스텀 색은 기능(CTA·프로그레스·활성)에만.
     // 커스텀 primaryColor를 태그 텍스트로 remap하면 밝은 색 선택 시 저-대비 틴트 위에서 판독 불가(AA 미달).
     // 무채색 태그는 테마가 대비를 보장하므로 이 위험을 원천 제거.
     cardRadius:
-      designTokens?.borderRadius === "none"
+      resolvedDesignTokens.borderRadius === "none"
         ? "0px"
-        : designTokens?.borderRadius === "sm"
+        : resolvedDesignTokens.borderRadius === "sm"
           ? "8px"
-          : designTokens?.borderRadius === "md"
+          : resolvedDesignTokens.borderRadius === "md"
             ? "16px"
-            : designTokens?.borderRadius === "lg"
+            : resolvedDesignTokens.borderRadius === "lg"
               ? "24px"
-              : designTokens?.borderRadius === "full"
+              : resolvedDesignTokens.borderRadius === "full"
                 ? "9999px"
                 : baseTheme.cardRadius,
   };
 
-  const fontKey = designTokens?.fontFamily || "inter";
+  const fontKey = resolvedDesignTokens.fontFamily || "inter";
   const fontFamily = FONT_STACK[fontKey] || FONT_STACK.inter;
   // 디스플레이 페이스(예: Playfair)는 헤딩에만 — 본문은 위 FONT_STACK(산세리프)
   const headingFont = HEADING_FONT_OVERRIDE[fontKey];
@@ -253,10 +264,10 @@ export default function PortfolioPreview({
         />
       )}
 
-      {designTokens?.customCss && (
+      {resolvedDesignTokens.customCss && (
         <style
           dangerouslySetInnerHTML={{
-            __html: sanitizeCss(designTokens.customCss),
+            __html: sanitizeCss(resolvedDesignTokens.customCss),
           }}
         />
       )}
@@ -273,7 +284,10 @@ export default function PortfolioPreview({
         return (
           <div
             key={block.id}
-            className={getBlockWrapperClass(isHero, isFirst, designTokens?.spacing)}
+            className={cn(
+              getBlockWrapperClass(isHero, isFirst, resolvedDesignTokens.spacing),
+              onSelectBlock && "group/editor relative",
+            )}
             // 섹션 구분선 색 — 테마 인식 토큰(모든 테마에서 보이는 헤어라인). hero·첫 블록엔 상단 보더 없음
             style={{
               ...(hasDivider ? { borderTopColor: mt.cardBorder } : {}),
@@ -282,6 +296,16 @@ export default function PortfolioPreview({
                 : {}),
             }}
           >
+            {onSelectBlock && (
+              <button
+                type="button"
+                onClick={() => onSelectBlock(block)}
+                className="absolute right-4 top-4 z-10 inline-flex items-center rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-bold text-white shadow-spotify backdrop-blur-sm transition-opacity md:pointer-events-none md:opacity-0 md:group-hover/editor:pointer-events-auto md:group-hover/editor:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{ outlineColor: mt.accent }}
+              >
+                섹션 편집
+              </button>
+            )}
             {block.block_type === "hero" && (
               <HeroBlock
                 config={
@@ -293,6 +317,7 @@ export default function PortfolioPreview({
                 theme={mt}
                 showContactLink={canContact}
                 showProjectsLink={hasProjects}
+                isCompactPreview={previewViewport === "mobile"}
               />
             )}
             {block.block_type === "project_grid" && (
@@ -306,6 +331,7 @@ export default function PortfolioPreview({
                 theme={mt}
                 portfolioId={portfolioId}
                 blockId={block.id}
+                isCompactPreview={previewViewport === "mobile"}
               />
             )}
             {block.block_type === "skills" && (

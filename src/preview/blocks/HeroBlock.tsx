@@ -19,13 +19,14 @@ interface HeroBlockProps {
   theme: ThemeTokens;
   showContactLink?: boolean;
   showProjectsLink?: boolean;
+  isCompactPreview?: boolean;
 }
 
 // 큰 수를 k 단위로 축약한다.
 const formatCount = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n);
 
-export default function HeroBlock({ config, theme: t, showContactLink, showProjectsLink }: HeroBlockProps) {
+export default function HeroBlock({ config, theme: t, showContactLink, showProjectsLink, isCompactPreview = false }: HeroBlockProps) {
   const { headline, subheadline, bio, show_github_stats, github_login } = config;
 
   const [avatarError, setAvatarError] = useState(false);
@@ -52,8 +53,11 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
       className="relative flex items-center -mx-6 md:-mx-8 px-6 md:px-8 overflow-hidden md:min-h-[52vh]"
     >
 
-      <div className="relative w-full max-w-[1100px] mx-auto flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20 py-14 md:py-16">
-        <div className="flex-1 space-y-8 text-center lg:text-left">
+      <div className={`relative w-full max-w-[1100px] mx-auto flex ${isCompactPreview ? "flex-col-reverse" : "flex-col-reverse lg:flex-row"} items-center gap-12 lg:gap-20 py-14 md:py-16`}>
+        <div
+          className={`${isCompactPreview ? "w-full min-w-0 flex-none text-center" : "flex-1 text-center lg:text-left"} space-y-8`}
+          style={isCompactPreview ? { width: "100%" } : undefined}
+        >
           <div className="space-y-4">
             <h1
               className="text-[clamp(44px,7vw,72px)] font-extrabold leading-[1.02] tracking-[-1px] break-words"
@@ -62,7 +66,7 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
               {headline}
             </h1>
             <p
-              className="text-xl md:text-2xl font-semibold tracking-[-0.5px]"
+            className="text-xl md:text-2xl font-semibold tracking-[-0.5px]"
               style={{ color: t.textMuted }}
             >
               {subheadline}
@@ -70,14 +74,14 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
           </div>
 
           <p
-            className="text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto lg:mx-0"
+            className={`text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto ${isCompactPreview ? "" : "lg:mx-0"}`}
             style={{ color: t.textMuted }}
           >
             {bio}
           </p>
 
           {(showProjectsLink || showContactLink) && (
-            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+            <div className={`flex flex-wrap gap-3 justify-center ${isCompactPreview ? "" : "lg:justify-start"}`}>
               {showProjectsLink && (
                 <a
                   href="#projects"
@@ -107,7 +111,7 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
           )}
 
           {showStats && (
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+            <div className={`flex flex-wrap justify-center ${isCompactPreview ? "" : "lg:justify-start"} gap-4`}>
               {stats.map((stat) => (
                 <div
                   key={stat.label}
@@ -144,7 +148,7 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
 
         <div className="shrink-0 relative">
           <div
-            className="relative w-36 h-36 md:w-60 md:h-60 rounded-full overflow-hidden group flex items-center justify-center"
+            className={`relative w-36 h-36 ${isCompactPreview ? "" : "md:w-60 md:h-60"} rounded-full overflow-hidden group flex items-center justify-center`}
             style={{
               backgroundColor: t.surfaceBg,
               border: `1px solid ${t.cardBorder}`,
@@ -161,7 +165,7 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
               />
             ) : (
               <span
-                className="text-6xl md:text-7xl font-extrabold select-none"
+                className={`text-6xl ${isCompactPreview ? "" : "md:text-7xl"} font-extrabold select-none`}
                 style={{ color: t.textMuted }}
                 aria-hidden="true"
               >

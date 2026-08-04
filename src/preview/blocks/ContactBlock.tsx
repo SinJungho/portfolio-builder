@@ -38,7 +38,7 @@ export default function ContactBlock({ config, theme: t, portfolioId, blockId }:
   const socialLinks = [
     github_url && { href: github_url, icon: Github, label: "GitHub", type: "github" },
     linkedin_url && { href: linkedin_url, icon: Linkedin, label: "LinkedIn", type: "linkedin" },
-    website_url && { href: website_url, icon: Globe, label: "Website", type: "website" },
+    website_url && { href: website_url, icon: Globe, label: "웹사이트", type: "website" },
   ].filter(Boolean) as Array<{ href: string; icon: React.ElementType; label: string; type: string }>;
 
   if (!email && socialLinks.length === 0) return null;

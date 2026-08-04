@@ -8,6 +8,8 @@ const analytics = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/analy
 const heroModal = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/components/HeroEditorModal.tsx"), "utf8");
 const skillsModal = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/components/SkillsEditorModal.tsx"), "utf8");
 const blogModal = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/components/BlogFeedEditorModal.tsx"), "utf8");
+const preview = readFileSync(resolve(process.cwd(), "src/preview/PortfolioPreview.tsx"), "utf8");
+const sortableBlock = readFileSync(resolve(process.cwd(), "src/app/generate/[id]/steps/components/SortableBlockItem.tsx"), "utf8");
 
 describe("dashboard portfolio actions", () => {
   it("gives the mobile creation action an accessible name and visible label", () => {
@@ -34,7 +36,7 @@ describe("dashboard portfolio actions", () => {
     expect(dashboard).toContain("다음 한 가지");
     expect(editor).toContain('useState<SidebarTab>("publish")');
     expect(editor).toContain('aria-selected={sidebarTab === "publish"}');
-    expect(editor).toContain('aria-controls="editor-panel-publish"');
+    expect(editor).toContain('aria-controls="editor-panel"');
     expect(editor).toContain("미리보기 확인");
     expect(editor).toContain("확인했어요");
     expect(editor).toContain("portfolio-preview-reviewed");
@@ -50,9 +52,24 @@ describe("dashboard portfolio actions", () => {
 
   it("links every unresolved readiness item to its editor destination before showing confirmation", () => {
     const editor = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/EditorClient.tsx"), "utf8");
-    expect(editor).toContain("onReadinessAction(item.destination)");
-    // 다음으로 채울 항목을 인라인에서 강조(중복 하단 액션 행 대신)
-    expect(editor).toContain("item.id === nextItem?.id");
+    expect(editor).toContain("onReadinessAction(group.destination)");
+    // 세부 조건은 유지하되 사용자에게는 세 단계로 묶어 다음 행동을 강조한다.
+    expect(editor).toContain("group.id === nextGroup?.id");
+    expect(editor).toContain("getPortfolioReadinessGroups(readinessItems)");
+  });
+
+  it("keeps the preview primary while preserving direct section editing", () => {
+    const editor = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/EditorClient.tsx"), "utf8");
+    expect(editor).toContain("isInspectorOpen");
+    expect(editor).toContain("컨트롤 숨기기");
+    expect(editor).toContain("fixed inset-x-0 bottom-0");
+    expect(editor).toContain("미리보기를 보며 바로 수정해요");
+    expect(editor).toContain("onSelectBlock={handlePreviewBlockSelect}");
+    expect(editor).toContain("맞춤 주소 연결");
+    expect(preview).toContain("onSelectBlock?: (block: Block) => void");
+    expect(preview).toContain("섹션 편집");
+    expect(sortableBlock).toContain("프로젝트 편집");
+    expect(sortableBlock).not.toContain('includes(block.block_type) && block.is_visible');
   });
 
   it("keeps project selection and analytics refresh usable without a mouse", () => {
