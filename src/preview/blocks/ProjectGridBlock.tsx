@@ -1,20 +1,13 @@
 "use client";
 
-import React from "react";
-import { ArrowUpRight, Code2, Calendar, Star } from "lucide-react";
+import { ArrowUpRight, Calendar, Code2, Star } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import React from "react";
 import type { ThemeTokens } from "../themes";
-import { useScrollReveal } from "../hooks/useScrollReveal";
-import { Badge } from "@/components/ui/badge";
 
 interface ProjectGridBlockProps {
   config: {
-    layout: "grid" | "list" | "masonry";
-    columns: number;
     project_ids: string[];
-    show_tech_stack: boolean;
     custom_descriptions?: Record<string, string>;
     projectsData?: Array<{
       id: string;
@@ -33,67 +26,95 @@ interface ProjectGridBlockProps {
   blockId?: string;
 }
 
+interface ParsedSummary {
+  headline: string | null;
+  highlights: string[];
+  demo_url: string | null;
+  role: string | null;
+}
 
-function parseSummary(summary: string | null) {
-  if (!summary) return { headline: null, highlights: [], demo_url: null, role: null };
+function parseSummary(summary: string | null): ParsedSummary {
+  if (!summary)
+    return { headline: null, highlights: [], demo_url: null, role: null };
   try {
     const trimmed = summary.trim();
     if (trimmed.startsWith("{")) {
       const data = JSON.parse(trimmed);
       return {
         headline: data.headline || null,
-        highlights: Array.isArray(data.highlights) ? data.highlights : [],
+        highlights: Array.isArray(data.highlights)
+          ? data.highlights.filter(
+              (x: unknown): x is string => typeof x === "string",
+            )
+          : [],
         demo_url: data.demo_url || null,
-        role: data.role || null
+        role: data.role || null,
       };
     }
   } catch {
-    // Fallback
+    return { headline: summary, highlights: [], demo_url: null, role: null };
   }
   return { headline: summary, highlights: [], demo_url: null, role: null };
 }
 
-export default function ProjectGridBlock({ config, theme: t, portfolioId, blockId }: ProjectGridBlockProps) {
-  const { show_tech_stack, projectsData = [] } = config;
+export default function ProjectGridBlock({
+  config,
+  theme: t,
+  portfolioId,
+  blockId,
+}: ProjectGridBlockProps) {
+  const { projectsData = [] } = config;
 
+  // 선택된 프로젝트의 순서를 유지한다.
   const displayProjects = projectsData;
 
-  const { ref: headerRef, style: headerStyle } = useScrollReveal("fadeUp");
-
-  if (displayProjects.length === 0) return null;
-
   return (
-    <section className="space-y-12">
-      {/* Section Header */}
-      <div ref={headerRef} style={headerStyle} className="space-y-4">
+    <section id="projects" className="space-y-12">
+      <div className="space-y-4">
         <div className="flex items-end gap-4">
           <h2
-            className="text-[28px] md:text-[36px] font-extrabold tracking-[-2px] leading-none"
+            className="text-[28px] md:text-[36px] font-extrabold tracking-[-1px] leading-none"
             style={{ color: t.text }}
           >
             대표 프로젝트
           </h2>
-          <span
-            className="text-[14px] font-semibold mb-1"
-            style={{ color: t.textMuted }}
-          >
-            {displayProjects.length}개 프로젝트
-          </span>
+          {displayProjects.length > 0 && (
+            <span
+              className="text-[14px] font-semibold mb-1"
+              style={{ color: t.textMuted }}
+            >
+              {displayProjects.length}개 프로젝트
+            </span>
+          )}
         </div>
-        <div
-          className="h-[3px] w-12 rounded-full"
-          style={{ background: t.decorBar }}
-        />
       </div>
 
-      {/* Projects List — Unified Design */}
-      <div className="space-y-8 md:space-y-12">
-        {displayProjects.map((p) => (
-          <FeaturedCard 
-            key={p.id} 
-            project={p} 
-            theme={t} 
-            showTech={show_tech_stack} 
+      {/* 프로젝트가 없을 때 공개 페이지용 빈 상태를 표시한다. */}
+      {displayProjects.length === 0 && (
+        <div
+          className="px-6 py-12 text-center"
+          style={{
+            backgroundColor: t.cardBg,
+            border: `1px solid ${t.cardBorder}`,
+            borderRadius: t.cardRadius,
+          }}
+        >
+          <p
+            className="text-[15px] font-semibold"
+            style={{ color: t.textMuted }}
+          >
+            아직 공개된 프로젝트가 없어요.
+          </p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3">
+        {displayProjects.map((p, i) => (
+          <ProjectRow
+            key={p.id}
+            project={p}
+            index={i}
+            theme={t}
             customDescription={config.custom_descriptions?.[p.id]}
             portfolioId={portfolioId}
             blockId={blockId}
@@ -104,25 +125,34 @@ export default function ProjectGridBlock({ config, theme: t, portfolioId, blockI
   );
 }
 
-/* ── Unified Project Card (Based on original Featured Design) ── */
-function FeaturedCard({
+function ProjectRow({
   project: p,
+  index,
   theme: t,
-  showTech,
   customDescription,
   portfolioId,
   blockId,
 }: {
   project: NonNullable<ProjectGridBlockProps["config"]["projectsData"]>[0];
+  index: number;
   theme: ThemeTokens;
-  showTech: boolean;
   customDescription?: string;
   portfolioId?: string;
   blockId?: string;
 }) {
-  const { ref: revealRef, style: revealStyle } = useScrollReveal<HTMLDivElement>("fadeUp");
-  const { headline, highlights, demo_url } = parseSummary(p.ai_summary);
+  const { headline, highlights, demo_url, role } = parseSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
+  const outcome =
+    headline || highlights[0] || customDescription || p.description;
+  const primaryUrl = demo_url || p.html_url;
+  const primaryLabel = demo_url ? "데모 보기" : "GitHub 보기";
+  const num = String(index + 1).padStart(2, "0");
+  // 첫 프로젝트만 대표작으로 강조한다.
+  const isFlagship = index === 0;
+  // 대표작에는 중복을 제외한 하이라이트를 최대 2개 표시한다.
+  const extraHighlights = isFlagship
+    ? highlights.filter((h) => h.trim() !== "" && h !== outcome).slice(0, 2)
+    : [];
 
   const trackClick = async () => {
     if (!portfolioId || !blockId) return;
@@ -130,10 +160,10 @@ function FeaturedCard({
       await fetch("/api/analytics/event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          event_type: "block_click", 
+        body: JSON.stringify({
+          event_type: "block_click",
           portfolio_id: portfolioId,
-          block_id: blockId 
+          block_id: blockId,
         }),
       });
     } catch (e) {
@@ -141,140 +171,137 @@ function FeaturedCard({
     }
   };
 
-  return (
-    <div
-      ref={revealRef}
-      style={{
-        ...revealStyle,
-        backgroundColor: t.cardBg,
-        border: `1px solid ${t.cardBorder}`,
-        borderRadius: t.cardRadius,
-        boxShadow: t.cardShadow,
-      }}
-      className="group relative block p-8 md:p-10 transition-all duration-500 overflow-hidden"
-    >
-      <div className="relative flex flex-col gap-8">
-        <div className="space-y-6">
-          {/* Metadata Badges - Trendy Style */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Badge 
-              variant="outline" 
-              className="px-3 py-1 h-6 rounded-full border-none flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-[1.05] leading-none"
-              style={{ 
-                color: t.accent,
-                backgroundColor: t.accentSoft,
-              }}
-            >
-              <Code2 className="w-3 h-3" />
-              <span className="mt-[0.5px]">{p.language || "Unknown"}</span>
-            </Badge>
+  const rowClass =
+    "group flex flex-col gap-4 sm:flex-row sm:items-center px-5 py-5 md:px-6 transition-all duration-300 hover:-translate-y-0.5 hover:brightness-[1.12] focus-visible:outline-2 focus-visible:outline-offset-4";
+  const rowStyle: React.CSSProperties = {
+    backgroundColor: t.cardBg,
+    border: `1px solid ${t.cardBorder}`,
+    borderRadius: t.cardRadius,
+    outlineColor: t.accent,
+  };
 
-            {year && (
-              <Badge 
-                variant="outline"
-                className="px-3 py-1 h-6 rounded-full border flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider leading-none"
-                style={{ 
-                  borderColor: t.cardBorder, 
-                  color: t.textMuted,
-                  backgroundColor: t.cardBg,
-                }}
-              >
-                <Calendar className="w-3 h-3" />
-                <span className="mt-[0.5px]">{year}</span>
-              </Badge>
-            )}
-
-            <Badge 
-              variant="outline"
-              className="px-3 py-1 h-6 rounded-full border flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider leading-none"
-              style={{ 
-                borderColor: t.cardBorder, 
-                color: t.text,
-                backgroundColor: t.cardBg,
-                boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
-              }}
-            >
-              <Star className="w-3 h-3 fill-[#F59E0B] text-[#F59E0B]" />
-              <span className="mt-[0.5px]">{p.stargazers_count}</span>
-            </Badge>
-          </div>
-
-          <div className="space-y-2">
+  const body = (
+    <>
+      <div className="flex gap-4 sm:gap-5 flex-1 min-w-0">
+        <span
+          className="block text-[13px] sm:text-[15px] font-bold tabular-nums pt-0.5 sm:pt-1 w-5 sm:w-7 shrink-0"
+          style={{ color: t.textMuted }}
+          aria-hidden="true"
+        >
+          {num}
+        </span>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h3
-              className="text-[26px] md:text-[32px] font-extrabold tracking-[-1.8px] leading-tight"
+              className="text-[20px] md:text-[24px] font-extrabold tracking-[-1px] leading-tight break-words"
               style={{ color: t.text }}
             >
               {p.name}
             </h3>
-            {headline && (
-              <p className="text-[18px] font-semibold leading-tight" style={{ color: t.accent }}>
-                {headline}
-              </p>
+            {role && (
+              <span
+                className="text-[13px] font-semibold"
+                style={{ color: t.textMuted }}
+              >
+                · {role}
+              </span>
             )}
           </div>
-
-          <div 
-            className={`space-y-4 prose prose-sm max-w-none md:prose-base ${t.id === "midnight" ? "prose-invert" : "prose-slate"}`} 
+          {outcome && (
+            <p
+              className="text-[15px] leading-relaxed line-clamp-2 max-w-2xl"
+              style={{ color: t.textMuted }}
+            >
+              {outcome}
+            </p>
+          )}
+          {extraHighlights.length > 0 && (
+            <ul className="space-y-1 pt-1 max-w-2xl">
+              {extraHighlights.map((h, hi) => (
+                <li
+                  key={hi}
+                  className="flex gap-2.5 text-[14px] leading-relaxed"
+                  style={{ color: t.textMuted }}
+                >
+                  <span aria-hidden="true" className="shrink-0 select-none">
+                    ·
+                  </span>
+                  <span className="min-w-0">{h}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div
+            className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5 text-[12px] font-semibold"
             style={{ color: t.textMuted }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {customDescription || p.description || ""}
-            </ReactMarkdown>
-
-            {highlights.length > 0 && (
-              <ul className="space-y-2">
-                {highlights.map((h: string, i: number) => (
-                  <li key={i} className="flex gap-3 text-[15px] leading-relaxed" style={{ color: t.text }}>
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: t.accent }} />
-                    {h}
-                  </li>
-                ))}
-              </ul>
+            {p.language && (
+              <span className="inline-flex items-center gap-1">
+                <Code2 className="w-3 h-3" />
+                {p.language}
+              </span>
             )}
-          </div>
-
-          {showTech && p.ai_tags?.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {p.ai_tags.slice(0, 8).map((tag: string) => (
-                <span
-                  key={tag}
-                  className="text-[11px] font-bold px-3 py-1.5 rounded-md uppercase tracking-wider"
-                  style={{ backgroundColor: t.tagBg, color: t.tagText }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-4 pt-4">
-            <Link
-              href={p.html_url || "#"}
-              target="_blank"
-              rel="noreferrer"
-              onClick={trackClick}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{ backgroundColor: t.accent, color: "#fff" }}
-            >
-              <Code2 className="w-4 h-4" />
-              GitHub
-            </Link>
-            {demo_url && (
-              <Link
-                href={demo_url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={trackClick}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold border transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ borderColor: t.cardBorder, color: t.text, backgroundColor: t.cardBg }}
-              >
-                <ArrowUpRight className="w-4 h-4" />
-                데모 보기
-              </Link>
+            {year && (
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {year}
+              </span>
+            )}
+            {p.stargazers_count > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <Star
+                  className="w-3 h-3"
+                  style={{ fill: t.textMuted, color: t.textMuted }}
+                />
+                {p.stargazers_count}
+              </span>
             )}
           </div>
         </div>
       </div>
+
+      {primaryUrl && (
+        <span
+          className={`${isFlagship ? "" : "pf-cta-badge "}inline-flex items-center justify-center gap-1.5 shrink-0 self-start sm:self-center px-4 py-2 text-[13px] font-bold rounded-full transition-all group-hover:translate-x-0.5`}
+          style={
+            isFlagship
+              ? { backgroundColor: t.ctaBg, color: t.ctaText }
+              : ({
+                  backgroundColor: t.cardBg,
+                  color: t.text,
+                  border: `1px solid ${t.cardBorder}`,
+                  "--cta-badge-bg-active": t.ctaBg,
+                  "--cta-badge-fg-active": t.ctaText,
+                } as React.CSSProperties)
+          }
+        >
+          {primaryLabel}
+          <ArrowUpRight className="w-4 h-4" />
+        </span>
+      )}
+    </>
+  );
+
+  return primaryUrl ? (
+    <Link
+      href={primaryUrl}
+      target="_blank"
+      rel="noreferrer"
+      onClick={trackClick}
+      className={rowClass}
+      style={rowStyle}
+      // 링크 이름에 프로젝트 요약과 이동 동작을 포함한다.
+      aria-label={
+        outcome
+          ? `${p.name} — ${outcome.slice(0, 100)}, ${primaryLabel}`
+          : `${p.name}, ${primaryLabel}`
+      }
+    >
+      {body}
+    </Link>
+  ) : (
+    <div className={rowClass} style={rowStyle}>
+      {body}
     </div>
   );
 }

@@ -137,6 +137,14 @@ describe('BlockConfigSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('연락처가 비어 있는 contact 블록도 파싱한다', () => {
+    const result = BlockConfigSchema.safeParse({
+      block_type: 'contact',
+      config: { github_url: '', email: '', linkedin_url: '', website_url: '' },
+    })
+    expect(result.success).toBe(true)
+  })
+
   it('유효한 blog_feed 블록을 파싱한다', () => {
     const input = {
       block_type: 'blog_feed',

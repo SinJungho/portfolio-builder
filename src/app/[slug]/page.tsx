@@ -1,10 +1,10 @@
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { prisma } from "@/lib/prisma";
+import { portfolioUrl } from "@/lib/portfolio-url";
 import PortfolioPreview from "@/preview/PortfolioPreview";
 import { resolveTheme } from "@/preview/themes";
 import { portfolioService } from "@/services/portfolio";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const revalidate = 60;
@@ -37,10 +37,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title:
       portfolio.seo_title ||
       portfolio.title ||
-      `${portfolio.user?.name || slug}'s Portfolio`,
+      `${portfolio.user?.name || slug} 포트폴리오`,
     description:
       portfolio.seo_description ||
-      "PortfolioForge로 생성된 프리미엄 포트폴리오입니다.",
+      `${portfolio.user?.name || slug}님의 개발 포트폴리오 — 프로젝트와 기술 스택을 한눈에 소개합니다.`,
     openGraph: {
       images: portfolio.og_image_url ? [portfolio.og_image_url] : [],
     },
@@ -50,10 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PortfolioPage({ params, searchParams }: Props) {
+export default async function PortfolioPage({ params }: Props) {
   const { slug } = await params;
-  const { export: isExport } = await searchParams;
-  const isExportMode = isExport === "true";
 
   // 포트폴리오 데이터와 모든 블록 구성 요소를 한 번에 가공하여 조회합니다. (N+1 쿼리 최적화 내장)
   const data = await portfolioService.getPopulatedPortfolioBySlug(slug);
@@ -71,7 +69,6 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
       style={{
         backgroundColor: t.bg,
         color: t.text,
-        backgroundImage: t.pageBgGradient || "none",
       }}
     >
       <AnalyticsTracker portfolioId={portfolio.id} />
@@ -84,13 +81,15 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
             "@context": "https://schema.org",
             "@type": "Person",
             name: portfolio.user?.name || slug,
-            url: `https://${portfolio.slug}.portfolioforge.app`,
+            // 커스텀 도메인 반영 — 하드코딩된 서브도메인은 커스텀 도메인 사용자에게 틀린 canonical URL이었음
+            url: portfolioUrl(portfolio.slug, portfolio.custom_domain),
             description: portfolio.seo_description || portfolio.title,
             image: portfolio.og_image_url || undefined,
           }),
         }}
       />
 
+      {/* 단일 <main> 랜드마크 — 포트폴리오 자체 푸터("포지로 만든 포트폴리오")는 PortfolioPreview가 렌더 */}
       <main className="flex-1 w-full">
         <PortfolioPreview
           blocks={blocks}
@@ -100,29 +99,6 @@ export default async function PortfolioPage({ params, searchParams }: Props) {
           portfolioId={portfolio.id}
         />
       </main>
-
-      {!isExportMode && (
-        <footer
-          className="py-10 px-6 print:hidden"
-          style={{ backgroundColor: t.footerBg }}
-        >
-          <div className="max-w-[960px] mx-auto flex flex-col items-center gap-3 text-center">
-            <p
-              className="text-[13px] font-medium"
-              style={{ color: t.footerText }}
-            >
-              © {new Date().getFullYear()} {portfolio.title || slug}
-            </p>
-            <Link
-              href="/"
-              className="text-[11px] font-bold uppercase tracking-[2px] transition-colors duration-200 hover:opacity-70"
-              style={{ color: t.textMuted }}
-            >
-              Powered by PortfolioForge
-            </Link>
-          </div>
-        </footer>
-      )}
     </div>
   );
 }

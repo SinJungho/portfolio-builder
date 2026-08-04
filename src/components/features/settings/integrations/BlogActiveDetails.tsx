@@ -31,7 +31,7 @@ export function BlogActiveDetails({ blogIntegration }: BlogActiveDetailsProps) {
       </dt>
       <dd className="self-center">
         <span
-          className={`uppercase font-extrabold text-[11px] border px-2 py-0.5 rounded inline-block ${theme.badge}`}
+          className={`uppercase font-bold text-[11px] border px-2 py-0.5 rounded inline-block ${theme.badge}`}
         >
           {getProviderDisplayName(blogIntegration.provider)}
         </span>

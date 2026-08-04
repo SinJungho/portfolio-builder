@@ -8,6 +8,10 @@ interface RGB {
   b: number;
 }
 
+interface RGBA extends RGB {
+  a: number;
+}
+
 /**
  * HEX 색상을 RGB 객체로 변환
  */
@@ -22,6 +26,31 @@ export function hexToRgb(hex: string): RGB | null {
         b: parseInt(result[3], 16),
       }
     : null;
+}
+
+function cssColorToRgba(color: string): RGBA | null {
+  const hex = hexToRgb(color);
+  if (hex) return { ...hex, a: 1 };
+
+  const match = color.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i);
+  if (!match) return null;
+
+  const [r, g, b, alpha = "1"] = match.slice(1);
+  const channels = [Number(r), Number(g), Number(b)];
+  const a = Number(alpha);
+  if (channels.some((channel) => channel < 0 || channel > 255) || a < 0 || a > 1) {
+    return null;
+  }
+
+  return { r: channels[0], g: channels[1], b: channels[2], a };
+}
+
+function compositeColor(foreground: RGBA, background: RGB): RGB {
+  return {
+    r: foreground.r * foreground.a + background.r * (1 - foreground.a),
+    g: foreground.g * foreground.a + background.g * (1 - foreground.a),
+    b: foreground.b * foreground.a + background.b * (1 - foreground.a),
+  };
 }
 
 /**
@@ -42,11 +71,19 @@ export function getRelativeLuminance(rgb: RGB): number {
  * 두 색상 간의 대비도(Contrast Ratio) 계산
  * 공식: (L1 + 0.05) / (L2 + 0.05)
  */
-export function getContrastRatio(hex1: string, hex2: string): number {
-  const rgb1 = hexToRgb(hex1);
-  const rgb2 = hexToRgb(hex2);
+export function getContrastRatio(
+  color1: string,
+  color2: string,
+  backdrop = "#FFFFFF",
+): number {
+  const rgba1 = cssColorToRgba(color1);
+  const rgba2 = cssColorToRgba(color2);
+  const background = cssColorToRgba(backdrop);
 
-  if (!rgb1 || !rgb2) return 1;
+  if (!rgba1 || !rgba2 || !background) return 1;
+
+  const rgb1 = compositeColor(rgba1, background);
+  const rgb2 = compositeColor(rgba2, background);
 
   const l1 = getRelativeLuminance(rgb1);
   const l2 = getRelativeLuminance(rgb2);

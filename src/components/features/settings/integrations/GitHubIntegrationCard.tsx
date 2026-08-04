@@ -32,13 +32,13 @@ export function GitHubIntegrationCard() {
 
         <div>
           <div className="flex flex-wrap items-center gap-3 mb-2">
-            <h3 className="text-[18px] font-black text-white tracking-tight">
+            <h3 className="text-[18px] font-bold text-white tracking-tight">
               GitHub
             </h3>
             <span
               role="status"
               aria-label="연동 완료 상태"
-              className="flex items-center gap-2 text-[11px] font-black text-spotify-green bg-spotify-green/10 px-3 py-1 rounded-full uppercase tracking-spotify"
+              className="flex items-center gap-2 text-[11px] font-bold text-spotify-green bg-spotify-green/10 px-3 py-1 rounded-full tracking-spotify"
             >
               <span className="w-1.5 h-1.5 bg-spotify-green rounded-full shadow-[0_0_8px_rgba(30,215,96,0.6)]"></span>
               연동됨

@@ -3,9 +3,21 @@
 import { THEMES, ThemeTokens } from "@/preview/themes";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import { Check, Palette } from "lucide-react";
+import { useState } from "react";
+
+const recommendedThemeIds = ["spotify", "minimal", "midnight"];
 
 export default function ThemeSelector() {
   const { theme, setTheme } = usePortfolioStore();
+  const [showAllThemes, setShowAllThemes] = useState(
+    () => !recommendedThemeIds.includes(theme),
+  );
+  const themes = showAllThemes
+    ? Object.values(THEMES)
+    : Object.values(THEMES).filter((themeItem) =>
+        recommendedThemeIds.includes(themeItem.id),
+      );
+  const hiddenThemeCount = Object.keys(THEMES).length - recommendedThemeIds.length;
 
   return (
     <section className="space-y-6" aria-labelledby="theme-selector-heading">
@@ -31,7 +43,7 @@ export default function ThemeSelector() {
         role="radiogroup"
         aria-labelledby="theme-selector-heading"
       >
-        {Object.values(THEMES).map((themeItem: ThemeTokens) => (
+        {themes.map((themeItem: ThemeTokens) => (
           <button
             key={themeItem.id}
             role="radio"
@@ -47,16 +59,21 @@ export default function ThemeSelector() {
               active:scale-[0.98]
             `}
           >
-            <div className="flex items-center justify-between z-10 w-full">
-              <span
-                className={`text-[15px] font-bold ${
-                  theme === themeItem.id
-                    ? "text-spotify-green"
-                    : "text-spotify-silver group-hover:text-white"
-                }`}
-              >
-                {themeItem.label}
-              </span>
+            <div className="flex items-start justify-between gap-3 z-10 w-full">
+              <div className="min-w-0">
+                <span
+                  className={`block text-[15px] font-bold ${
+                    theme === themeItem.id
+                      ? "text-spotify-green"
+                      : "text-spotify-silver group-hover:text-white"
+                  }`}
+                >
+                  {themeItem.label}
+                </span>
+                <span className="mt-1 block text-[11px] font-medium leading-snug text-spotify-silver">
+                  {themeItem.description}
+                </span>
+              </div>
               {theme === themeItem.id && (
                 <div
                   className="w-5 h-5 rounded-full bg-spotify-green flex items-center justify-center"
@@ -83,6 +100,16 @@ export default function ThemeSelector() {
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        className="w-full rounded-full bg-white/5 px-4 py-3 text-[12px] font-bold text-spotify-silver transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
+        aria-expanded={showAllThemes}
+        onClick={() => setShowAllThemes((showAll) => !showAll)}
+      >
+        {showAllThemes
+          ? "추천 테마만 보기"
+          : `다른 테마 ${hiddenThemeCount}개 보기`}
+      </button>
     </section>
   );
 }

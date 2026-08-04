@@ -93,7 +93,7 @@ export async function POST(
     if (block_type === 'project_grid') defaultConfig = { layout: "grid", columns: 2, project_ids: [], show_tech_stack: true };
     if (block_type === 'skills') defaultConfig = { chart_type: "bar", skills: [] };
     if (block_type === 'blog_feed') defaultConfig = { integration_provider: "velog", max_items: 4, show_thumbnail: true };
-    if (block_type === 'contact') defaultConfig = { github_url: "https://github.com", email: "", linkedin_url: "", website_url: "" };
+    if (block_type === 'contact') defaultConfig = { github_url: "", email: "", linkedin_url: "", website_url: "" };
 
     const newBlock = await prisma.portfolioBlock.create({
       data: {
@@ -116,4 +116,3 @@ export async function POST(
     return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
   }
 }
-

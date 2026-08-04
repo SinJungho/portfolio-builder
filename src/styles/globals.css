@@ -58,6 +58,8 @@
   --color-spotify-silver: #b3b3b3;
   --color-spotify-near-white: #cbcbcb;
   --color-spotify-negative: #f3727f;
+  --color-spotify-negative-strong: #e91429;
+  --color-spotify-negative-strong-hover: #c31022;
   --color-spotify-warning: #ffa42b;
   --color-spotify-announcement: #539df5;
 
@@ -85,7 +87,7 @@
   --accent: #1f1f1f;
   --accent-foreground: #ffffff;
   --destructive: #f3727f;
-  --border: #4d4d4d;
+  --border: rgba(255,255,255,0.06); /* hairline on dark; matches border-white/5 idiom, not raw gray */
   --input: #1f1f1f;
   --ring: #1ed760;
   --radius: 0.5rem;
@@ -121,7 +123,7 @@ html {
   --accent: #1f1f1f;
   --accent-foreground: #ffffff;
   --destructive: #f3727f;
-  --border: #4d4d4d;
+  --border: rgba(255,255,255,0.06);
   --input: #1f1f1f;
   --ring: #1ed760;
 }
@@ -138,11 +140,11 @@ html {
 
 @layer utilities {
   .btn-pill {
-    @apply inline-flex items-center justify-center rounded-full font-bold uppercase tracking-spotify;
+    @apply inline-flex items-center justify-center rounded-full font-bold;
   }
-  
+
   .btn-pill-primary {
-    @apply inline-flex items-center justify-center rounded-full border border-spotify-green/30 bg-spotify-green px-8 py-3 font-bold uppercase tracking-spotify text-black shadow-[0_8px_24px_rgba(30,215,96,0.22)]
+    @apply inline-flex items-center justify-center rounded-full border border-spotify-green/30 bg-spotify-green px-8 py-3 font-bold text-black shadow-[0_8px_24px_rgba(30,215,96,0.22)]
            transition-[transform,background-color,border-color,box-shadow] duration-300 ease-out
            hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#3be477] hover:shadow-[0_12px_28px_rgba(30,215,96,0.34)]
            active:translate-y-0 active:scale-[0.98]
@@ -150,7 +152,7 @@ html {
   }
   
   .btn-pill-secondary {
-    @apply inline-flex items-center justify-center rounded-full border border-spotify-silver bg-transparent px-8 py-3 font-bold uppercase tracking-spotify text-white
+    @apply inline-flex items-center justify-center rounded-full border border-spotify-silver bg-transparent px-8 py-3 font-bold text-white
            transition-[transform,background-color,border-color,box-shadow] duration-300 ease-out
            hover:-translate-y-0.5 hover:scale-[1.02] hover:border-white hover:bg-white/5 hover:shadow-[0_12px_28px_rgba(0,0,0,0.28)]
            active:translate-y-0 active:scale-[0.98]

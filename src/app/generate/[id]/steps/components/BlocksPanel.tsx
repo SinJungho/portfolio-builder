@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { SortableBlockItem } from "./SortableBlockItem";
+import { blockDisplayName } from "@/lib/block-labels";
 
 const blockTypeIcons: Record<string, React.ReactNode> = {
   hero: <User className="w-5 h-5 text-current" />,
@@ -31,14 +32,6 @@ const blockTypeIcons: Record<string, React.ReactNode> = {
   skills: <BarChart className="w-5 h-5 text-current" />,
   contact: <Mail className="w-5 h-5 text-current" />,
   blog_feed: <Rss className="w-5 h-5 text-current" />,
-};
-
-const blockTypeLabels: Record<string, string> = {
-  hero: "소개",
-  project_grid: "프로젝트",
-  skills: "기술 스택",
-  contact: "연락처",
-  blog_feed: "블로그",
 };
 
 interface BlocksPanelProps {
@@ -67,7 +60,7 @@ export const BlocksPanel = React.memo(function BlocksPanel({
       <div className="bg-spotify-dark-surface border border-white/5 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-spotify space-y-6 text-white">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            블록 구성
+            섹션 구성
             {isSaving && (
               <Loader2 className="inline w-5 h-5 animate-spin text-spotify-green" />
             )}
@@ -108,7 +101,7 @@ export const BlocksPanel = React.memo(function BlocksPanel({
               <Grid className="w-8 h-8" />
             </div>
             <p className="text-spotify-silver font-bold text-sm">
-              추가된 블록이 없습니다.
+              추가된 섹션이 없습니다.
             </p>
           </div>
         )}
@@ -116,15 +109,15 @@ export const BlocksPanel = React.memo(function BlocksPanel({
         <div className="pt-6 border-t border-white/5 mt-6 font-normal">
           <div className="flex flex-col gap-1 mb-4">
             <h4 className="text-[15px] font-bold text-white">
-              새로운 블록 추가
+              새로운 섹션 추가
             </h4>
             <p className="text-[12px] text-spotify-silver font-medium">
               내 포트폴리오를 더 풍성하게 만들어보세요.
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {Object.keys(blockTypeLabels).map((type: string) => {
-              /* 소개(hero) 및 연락처(contact) 블록은 포트폴리오당 1개만 생성하도록 중복 제한 */
+            {Object.keys(blockDisplayName).map((type: string) => {
+              /* 소개(hero) 및 연락처(contact) 섹션은 포트폴리오당 1개만 생성하도록 중복 제한 */
               const isUnique: boolean = type === "hero" || type === "contact";
               const alreadyExists: boolean =
                 isUnique && blocks.some((b: Block) => b.block_type === type);
@@ -148,7 +141,7 @@ export const BlocksPanel = React.memo(function BlocksPanel({
                   ) : (
                     <Plus className="w-3.5 h-3.5" />
                   )}
-                  {blockTypeLabels[type]}
+                  {blockDisplayName[type]}
                 </button>
               );
             })}

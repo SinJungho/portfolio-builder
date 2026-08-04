@@ -4,6 +4,7 @@ import { redis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { type AISummary } from "@/types/project";
 import OpenAI from "openai";
 import { revalidatePath } from "next/cache";
+import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -46,7 +47,9 @@ export async function generatePortfolio(params: {
 
     if (projectIds && projectIds.length > 0) {
       // Use manually selected projects
-      const selectedProjects = rawProjects.filter(p => projectIds.includes(p.id));
+      const selectedProjects = rawProjects.filter((p) =>
+        projectIds.slice(0, MAX_FEATURED_PROJECTS).includes(p.id),
+      );
       topProjects = selectedProjects
         .map(p => {
           let score = p.ai_score;
@@ -93,7 +96,7 @@ export async function generatePortfolio(params: {
 
       topProjects = projectsWithScore
         .sort((a, b) => b.calculatedScore - a.calculatedScore)
-        .slice(0, 4);
+        .slice(0, MAX_FEATURED_PROJECTS);
     }
 
     // Language aggregation
@@ -199,28 +202,35 @@ export async function generatePortfolio(params: {
       .sort((a, b) => b.level - a.level)
       .slice(0, 8);
 
-    // AI subheadline
+    // AI 히어로 소개 — 한 줄 소개(subheadline)와 상세 소개(bio)를 한 번의 호출로 함께 생성해
+    // 사용자가 빈 히어로가 아니라 "거의 완성된" 상태로 시작하게 한다. 실패 시 기존 동작으로 폴백.
     const bio = user.github_bio || "";
     let subheadline = bio.substring(0, 50);
+    let heroBio = bio;
 
     try {
       const skillsStr = skills.map(s => s.name).join(", ");
+      const projectsStr = topProjects.map(p => p.name).join(", ");
       const userGoal = goal ? `목표: ${goal}\n` : "";
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "당신은 개발자 포트폴리오 전문가입니다."
+          content: "당신은 개발자 포트폴리오 전문가입니다. 반드시 JSON 형식으로만 응답합니다."
         }, {
           role: "user",
-          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 수 있는 한 줄 소개를 한국어로 작성해줘. 직군 + 핵심 기술 + 강점 형태로, 50자 이내로.`,
+          content: `${userGoal}GitHub bio: ${bio}\n사용 언어: ${skillsStr}\n대표 프로젝트: ${projectsStr}\n위 정보를 바탕으로 채용 담당자에게 어필할 포트폴리오 소개를 한국어로 작성해줘. 다음 JSON 필드로 응답:\n- subheadline: 직군 + 핵심 기술 + 강점 형태의 한 줄 소개 (50자 이내)\n- bio: 어떤 개발자이고 무엇을 잘하는지 2~3문장으로 자연스럽게 (200자 이내)`,
         }],
+        response_format: { type: "json_object" },
       });
-      if (completion.choices[0]?.message?.content) {
-        subheadline = completion.choices[0].message.content;
-      }
+      const parsed = JSON.parse(completion.choices[0]?.message?.content || "{}") as {
+        subheadline?: string;
+        bio?: string;
+      };
+      if (parsed.subheadline?.trim()) subheadline = parsed.subheadline.trim();
+      if (parsed.bio?.trim()) heroBio = parsed.bio.trim();
     } catch (e) {
-      console.error("OpenAI subheadline error:", e);
+      console.error("OpenAI hero intro error:", e);
     }
 
     await updateJobProgress(jobId, { progress: 30 });
@@ -235,7 +245,7 @@ export async function generatePortfolio(params: {
       config: {
         headline: user.name || user.github_login || "Developer",
         subheadline,
-        bio: user.github_bio || "",
+        bio: heroBio,
         show_github_stats: true,
       },
       is_visible: true,
@@ -265,7 +275,7 @@ export async function generatePortfolio(params: {
       block_type: "skills",
       position: 2,
       config: {
-        chart_type: "radar",
+        chart_type: "bar",
         skills,
       },
       is_visible: true,
@@ -282,10 +292,12 @@ export async function generatePortfolio(params: {
       contactConfig.email = user.email;
     }
 
+    // 연락(채용 문의) 블록은 페이지 마지막에 — peak-end. 블로그 피드가 뒤에 오면
+    // 마무리 CTA가 글 목록에 묻히므로, 블로그(position 3)보다 뒤(position 4)에 배치.
     portfolioBlocksData.push({
       portfolio_id: portfolioId,
       block_type: "contact",
-      position: 3,
+      position: 4,
       config: contactConfig as Prisma.InputJsonValue,
       is_visible: true,
       is_ai_generated: true,
@@ -304,7 +316,7 @@ export async function generatePortfolio(params: {
       portfolioBlocksData.push({
         portfolio_id: portfolioId,
         block_type: "blog_feed",
-        position: 4,
+        position: 3, // 연락 블록(4)보다 앞 — 연락 CTA가 항상 페이지 마지막
         config: {
           integration_provider: blogIntegrations[0].provider,
           max_items: 3,

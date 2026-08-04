@@ -4,11 +4,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DesignTokenSchema } from "@/schemas/portfolio";
-import { getMissingPortfolioReadiness } from "@/lib/portfolio-readiness";
+import {
+  getMissingPortfolioReadiness,
+  getSelectedProjectIds,
+} from "@/lib/portfolio-readiness";
 
 const updatePortfolioSchema = z.object({
   theme: z
-    .enum(["minimal", "midnight", "ocean", "forest", "sunset", "minimalist", "creative", "corporate", "dark", "pastel", "tech"])
+    .enum(["spotify", "minimal", "midnight", "ocean", "forest", "sunset", "minimalist", "creative", "corporate", "dark", "pastel", "tech"])
     .optional(),
   slug: z.string().optional(),
   title: z.string().optional(),
@@ -25,12 +28,7 @@ export async function PATCH(
     const { error, portfolio } = await validatePortfolioOwnership(id);
     if (error) return error;
 
-    let json = {};
-    try {
-      json = await req.json();
-    } catch {
-      // ignore
-    }
+    const json = await req.json().catch(() => ({}));
 
     const {
       success,
@@ -51,11 +49,24 @@ export async function PATCH(
           where: { portfolio_id: id },
           select: { block_type: true, is_visible: true, config: true },
         });
+        const readinessBlocks = blocks.map((block) => ({
+          ...block,
+          config: block.config as Record<string, unknown>,
+        }));
+        const projectIds = getSelectedProjectIds(readinessBlocks);
+        const availableProjectIds = projectIds.length
+          ? (await prisma.rawProject.findMany({
+              where: {
+                id: { in: projectIds },
+                user_id: portfolio.user_id,
+                is_fork: false,
+              },
+              select: { id: true },
+            })).map((project) => project.id)
+          : [];
         const missing = getMissingPortfolioReadiness(
-          blocks.map((block) => ({
-            ...block,
-            config: block.config as Record<string, unknown>,
-          })),
+          readinessBlocks,
+          availableProjectIds,
         );
 
         if (missing.length) {

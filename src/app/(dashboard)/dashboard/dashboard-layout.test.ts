@@ -28,7 +28,7 @@ describe("dashboard portfolio actions", () => {
 
   it("keeps the application-link journey visible and starts editing from publish readiness", () => {
     const editor = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/EditorClient.tsx"), "utf8");
-    expect(dashboard).toContain("지원서 링크 준비");
+    expect(dashboard).toContain("이미 만든 것만으로 충분해요");
     expect(dashboard).toContain("GitHub 확인");
     expect(dashboard).toContain("링크 공유");
     expect(dashboard).toContain("다음 한 가지");
@@ -51,7 +51,8 @@ describe("dashboard portfolio actions", () => {
   it("links every unresolved readiness item to its editor destination before showing confirmation", () => {
     const editor = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/EditorClient.tsx"), "utf8");
     expect(editor).toContain("onReadinessAction(item.destination)");
-    expect(editor).toContain("nextItem ? nextItem.action");
+    // 다음으로 채울 항목을 인라인에서 강조(중복 하단 액션 행 대신)
+    expect(editor).toContain("item.id === nextItem?.id");
   });
 
   it("keeps project selection and analytics refresh usable without a mouse", () => {
@@ -75,6 +76,6 @@ describe("dashboard portfolio actions", () => {
     expect(analytics).toContain('aria-describedby="visitor-trend-summary"');
     expect(analytics).toContain('<table className="sr-only">');
     expect(analytics).toContain('scope="col"');
-    expect(analytics).toContain("방문자 추이 데이터가 없습니다.");
+    expect(analytics).toContain("방문자 추이 데이터가 없어요.");
   });
 });

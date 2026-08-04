@@ -1,33 +1,31 @@
+export type SettingsSection = "profile" | "integrations";
+
 interface SettingsNavProps {
-  activeSection: "profile" | "account" | "integrations" | "danger";
-  onSectionChange: (
-    section: "profile" | "account" | "integrations" | "danger"
-  ) => void;
+  activeSection: SettingsSection;
+  onSectionChange: (section: SettingsSection) => void;
 }
 
-export function SettingsNav({
-  activeSection,
-  onSectionChange,
-}: SettingsNavProps) {
-  const sections = [
-    { id: "profile" as const, label: "프로필" },
-    { id: "account" as const, label: "계정" },
-    { id: "integrations" as const, label: "연동" },
-    { id: "danger" as const, label: "위험 영역" },
+export function SettingsNav({ activeSection, onSectionChange }: SettingsNavProps) {
+  const sections: { id: SettingsSection; label: string }[] = [
+    { id: "profile", label: "프로필" },
+    { id: "integrations", label: "연동" },
   ];
 
   return (
-    <nav className="w-full lg:w-64 bg-spotify-dark-surface rounded-3xl p-4 shadow-spotify-md h-fit border border-white/5">
-      <ul className="space-y-2">
+    <nav
+      aria-label="설정 메뉴"
+      className="w-full lg:w-56 bg-spotify-dark-surface rounded-3xl p-4 shadow-spotify-md h-fit border border-white/5"
+    >
+      <ul className="flex gap-2 lg:flex-col">
         {sections.map((section) => (
-          <li key={section.id}>
+          <li key={section.id} className="flex-1 lg:flex-none">
             <button
+              type="button"
               onClick={() => onSectionChange(section.id)}
-              className={`w-full text-left px-5 py-3 rounded-full text-[14px] font-bold transition-all ${
+              aria-current={activeSection === section.id ? "page" : undefined}
+              className={`w-full text-left px-5 py-3 rounded-full text-[14px] font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green ${
                 activeSection === section.id
-                  ? "bg-spotify-green text-black"
-                  : section.id === "danger"
-                  ? "text-spotify-negative hover:bg-spotify-negative/10"
+                  ? "bg-white text-black"
                   : "text-spotify-silver hover:bg-white/5 hover:text-white"
               }`}
             >
