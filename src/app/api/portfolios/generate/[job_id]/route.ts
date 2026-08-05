@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { redis, JOB_KEY } from "@/lib/redis";
+import { RedisUnavailableError, redis, withRedis, JOB_KEY } from "@/lib/redis";
 import type { GenerateJobResponse } from "@/types/generate";
-import { apiError, routeError } from "@/lib/api/errors";
+import { apiError, logRouteError, routeError } from "@/lib/api/errors";
 
 export async function GET(
   _req: Request,
@@ -16,7 +16,7 @@ export async function GET(
 
     const { job_id } = await params;
 
-    const jobStr = await redis.get(JOB_KEY(job_id));
+    const jobStr = await withRedis(() => redis.get(JOB_KEY(job_id)));
     if (!jobStr) {
       return apiError("JOB_NOT_FOUND", 404);
     }
@@ -38,6 +38,10 @@ export async function GET(
 
     return NextResponse.json(response, { status: 200 });
   } catch (error: unknown) {
+    if (error instanceof RedisUnavailableError) {
+      logRouteError('/api/portfolios/generate/[job_id]/redis', 'GET', error.cause);
+      return apiError("REDIS_UNAVAILABLE", 503);
+    }
     return routeError('/api/portfolios/generate/[job_id]', 'GET', error);
   }
 }

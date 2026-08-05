@@ -1,7 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { redis, ratelimit, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
+import { RedisUnavailableError, redis, ratelimit, withRedis, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { generatePortfolio } from "@/lib/generate/generatePortfolio";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 import { apiError, logRouteError, logRouteWarning, routeError } from "@/lib/api/errors";
@@ -17,8 +17,7 @@ export async function POST(req: Request) {
 
     const { user } = session;
 
-    // AI 생성 요청 빈도를 제한한다.
-    const { success } = await ratelimit.limit(`generate_${user.id}`);
+    const { success } = await withRedis(() => ratelimit.limit(`generate_${user.id}`));
     if (!success) {
       return apiError("RATE_LIMITED", 429);
     }
@@ -62,11 +61,7 @@ export async function POST(req: Request) {
       auto_publish,
     };
 
-    try {
-      await redis.set(JOB_KEY(job_id), JSON.stringify(initialJobStatus), { ex: JOB_TTL });
-    } catch (e) {
-      throw e;
-    }
+    await withRedis(() => redis.set(JOB_KEY(job_id), JSON.stringify(initialJobStatus), { ex: JOB_TTL }));
     after(async () => {
       await generatePortfolio({
         jobId: job_id,
@@ -80,6 +75,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ job_id, estimated_seconds: 30 }, { status: 202 });
   } catch (error: unknown) {
+    if (error instanceof RedisUnavailableError) {
+      logRouteError('/api/portfolios/generate/redis', 'POST', error.cause);
+      return apiError("REDIS_UNAVAILABLE", 503);
+    }
     return routeError('/api/portfolios/generate', 'POST', error);
   }
 }

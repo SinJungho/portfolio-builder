@@ -6,6 +6,7 @@ export const ERROR_MESSAGES = {
   NOT_FOUND: "요청한 리소스를 찾을 수 없어요.",
   CONFLICT: "이미 사용 중인 값이에요.",
   RATE_LIMITED: "요청이 너무 많아요. 잠시 후 다시 시도해 주세요.",
+  REDIS_UNAVAILABLE: "서비스 연결이 불안정해요. 잠시 후 다시 시도해 주세요.",
   USER_NOT_FOUND: "사용자 정보를 찾을 수 없어요.",
   SLUG_UNAVAILABLE: "사용 가능한 주소를 만들지 못했어요.",
   SLUG_CONFLICT: "이미 사용 중인 주소예요.",

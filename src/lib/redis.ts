@@ -3,6 +3,24 @@ import { Redis } from "@upstash/redis";
 
 const actualRedis = Redis.fromEnv();
 
+export class RedisUnavailableError extends Error {
+  constructor(public readonly cause: unknown) {
+    super("Redis unavailable");
+    this.name = "RedisUnavailableError";
+  }
+}
+
+export async function withRedis<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+    if (!url || !token) throw new Error("REDIS_CONFIG_MISSING");
+    return await operation();
+  } catch (error) {
+    throw new RedisUnavailableError(error);
+  }
+}
+
 const globalForCache = globalThis as unknown as {
   localRedisCache?: Map<string, { value: unknown; expiresAt?: number }>;
 };
