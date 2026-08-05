@@ -28,19 +28,20 @@ describe("dashboard portfolio actions", () => {
     expect(dashboard).toContain("아직 GitHub 데이터를 불러오지 않았어요.");
   });
 
-  it("keeps the application-link journey visible and starts editing from publish readiness", () => {
+  it("keeps the application-link journey visible and starts editing from section controls", () => {
     const editor = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/EditorClient.tsx"), "utf8");
     expect(dashboard).toContain("이미 만든 것만으로 충분해요");
     expect(dashboard).toContain("GitHub 확인");
     expect(dashboard).toContain("링크 공유");
     expect(dashboard).toContain("다음 한 가지");
-    expect(editor).toContain('useState<SidebarTab>("publish")');
+    expect(editor).toContain('useState<SidebarTab>("blocks")');
     expect(editor).toContain('aria-selected={sidebarTab === "publish"}');
     expect(editor).toContain('aria-controls="editor-panel"');
     expect(editor).toContain("미리보기 확인");
     expect(editor).toContain("확인했어요");
     expect(editor).toContain("portfolio-preview-reviewed");
     expect(editor).toContain("reviewedPreviewSignature === previewSignature");
+    expect(editor).toContain("compactReadinessComplete");
     expect(editor).toContain("focus-visible:outline-spotify-green");
   });
 
@@ -53,7 +54,6 @@ describe("dashboard portfolio actions", () => {
   it("links every unresolved readiness item to its editor destination before showing confirmation", () => {
     const editor = readFileSync(resolve(process.cwd(), "src/app/(dashboard)/editor/[id]/EditorClient.tsx"), "utf8");
     expect(editor).toContain("onReadinessAction(group.destination)");
-    // 세부 조건은 유지하되 사용자에게는 세 단계로 묶어 다음 행동을 강조한다.
     expect(editor).toContain("group.id === nextGroup?.id");
     expect(editor).toContain("getPortfolioReadinessGroups(readinessItems)");
   });
@@ -63,12 +63,17 @@ describe("dashboard portfolio actions", () => {
     expect(editor).toContain("isInspectorOpen");
     expect(editor).toContain("컨트롤 숨기기");
     expect(editor).toContain("fixed inset-x-0 bottom-0");
+    expect(editor).toContain("overscroll-contain");
+    expect(editor).toContain("safe-area-inset-bottom");
+    expect(editor).toContain("완료한 준비");
     expect(editor).toContain("미리보기를 보며 바로 수정해요");
     expect(editor).toContain("onSelectBlock={handlePreviewBlockSelect}");
     expect(editor).toContain("맞춤 주소 연결");
     expect(preview).toContain("onSelectBlock?: (block: Block) => void");
-    expect(preview).toContain("섹션 편집");
+    expect(preview).toContain("blockDisplayName[block.block_type]");
+    expect(preview).toContain("<Pencil");
     expect(sortableBlock).toContain("프로젝트 편집");
+    expect(sortableBlock).toContain('block.is_visible ? "공개" : "숨김"');
     expect(sortableBlock).not.toContain('includes(block.block_type) && block.is_visible');
   });
 

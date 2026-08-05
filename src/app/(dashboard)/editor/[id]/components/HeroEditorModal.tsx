@@ -85,6 +85,9 @@ export default function HeroEditorModal({
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
+        <p className="rounded-2xl border border-spotify-green/20 bg-spotify-green/[0.06] px-4 py-3 text-[13px] leading-relaxed text-spotify-silver">
+          GitHub 프로필 정보가 있으면 초안으로 채워져요. 비어 있는 내용은 아래 예시를 참고해 짧게 작성하면 돼요.
+        </p>
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="hero-headline" className="text-xs font-bold text-spotify-silver">

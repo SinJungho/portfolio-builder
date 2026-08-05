@@ -32,7 +32,6 @@ import {
   PanelLeftOpen,
   Plus,
   Rss,
-  Sparkles,
   Smartphone,
   Tablet,
   User,
@@ -57,6 +56,7 @@ import {
 } from "@/lib/portfolio-state";
 import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
 import { blockDisplayName, blockDescription } from "@/lib/block-labels";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 import {
   type EditorDestination,
   type PortfolioReadinessGroup,
@@ -143,9 +143,8 @@ export default function EditorClient({
 
   const init = portfolioId === initialData.portfolioId;
 
-  // React 18 비동기 렌더링 전환 훅 ( 사이드바 탭 클릭 시의 미세 렉 완화 )
   const [isPending, startTransition] = useTransition();
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("publish");
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("blocks");
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [previewViewport, setPreviewViewport] = useState<PreviewViewport>("desktop");
@@ -161,12 +160,11 @@ export default function EditorClient({
   const focusItem = useSearchParams().get("focus");
   const handledFocusItem = useRef<string | null>(null);
 
-  // 무거운 미리보기 스크린의 동기적 리렌더링 차단 ( 드래그 순서 변경 시 프리뷰 지연 반영 )
+  // 미리보기는 입력 변경과 분리해 렌더링한다.
   const deferredBlocks = useDeferredValue(blocks);
   const deferredTheme = useDeferredValue(theme);
   const deferredDesignTokens = useDeferredValue(designTokens);
 
-  // 대표 프로젝트 편집 관련 모달 상태 관리
   const [isEditingProjects, setIsEditingProjects] = useState<boolean>(false);
   const [isEditingHero, setIsEditingHero] = useState<boolean>(false);
   const [isEditingSkills, setIsEditingSkills] = useState<boolean>(false);
@@ -180,15 +178,15 @@ export default function EditorClient({
   >({});
   const [saveError, setSaveError] = useState<{ message: string; retry: () => void } | null>(null);
   const [lastBlockOrder, setLastBlockOrder] = useState<Block[] | null>(null);
-  // 이번 세션에서 방금 공개했을 때만 축하 카드를 노출한다(이미 공개된 포트폴리오 재진입 시엔 조용히).
   const [justPublished, setJustPublished] = useState(false);
 
   const { data: rawProjects, isLoading: projectsLoading, isError: projectsLoadFailed, refetch: refetchProjects } = useQuery<RawProject[]>({
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("Failed to fetch projects");
-      return res.json();
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(payload, "PROJECT_LIST_FAILED"));
+      return payload;
     },
     enabled: init,
   });
@@ -242,7 +240,7 @@ export default function EditorClient({
       const newBlocks = arrayMove(blocks, oldIndex, newIndex);
       newBlocks.forEach((b: Block, i: number) => (b.position = i));
       void reorderBlocks(newBlocks).catch(() => {
-        toast.error("섹션 순서를 저장하지 못했어요. 이전 순서로 돌아갔어요.");
+        toast.error(errorMessage("SECTION_ORDER_SAVE_FAILED"));
       });
     }
   };
@@ -252,7 +250,7 @@ export default function EditorClient({
     const restored = lastBlockOrder.map((block, index) => ({ ...block, config: { ...block.config }, position: index }));
     void reorderBlocks(restored)
       .then(() => setLastBlockOrder(null))
-      .catch(() => toast.error("섹션 순서를 되돌리지 못했어요. 잠시 후 다시 시도해주세요."));
+      .catch(() => toast.error(errorMessage("SECTION_ORDER_RESTORE_FAILED")));
   };
 
   const contactBlock = blocks.find((b: Block) => b.block_type === "contact");
@@ -262,6 +260,13 @@ export default function EditorClient({
     rawProjects?.map((project) => project.id) ?? [],
   );
   const readinessGroups = getPortfolioReadinessGroups(readinessItems);
+  const compactReadinessTotal = readinessGroups.length + 1;
+  const compactReadinessComplete =
+    readinessGroups.filter((group) => group.complete).length +
+    (hasReviewedPreview ? 1 : 0);
+  const compactNextGroup = projectsLoading
+    ? undefined
+    : readinessGroups.find((group) => !group.complete);
 
   const handleTabChange = (tab: SidebarTab) => {
     startTransition(() => {
@@ -317,7 +322,7 @@ export default function EditorClient({
 
     if (!hasReviewedPreview) {
       handleTabChange("publish");
-      toast.error("미리보기를 확인한 뒤 공개해 주세요.");
+      toast.error(errorMessage("PREVIEW_REQUIRED"));
       return;
     }
 
@@ -326,7 +331,7 @@ export default function EditorClient({
       setJustPublished(true);
       toast.success("공개했어요. 이제 링크를 복사해 지원서에 넣어보세요.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "공개하지 못했어요.";
+      const message = error instanceof Error ? error.message : errorMessage("PUBLISH_FAILED");
       setSaveError({ message, retry: handlePublish });
       toast.error(message);
     }
@@ -339,7 +344,7 @@ export default function EditorClient({
       setJustPublished(false);
       toast.success("공개를 중지했어요. 편집 내용은 그대로 보관돼요.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "공개를 중지하지 못했어요.";
+      const message = error instanceof Error ? error.message : errorMessage("UNPUBLISH_FAILED");
       setSaveError({ message, retry: handleUnpublish });
       toast.error(message);
     }
@@ -393,7 +398,7 @@ export default function EditorClient({
         }
       }
     } catch {
-      toast.error("변경사항을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      toast.error(errorMessage("SECTION_SAVE_FAILED"));
     }
   };
 
@@ -426,7 +431,7 @@ export default function EditorClient({
 
   useEffect(() => {
     if (!focusItem || handledFocusItem.current === focusItem) return;
-    // 애널리틱스에서 오는 blocks/publish 딥링크는 해당 사이드바 탭으로 전환한다.
+    // URL focus를 탭 또는 준비 항목으로 한 번만 연결한다.
     if (focusItem === "blocks" || focusItem === "publish") {
       handledFocusItem.current = focusItem;
       handleTabChange(focusItem);
@@ -435,7 +440,6 @@ export default function EditorClient({
     if (!["hero", "projects", "contact"].includes(focusItem)) return;
     handledFocusItem.current = focusItem;
     void handleReadinessAction(focusItem as EditorDestination);
-    // The action must run once per URL focus target; the ref prevents reruns as blocks change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusItem]);
 
@@ -457,10 +461,10 @@ export default function EditorClient({
         toast.success("대표 프로젝트 설정을 업데이트했어요.");
       }).catch(() => {
         setSaveError({
-          message: "대표 프로젝트 설정을 저장하지 못했어요. 입력 내용은 유지돼요.",
+          message: errorMessage("PROJECT_CONFIG_SAVE_FAILED"),
           retry: () => handleSaveProjects(selectedIds, customDescriptions),
         });
-        toast.error("대표 프로젝트 설정을 저장하지 못했어요. 입력 내용은 유지돼요.");
+        toast.error(errorMessage("PROJECT_CONFIG_SAVE_FAILED"));
       });
     }
   };
@@ -477,10 +481,10 @@ export default function EditorClient({
       toast.success("섹션 설정을 업데이트했어요.");
     }).catch(() => {
       setSaveError({
-        message: "섹션 설정을 저장하지 못했어요. 입력 내용은 유지돼요.",
+        message: errorMessage("SECTION_SAVE_FAILED"),
         retry: () => handleSaveBlockConfig(config),
       });
-      toast.error("섹션 설정을 저장하지 못했어요. 입력 내용은 유지돼요.");
+      toast.error(errorMessage("SECTION_SAVE_FAILED"));
     });
   };
 
@@ -496,7 +500,6 @@ export default function EditorClient({
 
   return (
     <div className="flex flex-col h-screen w-full md:-ml-64 md:w-[calc(100%+16rem)] bg-spotify-near-black overflow-hidden text-white">
-      {/* 상단 헤더 영역 */}
       <header className="h-14 border-b border-white/5 bg-spotify-near-black flex items-center justify-between px-6 shrink-0 z-20">
         <h1 className="sr-only">포트폴리오 편집</h1>
         <Link
@@ -545,10 +548,8 @@ export default function EditorClient({
         </div>
       )}
 
-      {/* 에디터 메인 레이아웃 */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* 좌측 사이드바 패널 */}
-        <aside className={`${isPreviewing ? "fixed inset-x-0 bottom-0 z-30 flex max-h-[72vh] rounded-t-3xl border-t border-white/10" : "flex"} ${isInspectorOpen ? "md:flex" : "md:hidden"} w-full md:static md:max-h-none md:w-[340px] md:rounded-none lg:w-[380px] shrink-0 border-r border-white/5 bg-spotify-dark-surface flex-col shadow-spotify`}>
+        <aside className={`${isPreviewing ? "fixed inset-x-0 bottom-0 z-30 flex h-[min(72dvh,42rem)] max-h-[calc(100dvh-3.5rem)] overflow-hidden overscroll-contain rounded-t-3xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]" : "flex"} ${isInspectorOpen ? "md:flex" : "md:hidden"} w-full md:static md:max-h-none md:w-[340px] md:rounded-none lg:w-[380px] shrink-0 border-r border-white/5 bg-spotify-dark-surface flex-col shadow-spotify`}>
           {isPreviewing && (
             <div className="flex items-center justify-between border-b border-white/5 px-5 py-3 md:hidden">
               <p className="text-[12px] font-bold text-white">미리보기를 보며 바로 수정해요</p>
@@ -559,6 +560,61 @@ export default function EditorClient({
               >
                 전체 편집
               </button>
+            </div>
+          )}
+          {!isPreviewing && (
+            <div className="shrink-0 border-b border-white/5 bg-spotify-dark-surface px-5 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[13px] font-bold text-white">공개 준비</p>
+                <span className="text-[11px] font-bold tabular-nums text-spotify-silver">
+                  {projectsLoading ? "확인 중" : `${compactReadinessComplete}/${compactReadinessTotal}`}
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label="공개 준비도"
+                aria-valuemin={0}
+                aria-valuemax={compactReadinessTotal}
+                aria-valuenow={compactReadinessComplete}
+                className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"
+              >
+                <div
+                  className="h-full rounded-full bg-spotify-green transition-[width] duration-500 motion-reduce:transition-none"
+                  style={{ width: `${Math.round((compactReadinessComplete / compactReadinessTotal) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="min-w-0 text-[11px] leading-relaxed text-spotify-silver">
+                  {projectsLoading
+                    ? "GitHub 프로젝트를 확인하고 있어요."
+                    : compactNextGroup
+                      ? `${compactNextGroup.label}만 확인하면 돼요.`
+                      : hasReviewedPreview
+                        ? "공개할 준비가 됐어요."
+                        : "미리보기만 확인하면 공개할 수 있어요."}
+                </p>
+                {!projectsLoading && compactNextGroup ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 shrink-0 rounded-full bg-white/10 px-3 text-[11px] font-bold text-white hover:bg-white/15"
+                    onClick={() => void handleReadinessAction(compactNextGroup.destination)}
+                  >
+                    {compactNextGroup.action}
+                  </Button>
+                ) : !projectsLoading && !hasReviewedPreview ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 shrink-0 rounded-full bg-white/10 px-3 text-[11px] font-bold text-white hover:bg-white/15"
+                    onClick={openPreview}
+                  >
+                    미리보기 확인
+                  </Button>
+                ) : null}
+              </div>
             </div>
           )}
           <div role="tablist" aria-label="포트폴리오 편집 단계" className="flex p-3 gap-2 bg-spotify-near-black border-b border-white/5 shrink-0">
@@ -614,7 +670,7 @@ export default function EditorClient({
               디자인
             </button>
           </div>
-          <div role="tabpanel" id="editor-panel" aria-labelledby={`editor-tab-${sidebarTab}`} className="flex-1 overflow-y-auto p-5 md:p-6 bg-spotify-dark-surface">
+          <div role="tabpanel" id="editor-panel" aria-labelledby={`editor-tab-${sidebarTab}`} className="flex-1 overflow-y-auto overscroll-contain p-5 md:p-6 bg-spotify-dark-surface">
             {isPending ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="animate-spin w-6 h-6 text-spotify-green" />
@@ -657,7 +713,6 @@ export default function EditorClient({
           </div>
         </aside>
 
-        {/* 우측 실시간 미리보기 스크린 */}
         <main className={`${isPreviewing ? "flex" : "hidden"} md:flex flex-1 flex-col bg-spotify-near-black overflow-y-auto relative items-center pt-4 md:pt-8 pb-20 md:pb-32`}>
           <MobilePreviewStatus
             portfolioState={portfolioState}
@@ -717,14 +772,12 @@ export default function EditorClient({
             </div>
           </div>
 
-            {/* 실시간으로 연동되는 뷰포트 영역 (Deferred Value를 통해 인풋 타이핑 반응성 보존) */}
             <div className="w-full h-full min-h-[800px] overflow-hidden bg-white">
               <PortfolioPreview
                 blocks={previewBlocks}
                 theme={deferredTheme}
                 designTokens={deferredDesignTokens}
-                // slug 미전달 — PDF 내보내기 버튼은 position:fixed라 에디터 프레임을 뚫고 뷰포트에 고정됨.
-                // 내보내기는 게시 페이지 전용 액션이므로 에디터 프리뷰에선 렌더하지 않음.
+                // PDF 내보내기는 게시 페이지에서만 제공한다.
                 slug={undefined}
                 portfolioId={initialData?.portfolioId}
                 highlightedBlockId={previewHighlightedBlockId}
@@ -736,7 +789,6 @@ export default function EditorClient({
         </main>
       </div>
 
-      {/* 격리 설계된 고성능 리포지토리 지정 팝업 모달 */}
       <ProjectSelectionModal
         isOpen={isEditingProjects}
         onClose={() => {
@@ -801,10 +853,6 @@ export default function EditorClient({
   );
 }
 
-// ==========================================
-// 캡슐화 및 메모이제이션 처리된 하위 패널 컴포넌트군
-// ==========================================
-
 interface BlocksPanelProps {
   blocks: Block[];
   sensors: ReturnType<typeof useSensors>;
@@ -832,7 +880,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
     try {
       await toggleBlock(blockId);
     } catch {
-      toast.error("공개 상태를 저장하지 못했어요. 이전 상태로 돌아갔어요.");
+      toast.error(errorMessage("SECTION_VISIBILITY_SAVE_FAILED"));
     }
   };
 
@@ -841,7 +889,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
       await deleteBlock(blockId);
       toast.success("섹션을 삭제했어요.");
     } catch {
-      toast.error("섹션을 삭제하지 못했어요. 섹션은 그대로 보관돼요.");
+      toast.error(errorMessage("SECTION_DELETE_FAILED"));
     }
   };
 
@@ -849,7 +897,7 @@ const BlocksPanel = React.memo(function BlocksPanel({
     try {
       await addBlock(blockType);
     } catch {
-      toast.error("새 섹션을 추가하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      toast.error(errorMessage("SECTION_ADD_FAILED"));
     }
   };
 
@@ -996,15 +1044,15 @@ const SettingsPanel = React.memo(function SettingsPanel({
     ? portfolioUrl(initialData.slug, customDomain)
     : null;
   const nextGroup = readinessGroups.find((group) => !group.complete);
+  const pendingReadinessGroups = readinessGroups.filter((group) => !group.complete);
+  const completedReadinessGroups = readinessGroups.filter((group) => group.complete);
 
-  // 미리보기 확인까지 포함해 화면의 진행도와 실제 공개 조건을 같은 숫자로 보여준다.
+  // 공개 조건과 진행도를 같은 기준으로 계산한다.
   const totalSteps = readinessGroups.length + 1;
   const completedSteps = readinessGroups.filter((group) => group.complete).length + (hasReviewedPreview ? 1 : 0);
   const progressPct = Math.round((completedSteps / totalSteps) * 100);
   const previewIsNext = !nextGroup && !hasReviewedPreview;
   const readyToPublish = !nextGroup && hasReviewedPreview;
-  // 한 번 확인한 뒤 내용을 바꿔 미리보기가 다시 잠긴 상태. 공개 버튼이 조용히 사라지는 대신
-  // "왜 또 잠겼는지"를 카피로 설명해 마감 직전 불안(다 됐는데 왜?)을 줄인다.
   const previewStale = previewIsNext && hasReviewedOnce;
   const readinessLead =
     projectsLoading
@@ -1029,7 +1077,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
       await navigator.clipboard.writeText(portfolioUrl(initialData.slug, customDomain));
       toast.success("지원서용 링크를 복사했어요.");
     } catch {
-      toast.error("링크를 복사하지 못했어요. 위 주소를 직접 선택해 복사해주세요.");
+      toast.error(errorMessage("LINK_COPY_FAILED"));
     }
   };
 
@@ -1053,7 +1101,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
               <Check className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <h2 className="text-[17px] font-bold tracking-tight text-white">공개됐어요 🎉</h2>
+              <h2 className="text-[17px] font-bold tracking-tight text-white">공개됐어요</h2>
               <p className="text-[12px] font-medium text-spotify-silver">이제 이 링크만 지원서에 붙여넣으면 끝이에요.</p>
             </div>
           </div>
@@ -1075,23 +1123,6 @@ const SettingsPanel = React.memo(function SettingsPanel({
             >
               <ArrowUpRight className="w-4 h-4" /> 열기
             </Button>
-          </div>
-        </div>
-      )}
-      {portfolioState !== "published" && completedSteps > 0 && (
-        // 첫 진입의 감정 프레임: 빈 체크리스트가 아니라 "GitHub가 이미 채워둔 것"을 먼저 보여준다.
-        // completedSteps === 0(진짜 빈 상태)에서는 근거 없는 안심이 되므로 숨긴다(정직한 증거 원칙).
-        <div className="rounded-3xl border border-spotify-green/20 bg-spotify-green/[0.06] p-5 text-white flex items-start gap-3.5 animate-in fade-in duration-500 motion-reduce:animate-none">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-spotify-green/15 text-spotify-green">
-            <Sparkles className="h-[18px] w-[18px]" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 space-y-1">
-            <p className="text-[15px] font-bold tracking-tight text-white">이미 대부분 채워져 있어요</p>
-            <p className="text-[12px] text-spotify-silver font-medium leading-relaxed">
-              {totalSteps - completedSteps > 0
-                ? `GitHub에서 불러온 내용으로 ${completedSteps}단계를 채웠어요. ${totalSteps - completedSteps}단계만 확인하면 지원서에 넣을 링크가 완성돼요.`
-                : "GitHub에서 불러온 내용으로 준비를 마쳤어요. 미리보기만 확인하면 공개할 수 있어요."}
-            </p>
           </div>
         </div>
       )}
@@ -1125,7 +1156,7 @@ const SettingsPanel = React.memo(function SettingsPanel({
         </div>
 
         <ul className="-mx-2 space-y-0.5" aria-label="공개 전 확인 항목">
-          {readinessGroups.map((group) => {
+          {pendingReadinessGroups.map((group) => {
             const isProjectPending = projectsLoading && group.id === "projects";
             const isNext = !isProjectPending && !group.complete && group.id === nextGroup?.id;
             const missingLabels = group.missingItems.map((item) => item.label).join(" · ");
@@ -1173,6 +1204,24 @@ const SettingsPanel = React.memo(function SettingsPanel({
               </li>
             );
           })}
+          {completedReadinessGroups.length > 0 && (
+            <li className="rounded-xl px-2 py-2 text-[12px]">
+              <details>
+                <summary className="cursor-pointer font-bold text-spotify-silver marker:text-spotify-silver">
+                  완료한 준비 {completedReadinessGroups.length}개 보기
+                </summary>
+                <ul className="mt-2 space-y-1.5" aria-label="완료한 공개 준비 항목">
+                  {completedReadinessGroups.map((group) => (
+                    <li key={group.id} className="flex items-center gap-3 px-1 py-1 text-spotify-silver">
+                      <Check className="h-4 w-4 shrink-0 text-spotify-green" aria-hidden="true" />
+                      <span>{group.label}</span>
+                      <span className="ml-auto text-[11px]">완료</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </li>
+          )}
           <li className={`flex items-center gap-3 rounded-xl px-2 py-2 text-[12px] font-bold transition-colors ${previewIsNext ? "bg-white/[0.06]" : ""}`}>
             {hasReviewedPreview ? (
               <Check className="h-4 w-4 shrink-0 text-spotify-green" aria-hidden="true" />
@@ -1183,7 +1232,6 @@ const SettingsPanel = React.memo(function SettingsPanel({
             {hasReviewedPreview ? (
               <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
             ) : previewIsNext ? (
-              // 미리보기 확인 단계는 현재 필요한 행동 하나만 노출한다.
               <Button type="button" variant="ghost" size="sm" className="ml-auto h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={previewOpened ? onReviewPreview : onPreview}>
                 {previewOpened ? <Check className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 {previewOpened ? "확인했어요" : "미리보기 확인하기"}
@@ -1234,7 +1282,6 @@ const SettingsPanel = React.memo(function SettingsPanel({
               </span>
               {portfolioState === "published" && publishedPath ? (
                 <>
-                  {/* 방금 공개한 직후엔 위 성공 카드가 복사/열기를 제공하므로 여기선 중복을 접고 공개 중지만 남긴다. */}
                   {!justPublished && (
                     <>
                       <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={copyPublishedLink}>
