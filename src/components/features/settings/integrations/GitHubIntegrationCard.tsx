@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Github, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 export function GitHubIntegrationCard() {
   const [isSyncing, setIsSyncing] = React.useState(false);
@@ -14,10 +15,11 @@ export function GitHubIntegrationCard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ force: true }),
       });
-      if (!response.ok) throw new Error();
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(responseErrorMessage(data, "SYNC_START_FAILED"));
       toast.success("GitHub 동기화를 시작했어요. 잠시 후 대시보드에서 확인해 보세요.");
-    } catch {
-      toast.error("동기화를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : errorMessage("SYNC_START_FAILED"));
     } finally {
       setIsSyncing(false);
     }

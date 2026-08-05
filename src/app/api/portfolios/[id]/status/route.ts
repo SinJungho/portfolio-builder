@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { apiError, routeError } from "@/lib/api/errors";
 import {
   getMissingPortfolioReadiness,
   getSelectedProjectIds,
@@ -14,7 +15,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
     const { id } = await props.params;
@@ -30,7 +31,7 @@ export async function GET(
     });
 
     if (!portfolio || portfolio.user_id !== session.user.id) {
-      return new NextResponse(null, { status: 404 });
+      return apiError("NOT_FOUND", 404);
     }
 
     const blocks = await prisma.portfolioBlock.findMany({
@@ -63,7 +64,6 @@ export async function GET(
       ),
     });
   } catch (error: unknown) {
-    console.error("GET /api/portfolios/[id]/status error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return routeError('/api/portfolios/[id]/status', 'GET', error);
   }
 }

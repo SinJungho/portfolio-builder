@@ -19,6 +19,7 @@ import {
   portfolioStateLabel,
 } from "@/lib/portfolio-state";
 import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -60,8 +61,9 @@ export default function DashboardPage() {
     queryKey: ["dashboardData"],
     queryFn: async () => {
       const res = await fetch("/api/portfolios");
-      if (!res.ok) throw new Error("Failed to fetch dashboard data");
-      return { ...(await res.json()), fetchedAt: Date.now() };
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(data, "FETCH_FAILED"));
+      return { ...data, fetchedAt: Date.now() };
     },
   });
 
@@ -73,7 +75,8 @@ export default function DashboardPage() {
         body: JSON.stringify({}),
       });
       if (!res.ok) {
-        throw new Error("포트폴리오를 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+        const data = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "PORTFOLIO_CREATE_FAILED"));
       }
       return res.json();
     },
@@ -88,7 +91,10 @@ export default function DashboardPage() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/portfolios/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("삭제하지 못했어요. 다시 시도해 주세요.");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "PORTFOLIO_DELETE_FAILED"));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
@@ -103,7 +109,7 @@ export default function DashboardPage() {
     mutationFn: async () => {
       const res = await fetch("/api/integrations/github/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ force: true }) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "동기화를 시작하지 못했어요.");
+      if (!res.ok) throw new Error(responseErrorMessage(data, "SYNC_START_FAILED"));
       return data as { job_id: string };
     },
     onSuccess: ({ job_id }) => { setSyncError(null); setSyncJobId(job_id); toast.success("GitHub 동기화를 시작했어요."); },
@@ -115,7 +121,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       const res = await fetch(`/api/integrations/github/sync/${syncJobId}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "동기화 상태를 확인하지 못했어요.");
+      if (!res.ok) throw new Error(responseErrorMessage(data, "SYNC_STATUS_FAILED"));
       return data;
     },
     enabled: Boolean(syncJobId),
@@ -128,7 +134,7 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
       toast.success("GitHub 동기화를 마쳤어요.");
     } else if (syncJob.status === "failed") {
-      toast.error(syncJob.error || "GitHub 동기화에 실패했어요.");
+      toast.error(syncJob.error || errorMessage("SYNC_FAILED"));
     }
   }, [queryClient, syncJob, syncJobId]);
 
@@ -160,7 +166,7 @@ export default function DashboardPage() {
   const { portfolios, github_connected, github_synced_at } = data;
   const availableProjectIds = (data.available_project_ids as string[] | undefined) ?? [];
   const syncFailure = syncJob?.status === "failed"
-    ? syncJob.error || "GitHub 동기화에 실패했어요."
+    ? syncJob.error || errorMessage("SYNC_FAILED")
     : syncError;
   const githubSyncDate = github_synced_at ? new Date(github_synced_at) : null;
   const hasGithubSync = Boolean(githubSyncDate && !Number.isNaN(githubSyncDate.getTime()));
@@ -201,7 +207,7 @@ export default function DashboardPage() {
               {journeyMessage}
             </p>
           </div>
-          {/* 4단계 여정은 오리엔테이션이 가장 필요한 첫 사용자에게만 — 초안이 생기면 아래 '다음 한 가지'가 단일 행동을 안내한다. */}
+          {/* 신규 사용자에게만 온보딩 여정을 표시한다. */}
           {portfolios.length === 0 && (
           <ol aria-label="포트폴리오 준비 단계" className="flex items-stretch gap-2">
             {[
@@ -240,7 +246,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* GitHub 동기화 상태 바 영역 */}
         <section
           aria-label="GitHub 연동 상태 알림"
           className="flex flex-wrap items-center gap-3"
@@ -318,7 +323,6 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      {/* 포트폴리오 목록 섹션 */}
       <section id="new-portfolio" aria-labelledby="portfolio-section-title" className="space-y-8">
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <h2
@@ -362,7 +366,6 @@ export default function DashboardPage() {
             aria-label="내 포트폴리오 카드 목록"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-0 m-0"
           >
-            {/* 기존 포트폴리오 카드 리스트 */}
             {[...portfolios].sort((a, b) => {
               const progress = (portfolio: typeof a) => getPortfolioReadiness(portfolio.blocks, availableProjectIds).filter((item) => item.complete).length;
               if (a.is_published !== b.is_published) return Number(a.is_published) - Number(b.is_published);
@@ -474,7 +477,7 @@ export default function DashboardPage() {
                               await navigator.clipboard.writeText(publicUrl || "");
                               toast.success("지원서용 링크를 복사했어요.");
                             } catch {
-                              toast.error("링크를 복사하지 못했어요. 다시 시도해 주세요.");
+                              toast.error(errorMessage("LINK_COPY_FAILED"));
                             }
                           }}
                           className="flex-[1.4] flex items-center justify-center gap-2 text-[13px] font-bold text-black bg-spotify-green hover:brightness-110 transition-all rounded-full disabled:opacity-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-black"

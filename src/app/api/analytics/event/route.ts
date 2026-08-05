@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiError, logRouteError } from "@/lib/api/errors";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { event_type, portfolio_id, block_id, session_id, referrer, user_agent } = body;
 
-    // Optional: get basic country code from request headers (Vercel provides this)
+    // Vercel 요청 헤더에서 국가 코드를 읽는다.
     const country_code = req.headers.get("x-vercel-ip-country") || undefined;
 
-    // Track event
-    // Using fire-and-forget or await depending on strictness
-    // Usually analytics should not block, but for simplicity we await it here
     await prisma.analyticsEvent.create({
       data: {
         event_type,
@@ -26,7 +24,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Analytics Event Error:", error);
-    return NextResponse.json({ error: "failed_to_track" }, { status: 400 });
+    logRouteError("/api/analytics/event", "POST", error);
+    return apiError("TRACK_FAILED", 400);
   }
 }

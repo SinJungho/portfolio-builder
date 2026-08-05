@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/api/errors";
 
 export default function LoginSessionAlert(): null {
   const searchParams = useSearchParams();
@@ -11,12 +12,10 @@ export default function LoginSessionAlert(): null {
     const expired: string | null = searchParams.get("expired");
 
     if (expired === "true") {
-      // 보안을 위한 로그아웃 알림 (글로벌 한국어 토스트 오류 양식 준수)
-      toast.error(
-        "보안을 위해 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.",
-      );
+      // 만료된 세션을 로그아웃 처리하고 안내한다.
+      toast.error(errorMessage("SESSION_EXPIRED"));
 
-      // 주소창에서 지저분한 ?expired=true 쿼리 문자열을 깔끔하게 소거
+      // 만료 알림용 쿼리 파라미터를 제거한다.
       const url: URL = new URL(window.location.href);
       url.searchParams.delete("expired");
       window.history.replaceState(

@@ -6,6 +6,7 @@ import { THEMES, readableTextOn } from "@/preview/themes";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import { Sparkles } from "lucide-react";
 import React, { useState } from "react";
+import { errorMessage } from "@/lib/api/errors";
 
 const isHexColor = (value: string) => /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value);
 
@@ -24,7 +25,7 @@ export default function ColorCustomizer() {
   const [error, setError] = useState("");
 
   const commitColor = (value: string) => {
-    if (!isHexColor(value)) return setError("#RGB 또는 #RRGGBB 형식의 색상을 입력하세요.");
+    if (!isHexColor(value)) return setError(errorMessage("COLOR_INVALID"));
     setError("");
     updateToken("primaryColor", value);
     setDraftValue(null);

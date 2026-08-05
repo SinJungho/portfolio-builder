@@ -32,6 +32,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { responseErrorMessage } from "@/lib/api/errors";
 
 interface Portfolio {
   id: string;
@@ -48,17 +49,16 @@ export function PortfolioGrid() {
   const [isCreating, setIsCreating] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // 1. 포트폴리오 목록 조회
   const { data: portfolios = [], isLoading } = useQuery<Portfolio[]>({
     queryKey: ["portfolios"],
     queryFn: async () => {
       const res = await fetch("/api/portfolios");
-      if (!res.ok) throw new Error("목록을 불러오지 못했습니다");
-      return res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(data, "FETCH_FAILED"));
+      return data;
     },
   });
 
-  // 2. 새 포트폴리오 생성 뮤테이션
   const createMutation = useMutation({
     mutationFn: async () => {
       setIsCreating(true);
@@ -69,8 +69,8 @@ export function PortfolioGrid() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "생성에 실패했습니다");
+        const errorData = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(errorData, "PORTFOLIO_CREATE_FAILED"));
       }
 
       return res.json();
@@ -85,13 +85,15 @@ export function PortfolioGrid() {
     },
   });
 
-  // 3. 삭제 뮤테이션
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/portfolios/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("삭제에 실패했습니다");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "PORTFOLIO_DELETE_FAILED"));
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -145,7 +147,6 @@ export function PortfolioGrid() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-        {/* 기존 포트폴리오 목록 */}
         {portfolios.map((portfolio, index) => (
           <motion.div
             key={portfolio.id}

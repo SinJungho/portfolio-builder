@@ -23,6 +23,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { type RawProject } from "@/types/project";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 export default function ConfigureStep({
   portfolioId,
@@ -38,10 +39,10 @@ export default function ConfigureStep({
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
+      if (!res.ok) throw new Error(responseErrorMessage(data, "PROJECT_LIST_FAILED"));
       
-      // 지정된 대표 프로젝트가 없으면 featured 프로젝트 또는 상위 프로젝트를 선택한다.
+      // 대표 프로젝트가 없으면 featured 또는 첫 프로젝트를 사용한다.
       if (selectedIds.length === 0) {
         const featured = (data as RawProject[])
           .filter((p: RawProject) => p.is_featured)
@@ -74,8 +75,8 @@ export default function ConfigureStep({
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "생성에 실패했습니다.");
+        const data = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "PORTFOLIO_CREATE_FAILED"));
       }
       return res.json();
     },
@@ -91,7 +92,7 @@ export default function ConfigureStep({
 
   const toggleProject = (id: string) => {
     if (!selectedIds.includes(id) && selectedIds.length >= MAX_FEATURED_PROJECTS) {
-      toast.info(`대표 프로젝트는 최대 ${MAX_FEATURED_PROJECTS}개까지 선택할 수 있어요.`);
+      toast.info(errorMessage("PROJECT_LIMIT"));
       return;
     }
     setSelectedIds((prev) =>

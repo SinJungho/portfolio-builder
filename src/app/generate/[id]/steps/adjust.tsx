@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 import DesignEditor from "@/components/features/editor/DesignEditor";
 import {
@@ -61,13 +62,14 @@ export default function AdjustStep({
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("프로젝트 목록을 불러오지 못했습니다.");
-      return res.json();
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(payload, "PROJECT_LIST_FAILED"));
+      return payload;
     },
     enabled: init,
   });
 
-  // 컴포넌트 마운트 시 스토어 상태를 최초 1회 동기화합니다.
+  // 마운트 시 스토어 상태를 동기화한다.
   if (initialData && !init) {
     initialize({
       ...initialData,
@@ -79,7 +81,7 @@ export default function AdjustStep({
     setInit(true);
   }
 
-  // 일반 클릭 이벤트와의 오동작을 방지하기 위해, 5px 이상 드래그가 감지되었을 때만 dnd 동작을 시작합니다.
+  // 5px 이상 움직였을 때만 드래그를 시작한다.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
@@ -113,7 +115,7 @@ export default function AdjustStep({
         .catch((err: Error) => {
           toast.error(
             err.message ||
-              "연락처 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+              errorMessage("CONTACT_SAVE_FAILED"),
           );
         });
     },
@@ -146,7 +148,7 @@ export default function AdjustStep({
         .catch((err: Error) => {
           toast.error(
             err.message ||
-              "프로젝트 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+              errorMessage("PROJECT_SAVE_FAILED"),
           );
         });
     }

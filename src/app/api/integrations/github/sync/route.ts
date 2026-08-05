@@ -2,6 +2,7 @@ import { NextResponse, after } from 'next/server'
 import { auth } from '@/auth'
 import { redis, ratelimit, JOB_KEY, JOB_TTL, type JobStatus } from '@/lib/redis'
 import { syncGithubData } from '@/lib/sync/syncGithub'
+import { apiError, logRouteError, logRouteWarning, routeError } from '@/lib/api/errors'
 
 export const maxDuration = 60;
 
@@ -9,21 +10,21 @@ export async function POST(req: Request) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError("UNAUTHORIZED", 401)
     }
     
     const userId = session.user.id
     
-    // Rate Limiting 검증
+    // 요청 빈도를 제한한다.
     const { success } = await ratelimit.limit(`sync_${userId}`);
     if (!success) {
-      return NextResponse.json(
-        { error: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' },
-        { status: 429 }
-      )
+      return apiError("RATE_LIMITED", 429)
     }
 
-    const { force = false } = await req.json().catch(() => ({}))
+    const { force = false } = await req.json().catch((error: unknown) => {
+      logRouteWarning('/api/integrations/github/sync', 'POST', error, 'Invalid JSON');
+      return {};
+    })
     const jobId = `sync_${crypto.randomUUID()}`
 
     const initialStatus: JobStatus = {
@@ -36,13 +37,13 @@ export async function POST(req: Request) {
 
     await redis.setex(JOB_KEY(jobId), JOB_TTL, JSON.stringify(initialStatus))
 
-    // Launch background work via next/server after()
+    // 동기화 작업은 응답 후 백그라운드에서 실행한다.
     after(async () => {
       await syncGithubData({
         jobId: jobId,
         userId: userId,
         force,
-      }).catch(console.error);
+      }).catch((error) => logRouteError('/api/integrations/github/sync/background', 'POST', error));
     });
 
     return NextResponse.json(
@@ -50,7 +51,6 @@ export async function POST(req: Request) {
       { status: 202 }
     )
   } catch (error) {
-    console.error('POST /api/integrations/github/sync error:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return routeError('/api/integrations/github/sync', 'POST', error)
   }
 }

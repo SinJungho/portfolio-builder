@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redis, ratelimit, JOB_KEY, JOB_TTL, JobStatus } from "@/lib/redis";
 import { generatePortfolio } from "@/lib/generate/generatePortfolio";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
+import { apiError, logRouteError, logRouteWarning, routeError } from "@/lib/api/errors";
 
 export const maxDuration = 60;
 
@@ -11,43 +12,35 @@ export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
     const { user } = session;
 
-    // Rate Limiting 검증 (AI 자동 생성 비용 및 트래픽 방어)
+    // AI 생성 요청 빈도를 제한한다.
     const { success } = await ratelimit.limit(`generate_${user.id}`);
     if (!success) {
-      return NextResponse.json(
-        { error: "포트폴리오 생성 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-        { status: 429 }
-      );
+      return apiError("RATE_LIMITED", 429);
     }
 
-    let json: Record<string, unknown> = {};
-    try {
-      json = await req.json();
-    } catch {
-      // ignore
-    }
+    const json: Record<string, unknown> = await req.json().catch((error: unknown) => {
+      logRouteWarning('/api/portfolios/generate', 'POST', error, 'Invalid JSON');
+      return {};
+    });
 
     const portfolio_id = json.portfolio_id as string;
     const auto_publish = (json.auto_publish as boolean) ?? false;
     const project_ids = Array.isArray(json.project_ids) &&
-      json.project_ids.every((id): id is string => typeof id === "string")
+      json.project_ids.every((id: unknown): id is string => typeof id === "string")
       ? json.project_ids
       : undefined;
     const ai_focus = json.ai_focus as string | undefined;
 
     if (!portfolio_id) {
-      return NextResponse.json({ error: "portfolio_id is required" }, { status: 400 });
+      return apiError("PORTFOLIO_ID_REQUIRED", 400);
     }
     if (project_ids && project_ids.length > MAX_FEATURED_PROJECTS) {
-      return NextResponse.json(
-        { error: `대표 프로젝트는 최대 ${MAX_FEATURED_PROJECTS}개까지 선택할 수 있습니다.` },
-        { status: 400 },
-      );
+      return apiError("PROJECT_LIMIT", 400);
     }
 
     const portfolio = await prisma.portfolio.findUnique({
@@ -55,7 +48,7 @@ export async function POST(req: Request) {
     });
 
     if (!portfolio || portfolio.user_id !== user.id) {
-      return new NextResponse(null, { status: 404 });
+      return apiError("NOT_FOUND", 404);
     }
 
 
@@ -82,12 +75,11 @@ export async function POST(req: Request) {
         autoPublish: auto_publish,
         projectIds: project_ids,
         goal: ai_focus,
-      }).catch(console.error);
+      }).catch((error) => logRouteError('/api/portfolios/generate/background', 'POST', error));
     });
 
     return NextResponse.json({ job_id, estimated_seconds: 30 }, { status: 202 });
   } catch (error: unknown) {
-    console.error("POST /api/portfolios/generate error:", error);
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
+    return routeError('/api/portfolios/generate', 'POST', error);
   }
 }

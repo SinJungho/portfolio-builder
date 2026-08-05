@@ -13,6 +13,7 @@ import React, { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 interface MarkdownEditorProps {
   value: string;
@@ -37,7 +38,7 @@ export default function MarkdownEditor({
     if (!file) return;
 
     if (!file.name.endsWith(".md")) {
-      toast.error("마크다운(.md) 파일만 가져올 수 있습니다.");
+      toast.error(errorMessage("IMAGE_ONLY"));
       return;
     }
 
@@ -49,7 +50,7 @@ export default function MarkdownEditor({
     };
     reader.readAsText(file);
 
-    // Reset input
+    // 같은 파일을 다시 선택할 수 있도록 입력값을 초기화한다.
     e.target.value = "";
   };
 
@@ -58,7 +59,7 @@ export default function MarkdownEditor({
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("이미지 크기는 최대 5MB까지만 가능합니다.");
+      toast.error(errorMessage("IMAGE_TOO_LARGE"));
       return;
     }
 
@@ -73,8 +74,8 @@ export default function MarkdownEditor({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "업로드 실패");
+        const data = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "IMAGE_UPLOAD_FAILED"));
       }
 
       const { url, isLocal, message } = await res.json();
@@ -91,7 +92,7 @@ export default function MarkdownEditor({
       }
     } catch (error) {
       console.error(error);
-      toast.error("이미지 업로드 중 오류가 발생했습니다.");
+      toast.error(errorMessage("IMAGE_UPLOAD_FAILED"));
     } finally {
       setIsUploading(false);
       e.target.value = "";
@@ -118,7 +119,6 @@ export default function MarkdownEditor({
     <div
       className={`flex flex-col border border-black/5 rounded-[24px] overflow-hidden bg-white shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-100 ${className}`}
     >
-      {/* Header Tabs */}
       <div className="flex items-center justify-between px-2 py-1.5 border-b border-black/5 bg-gray-50/50">
         <div className="flex items-center gap-1">
           <button
@@ -146,7 +146,6 @@ export default function MarkdownEditor({
         </div>
 
         <div className="flex items-center gap-1 pr-2">
-          {/* Markdown Import */}
           <Button
             variant="ghost"
             size="sm"
@@ -164,7 +163,6 @@ export default function MarkdownEditor({
             onChange={handleFileImport}
           />
 
-          {/* Image Upload */}
           <Button
             variant="ghost"
             size="sm"
@@ -189,7 +187,6 @@ export default function MarkdownEditor({
         </div>
       </div>
 
-      {/* Editor Content */}
       <div className="relative min-h-[160px] flex flex-col">
         {activeTab === "write" ? (
           <textarea
@@ -211,7 +208,6 @@ export default function MarkdownEditor({
         )}
       </div>
 
-      {/* Footer Info */}
       <div className="px-5 py-3 border-t border-black/5 bg-gray-50/30 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
           <Info className="w-3.5 h-3.5 text-gray-300" />

@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 type BioStatus = "loading" | "missing" | "verified" | "error";
 
@@ -40,9 +41,8 @@ export default function OnboardingBioPage() {
 
     try {
       const response = await fetch("/api/integrations/github/bio", { signal: controller.signal });
-      if (!response.ok) throw new Error();
-
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(responseErrorMessage(data, "GITHUB_BIO_FAILED"));
       if (data.exists) {
         setBio(data.bio);
         setStatus("verified");
@@ -53,7 +53,7 @@ export default function OnboardingBioPage() {
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       setStatus("error");
-      if (manual) toast.error("GitHub 소개를 확인하지 못했어요.");
+        if (manual) toast.error(errorMessage("GITHUB_BIO_FAILED"));
     } finally {
       if (requestRef.current === controller) requestRef.current = null;
       if (manual) setIsRefreshing(false);
@@ -84,7 +84,7 @@ export default function OnboardingBioPage() {
       toast.success("예시를 복사했어요.");
       window.setTimeout(() => setCopiedIndex(null), 2000);
     } catch {
-      toast.error("복사하지 못했어요. 예시를 길게 눌러 직접 복사해 주세요.");
+      toast.error(errorMessage("COPY_FAILED"));
     }
   };
 

@@ -4,10 +4,10 @@ import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import puppeteer, { Browser } from "puppeteer-core";
+import { apiError, logRouteError } from "@/lib/api/errors";
 
 /**
- * Chromium 실행 파일이 안전한 화이트리스트 디렉토리에 위치하고 실제 정규 파일인지 교차 검증합니다.
- * (심볼릭 링크 우회 공격 및 비권한 바이너리 실행 리스크 방어 - 로컬 & 프로덕션 통합 가드)
+ * 허용된 디렉토리의 실제 Chromium 실행 파일인지 검증한다.
  */
 function validateChromiumPath(filePath: string): boolean {
   try {
@@ -66,8 +66,7 @@ function validateChromiumPath(filePath: string): boolean {
 }
 
 /**
- * 렌더링 타겟 URL의 호스트가 인가된 도메인(Localhost 또는 portfolioforge.app 대역)인지 검증합니다.
- * (사설망 자원 탈취 시도 및 외부 악성 도메인으로의 SSRF 리다이렉션 방어)
+ * 렌더링 대상이 허용된 호스트인지 검증한다.
  */
 function validateTargetUrl(targetUrl: string): boolean {
   try {
@@ -91,33 +90,14 @@ function validateTargetUrl(targetUrl: string): boolean {
   }
 }
 
-/**
- * @summary 포트폴리오 페이지를 A4 규격의 PDF 이력서(CV) 문서로 변환하여 다운로드 스트림으로 반환합니다.
- *
- * @description
- * Vercel Serverless 환경의 50MB 용량 제한을 우회하기 위해 `@sparticuz/chromium` 바이너리를 활용하며,
- * 로컬 개발 환경과 프로덕션 환경의 OS 플랫폼 구분에 맞춰 Chrome 실행 파일을 동적으로 탐색합니다.
- * 렌더링 시 웹 폰트 누락 및 레이아웃 깨짐을 방지하기 위해 폰트 로드 완료 대기 및 추가 지연 시간을 가집니다.
- *
- * @route GET /api/export/pdf
- * @query {string} slug - 포트폴리오를 식별하기 위한 고유 주소(Slug)
- * @returns {NextResponse} application/pdf 바이너리 파일 다운로드 스트림
- * @throws {400} 포트폴리오 식별자(slug) 누락 및 유효하지 않은 특수 문자 포함(SSRF 방어) 시 반환
- * @throws {500} Chromium 인스턴스 기동 실패, 페이지 렌더링 타임아웃, PDF 변환 실패 시 반환
- */
+/** 포트폴리오 페이지를 A4 PDF로 변환한다. */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug");
 
   const slugRegex = /^[a-z0-9-]+$/i;
   if (!slug || !slugRegex.test(slug)) {
-    return NextResponse.json(
-      {
-        error:
-          "유효하지 않은 포트폴리오 식별자 형식입니다. (영문, 숫자, 하이픈만 허용)",
-      },
-      { status: 400 },
-    );
+    return apiError("PDF_INVALID_SLUG", 400);
   }
 
   let browser: Browser | null = null;
@@ -158,10 +138,7 @@ export async function GET(req: NextRequest) {
     const portfolioUrl = `${baseUrl}/${slug}?export=true`;
 
     if (!validateTargetUrl(portfolioUrl)) {
-      return NextResponse.json(
-        { error: "보안 검증 실패: 허용되지 않은 렌더링 대상 주소입니다." },
-        { status: 400 },
-      );
+      return apiError("PDF_SECURITY", 400);
     }
 
     console.log(
@@ -198,19 +175,10 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error("[PDF_내보내기_실패]", error);
-    return NextResponse.json(
-      {
-        error: "PDF 생성을 실패했습니다.",
-        details:
-          error instanceof Error
-            ? error.message
-            : "알 수 없는 오류가 발생했습니다.",
-      },
-      { status: 500 },
-    );
+    logRouteError('/api/export/pdf', 'GET', error);
+    return apiError("PDF_FAILED", 500);
   } finally {
-    // 좀비 크롬 프로세스 잔존으로 인한 서버 리소스 커넥션 누수 및 OOM(Memory Leak) 방지
+    // Chromium을 종료해 프로세스와 리소스를 정리한다.
     if (browser) {
       await browser.close();
     }

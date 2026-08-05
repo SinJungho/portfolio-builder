@@ -23,6 +23,7 @@ import { portfolioUrl } from "@/lib/portfolio-url";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, Copy, ExternalLink, Layout } from "lucide-react";
 import Link from "next/link";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 import { useState } from "react";
 import {
   Area,
@@ -76,7 +77,7 @@ export default function AnalyticsPage() {
   const [selectedId, setSelectedPortfolioId] = useState<string>("");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
 
-  // 1. Fetch Portfolios (Including blocks for ID translation)
+  // 포트폴리오와 블록을 조회한다.
   const { data: portfolios, isLoading: isPortfoliosLoading } = useQuery<
     PortfolioWithBlocks[]
   >({
@@ -84,10 +85,10 @@ export default function AnalyticsPage() {
     queryFn: () => getUserPortfolios(),
   });
 
-  // 선택값이 없으면 첫 포트폴리오로 기본 선택 (effect 대신 파생)
+  // 선택값이 없으면 첫 포트폴리오를 사용한다.
   const selectedPortfolioId = selectedId || portfolios?.[0]?.id || "";
 
-  // 2. Fetch Summary
+  // 선택한 포트폴리오의 요약을 조회한다.
   const {
     data: summary,
     error: summaryError,
@@ -100,13 +101,14 @@ export default function AnalyticsPage() {
       const res = await fetch(
         `/api/analytics/${selectedPortfolioId}/summary?period=${period}`,
       );
-      if (!res.ok) throw new Error("Failed to fetch analytics");
-      return res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(data, "ANALYTICS_FETCH_FAILED"));
+      return data;
     },
     enabled: !!selectedPortfolioId,
   });
 
-  // Block ID Translation helper
+  // 분석 데이터의 블록 ID를 표시 이름으로 변환한다.
   const getBlockName = (blockId: string) => {
     const activePortfolio = portfolios?.find(
       (p) => p.id === selectedPortfolioId,
@@ -144,7 +146,7 @@ export default function AnalyticsPage() {
       );
       toast.success("지원서용 링크를 복사했어요.");
     } catch {
-      toast.error("링크를 복사하지 못했어요. 다시 시도해 주세요.");
+      toast.error(errorMessage("COPY_FAILED"));
     }
   };
 
@@ -156,7 +158,6 @@ export default function AnalyticsPage() {
         className="p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in duration-500"
       >
         <span className="sr-only">분석 대시보드를 불러오는 중</span>
-        {/* 헤더 + 컨트롤 */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
           <div className="space-y-3">
             <Skeleton className="h-4 w-28 bg-white/10" />
@@ -167,7 +168,6 @@ export default function AnalyticsPage() {
             <Skeleton className="h-12 w-40 rounded-xl bg-white/5" />
           </div>
         </div>
-        {/* 통계 카드 + 차트 */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <Skeleton className="h-32 rounded-2xl bg-white/5" />
           <Skeleton className="h-32 rounded-2xl bg-white/5" />
@@ -204,7 +204,6 @@ export default function AnalyticsPage() {
 
   return (
     <div className="text-white p-6 sm:p-10 space-y-10 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
           분석 대시보드
@@ -278,7 +277,6 @@ export default function AnalyticsPage() {
       ) : summary ? (
         hasAnalyticsData ? (
           <div className="space-y-10" aria-busy={isSummaryFetching}>
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md">
                 <CardContent className="p-8 space-y-2">
@@ -314,7 +312,6 @@ export default function AnalyticsPage() {
               </Card>
             </div>
 
-            {/* Main Chart */}
             <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
               <CardHeader className="p-8 pb-0">
                 <div>
@@ -477,9 +474,7 @@ export default function AnalyticsPage() {
               </section>
             )}
 
-            {/* Detailed Lists */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Top Blocks */}
               <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
                 <CardHeader className="p-8">
                   <CardTitle className="text-xl font-bold text-white">
@@ -545,7 +540,6 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
 
-              {/* Top Referrers */}
               <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
                 <CardHeader className="p-8">
                   <CardTitle className="text-xl font-bold text-white">
@@ -664,8 +658,8 @@ export default function AnalyticsPage() {
         >
           <p>
             {summaryError instanceof Error
-              ? "분석 데이터를 불러오지 못했어요."
-              : "데이터를 불러오지 못했어요."}
+              ? errorMessage("ANALYTICS_FETCH_FAILED")
+              : errorMessage("FETCH_FAILED")}
           </p>
           <Button
             variant="outline"

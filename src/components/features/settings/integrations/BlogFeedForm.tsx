@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, Lightbulb, Loader2 } from "lucide-react";
 import React, { useState } from "react";
+import { errorMessage } from "@/lib/api/errors";
 
 interface BlogFeedFormProps {
   onConnect: (url: string) => void;
@@ -12,17 +13,17 @@ export function BlogFeedForm({ onConnect, isPending }: BlogFeedFormProps) {
   const [rssUrl, setRssUrl] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // URL 유효성 검사
+  // RSS URL 형식을 검증한다.
   const validateUrl = (url: string): boolean => {
     const trimmedUrl = url.trim();
     if (!trimmedUrl) {
-      setValidationError("RSS 피드 주소를 입력해 주세요.");
+      setValidationError(errorMessage("BLOG_VALIDATION_FAILED"));
       return false;
     }
 
     const urlPattern = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
     if (!urlPattern.test(trimmedUrl)) {
-      setValidationError("올바른 URL 형식(https://...)으로 입력해 주세요.");
+      setValidationError(errorMessage("RSS_INVALID_URL"));
       return false;
     }
 

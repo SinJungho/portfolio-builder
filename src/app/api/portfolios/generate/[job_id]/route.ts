@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { redis, JOB_KEY } from "@/lib/redis";
 import type { GenerateJobResponse } from "@/types/generate";
+import { apiError, routeError } from "@/lib/api/errors";
 
 export async function GET(
   _req: Request,
@@ -10,20 +11,20 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
     const { job_id } = await params;
 
     const jobStr = await redis.get(JOB_KEY(job_id));
     if (!jobStr) {
-      return NextResponse.json({ error: "job_not_found" }, { status: 404 });
+      return apiError("JOB_NOT_FOUND", 404);
     }
 
     const job = (typeof jobStr === "string" ? JSON.parse(jobStr) : jobStr) as GenerateJobResponse & { user_id: string };
 
     if (job.user_id !== session.user.id) {
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      return apiError("FORBIDDEN", 403);
     }
 
     const response: GenerateJobResponse = {
@@ -37,12 +38,8 @@ export async function GET(
 
     return NextResponse.json(response, { status: 200 });
   } catch (error: unknown) {
-    console.error("GET /api/portfolios/generate/[job_id] error:", error);
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
+    return routeError('/api/portfolios/generate/[job_id]', 'GET', error);
   }
 }
 
-// 클라이언트 폴링 규칙:
-// - 폴링 간격: 3초
-// - 타임아웃: 60초 (20회 초과 시 클라이언트에서 타임아웃 처리)
-// - status: 'completed' 또는 'status: 'failed' 수신 시 폴링 중단
+// 클라이언트는 3초 간격으로 최대 60초 동안 상태를 조회한다.

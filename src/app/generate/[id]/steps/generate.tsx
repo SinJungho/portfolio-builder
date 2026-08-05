@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 export function clampProgress(progress: number | undefined) {
   return Math.min(100, Math.max(0, typeof progress === "number" && Number.isFinite(progress) ? progress : 0));
@@ -31,16 +32,17 @@ export default function GenerateStep({
   const { data, error, refetch } = useQuery<GenerateJobResponse>({
     queryKey: ["generate-job", generateJobId],
     queryFn: async () => {
-      if (!generateJobId) throw new Error("job_id_missing");
+      if (!generateJobId) throw new Error(errorMessage("JOB_NOT_FOUND"));
       const res = await fetch(`/api/portfolios/generate/${generateJobId}`);
-      if (!res.ok) throw new Error("fetch_failed");
-      return res.json();
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(payload, "FETCH_FAILED"));
+      return payload;
     },
     refetchInterval: (query) => {
       if (
         query.state.data?.status === "completed" ||
         query.state.data?.status === "failed" ||
-        timeoutsCount.current >= 60 // 3초 간격 폴링, 최대 3분(60회) 대기 후 타임아웃 처리
+        timeoutsCount.current >= 60 // 3초 간격으로 최대 3분 대기
       ) {
         return false;
       }
@@ -54,7 +56,7 @@ export default function GenerateStep({
     enabled: !!generateJobId,
   });
 
-  // API 에러 또는 타임아웃 발생 시 DB에 최종 반영된 published_url 보조 체크
+  // 오류나 타임아웃 뒤에도 DB의 최종 URL을 확인한다.
   const { data: dbCheck } = useQuery({
     queryKey: ["portfolio-status", portfolioId],
     queryFn: async () => {
@@ -89,16 +91,16 @@ export default function GenerateStep({
           </div>
           <h2 className="text-[24px] font-extrabold tracking-[-1px] text-white mb-2">
             {generateJobId
-              ? "포트폴리오 생성에 실패했습니다"
+              ? errorMessage("GENERATION_FAILED")
               : "생성 작업을 이어갈 수 없어요"}
           </h2>
           <p className="text-[15px] text-spotify-silver leading-[1.7] mb-8 font-normal">
             {!generateJobId
-              ? "생성 작업 정보를 찾을 수 없습니다. 프로젝트를 다시 선택해 생성해 주세요."
+              ? errorMessage("JOB_NOT_FOUND")
               : data?.error ||
               (isTimedOut
-                ? "생성 작업이 다소 지연되고 있습니다. 잠시 후 다시 한 번 시도해 주세요."
-                : "일시적인 시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")}
+                ? errorMessage("GENERATION_TIMEOUT")
+                : errorMessage("GENERATION_FAILED"))}
           </p>
           <button
             type="button"

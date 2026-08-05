@@ -1,4 +1,5 @@
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
+import { apiError, logRouteError, routeError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -33,10 +34,9 @@ export async function PATCH(
     const {
       success,
       data,
-      error: zError,
     } = updatePortfolioSchema.safeParse(json);
     if (!success) {
-      return NextResponse.json({ error: zError.message }, { status: 400 });
+      return apiError("INVALID_REQUEST", 400);
     }
 
     const updateData: Record<string, unknown> = {};
@@ -70,13 +70,7 @@ export async function PATCH(
         );
 
         if (missing.length) {
-          return NextResponse.json(
-            {
-              error: `공개 전 ${missing[0].label}을(를) 완료해주세요.`,
-              missing_items: missing,
-            },
-            { status: 400 },
-          );
+          return apiError("PORTFOLIO_NOT_READY", 400, { missing_items: missing });
         }
       }
       updateData.is_published = data.is_published;
@@ -88,7 +82,7 @@ export async function PATCH(
         where: { slug: data.slug },
       });
       if (existing) {
-        return NextResponse.json({ error: "slug_conflict" }, { status: 409 });
+        return apiError("SLUG_CONFLICT", 409);
       }
       updateData.slug = data.slug;
     }
@@ -109,17 +103,13 @@ export async function PATCH(
           body: JSON.stringify({ slug: updatedPortfolio.slug }),
         });
       } catch (e) {
-        console.error("Revalidate explicitly failed:", e);
+        logRouteError('/api/revalidate', 'POST', e);
       }
     }
 
     return NextResponse.json({ portfolio: updatedPortfolio }, { status: 200 });
   } catch (error: unknown) {
-    console.error("PATCH /api/portfolios/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Internal server error" },
-      { status: 500 },
-    );
+    return routeError('/api/portfolios/[id]', 'PATCH', error);
   }
 }
 
@@ -138,10 +128,6 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
-    console.error("DELETE /api/portfolios/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Internal server error" },
-      { status: 500 },
-    );
+    return routeError('/api/portfolios/[id]', 'DELETE', error);
   }
 }

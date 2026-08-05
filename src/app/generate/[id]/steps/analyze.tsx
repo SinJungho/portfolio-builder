@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Loader2, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 interface SyncStatusResponse {
   status: "pending" | "processing" | "completed" | "failed";
@@ -27,12 +28,13 @@ export default function AnalyzeStep({
   const { data, error, refetch } = useQuery<SyncStatusResponse>({
     queryKey: ["sync-job", syncJobId],
     queryFn: async () => {
-      if (!syncJobId) throw new Error("job_id_missing");
+      if (!syncJobId) throw new Error(errorMessage("JOB_NOT_FOUND"));
       const res = await fetch(`/api/integrations/github/sync/${syncJobId}`);
-      if (!res.ok) throw new Error("sync_failed");
-      return res.json();
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(payload, "SYNC_FAILED"));
+      return payload;
     },
-    // 비동기로 실행되는 GitHub 분석 작업의 완료 상태를 감지하기 위해 최대 2분(3초 간격, 40회) 동안 폴링을 수행하며, 초과 시 타임아웃으로 처리합니다.
+    // GitHub 분석을 3초 간격으로 최대 2분 동안 확인한다.
     refetchInterval: (query) => {
       if (
         query.state.data?.status === "completed" ||
@@ -55,7 +57,7 @@ export default function AnalyzeStep({
     if (data?.status === "completed") {
       router.push(`/generate/${portfolioId}?step=configure`);
     } else if (data?.status === "failed") {
-      setTimeout(() => setErrorMsg(data.error || "분석에 실패했습니다."), 0);
+      setTimeout(() => setErrorMsg(data.error || errorMessage("ANALYSIS_FAILED")), 0);
     }
   }, [data?.status, portfolioId, router, data?.error]);
 
@@ -83,14 +85,14 @@ export default function AnalyzeStep({
         <div className="space-y-3">
           <h3 className="text-[22px] font-extrabold text-white tracking-tight">
             {isAuthError
-              ? "GitHub 연동 정보가 만료되었어요"
+              ? errorMessage("GITHUB_AUTH_EXPIRED")
               : "오류가 발생했습니다"}
           </h3>
           <p className="text-[15px] font-medium text-spotify-silver leading-relaxed">
             {errorMsg ||
               (isTimedOut
-                ? "분석 시간이 너무 오래 걸리고 있습니다. 잠시 후 서버가 안정되면 다시 시도해 주세요."
-                : "일시적인 오류입니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.")}
+                ? errorMessage("ANALYSIS_TIMEOUT")
+                : errorMessage("INTERNAL_ERROR"))}
           </p>
         </div>
 

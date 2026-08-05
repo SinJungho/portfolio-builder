@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
+import { apiError, logRouteError, logRouteWarning, routeError } from "@/lib/api/errors";
 import { z } from "zod";
 
 const updateBlockSchema = z.object({
@@ -17,16 +18,14 @@ export async function PATCH(
     const { error, portfolio } = await validatePortfolioOwnership(id);
     if (error) return error;
 
-    let json = {};
-    try {
-      json = await req.json();
-    } catch {
-      // ignore
-    }
+    const json = await req.json().catch((error: unknown) => {
+      logRouteWarning('/api/portfolios/[id]/blocks/[blockId]', 'PATCH', error, 'Invalid JSON');
+      return {};
+    });
 
-    const { success, data, error: zError } = updateBlockSchema.safeParse(json);
+    const { success, data } = updateBlockSchema.safeParse(json);
     if (!success) {
-      return NextResponse.json({ error: zError.message }, { status: 400 });
+      return apiError("INVALID_REQUEST", 400);
     }
 
     const block = await prisma.portfolioBlock.findFirst({
@@ -37,7 +36,7 @@ export async function PATCH(
     });
 
     if (!block) {
-      return new NextResponse(null, { status: 404 });
+      return apiError("BLOCK_NOT_FOUND", 404);
     }
 
     const updateData: Record<string, unknown> = {};
@@ -60,14 +59,13 @@ export async function PATCH(
           body: JSON.stringify({ slug: portfolio.slug }),
         });
       } catch (e) {
-        console.error("Revalidate explicitly failed:", e);
+        logRouteError('/api/revalidate', 'POST', e);
       }
     }
 
     return NextResponse.json({ block: updatedBlock }, { status: 200 });
   } catch (error: unknown) {
-    console.error("PATCH /api/portfolios/[id]/blocks/[blockId] error:", error);
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
+    return routeError('/api/portfolios/[id]/blocks/[blockId]', 'PATCH', error);
   }
 }
 
@@ -88,14 +86,14 @@ export async function DELETE(
     });
 
     if (!block) {
-      return new NextResponse(null, { status: 404 });
+      return apiError("BLOCK_NOT_FOUND", 404);
     }
 
     await prisma.portfolioBlock.delete({
       where: { id: blockId },
     });
 
-    // Reorder remaining blocks
+    // 남은 블록의 순서를 다시 계산한다.
     const remainingBlocks = await prisma.portfolioBlock.findMany({
       where: { portfolio_id: id },
       orderBy: { position: "asc" },
@@ -119,13 +117,12 @@ export async function DELETE(
           body: JSON.stringify({ slug: portfolio.slug }),
         });
       } catch (e) {
-        console.error("Revalidate explicitly failed:", e);
+        logRouteError('/api/revalidate', 'POST', e);
       }
     }
 
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
-    console.error("DELETE /api/portfolios/[id]/blocks/[blockId] error:", error);
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
+    return routeError('/api/portfolios/[id]/blocks/[blockId]', 'DELETE', error);
   }
 }

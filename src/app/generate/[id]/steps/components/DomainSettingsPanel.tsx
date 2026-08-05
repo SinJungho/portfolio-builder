@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 interface DomainSettingsPanelProps {
   initialSlug?: string;
@@ -58,7 +59,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
     const val = input.value.trim();
     setCustomDomain(val || null)
       .then(() => toast.success("도메인 설정이 업데이트되었습니다."))
-      .catch((err: Error) => toast.error(err.message));
+      .catch((err: Error) => toast.error(err.message || errorMessage("DOMAIN_SAVE_FAILED")));
   };
 
   const handleDomainKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -66,7 +67,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
       const val = e.currentTarget.value.trim();
       setCustomDomain(val || null)
         .then(() => toast.success("도메인이 업데이트되었습니다."))
-        .catch((err: Error) => toast.error(err.message));
+        .catch((err: Error) => toast.error(err.message || errorMessage("DOMAIN_SAVE_FAILED")));
     }
   };
 
@@ -75,15 +76,16 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
     try {
       const res = await fetch(`/api/domains/${customDomain}`);
       const data = await res.json();
+      if (!res.ok) throw new Error(responseErrorMessage(data, "DOMAIN_STATUS_FAILED"));
       if (data.configured) {
         toast.success(
           "도메인 연결이 성공적으로 시뮬레이션 및 연결 완료되었습니다!",
         );
       } else {
-        toast.error("DNS 연결 상태를 확인하고 있습니다.");
+        toast.error(errorMessage("DOMAIN_STATUS_FAILED"));
       }
-    } catch {
-      toast.error("도메인 상태를 확인할 수 없습니다.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : errorMessage("DOMAIN_STATUS_FAILED"));
     }
   };
 
