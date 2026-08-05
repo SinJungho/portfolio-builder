@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { apiError, logRouteWarning, routeError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -8,64 +9,59 @@ const createPortfolioSchema = z.object({
   theme: z.string().optional(),
 });
 
+async function getUserId() {
+  return (await auth())?.user?.id ?? null;
+}
+
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+    const userId = await getUserId();
+    if (!userId) {
+      return apiError("UNAUTHORIZED", 401);
     }
 
-    const { user } = session;
-
-    let json = {};
-    try {
-      json = await req.json();
-    } catch {
-      // ignore
-    }
-
+    const json = await req.json().catch((error: unknown) => {
+      logRouteWarning('/api/portfolios', 'POST', error, 'Invalid JSON');
+      return {};
+    });
     const parseResult = createPortfolioSchema.safeParse(json);
     if (!parseResult.success) {
-      return NextResponse.json({ error: parseResult.error.message }, { status: 400 });
+      return apiError("INVALID_REQUEST", 400);
     }
 
     const { slug: requestedSlug, theme } = parseResult.data;
 
-    // Fetch user details
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       select: { github_login: true },
     });
 
     if (!dbUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return apiError("USER_NOT_FOUND", 404);
     }
 
-    const baseSlug = requestedSlug || dbUser.github_login || `user-${user.id.substring(0, 5)}`;
-    let finalSlug = baseSlug;
-    let attempt = 0;
-    let slugExists = true;
+    const baseSlug = requestedSlug || dbUser.github_login || `user-${userId.substring(0, 5)}`;
+    let finalSlug: string | null = null;
 
-    while (slugExists && attempt < 10) {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
       const existing = await prisma.portfolio.findUnique({
-        where: { slug: finalSlug },
+        where: { slug: candidate },
       });
 
       if (!existing) {
-        slugExists = false;
-      } else {
-        attempt++;
-        finalSlug = `${baseSlug}-${attempt + 1}`;
+        finalSlug = candidate;
+        break;
       }
     }
 
-    if (slugExists) {
-      return NextResponse.json({ error: "Failed to generate a unique slug" }, { status: 500 });
+    if (!finalSlug) {
+      return apiError("SLUG_UNAVAILABLE", 500);
     }
 
     const portfolio = await prisma.portfolio.create({
       data: {
-        user_id: user.id,
+        user_id: userId,
         slug: finalSlug,
         theme: theme || "minimal",
         auto_published: false,
@@ -81,22 +77,19 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("POST /api/portfolios error:", error);
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
+    return routeError("/api/portfolios", "POST", error);
   }
 }
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+    const userId = await getUserId();
+    if (!userId) {
+      return apiError("UNAUTHORIZED", 401);
     }
 
-    const { user } = session;
-
     const portfolios = await prisma.portfolio.findMany({
-      where: { user_id: user.id },
+      where: { user_id: userId },
       orderBy: { created_at: "desc" },
       include: {
         _count: { select: { blocks: true } },
@@ -104,18 +97,17 @@ export async function GET() {
       },
     });
     const availableProjects = await prisma.rawProject.findMany({
-      where: { user_id: user.id, is_fork: false },
+      where: { user_id: userId, is_fork: false },
       select: { id: true },
     });
 
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       select: { github_bio_verified: true }
     });
     
-    // Also see sync status
     const integration = await prisma.integration.findFirst({
-      where: { user_id: user.id, provider: "github" },
+      where: { user_id: userId, provider: "github" },
       orderBy: { synced_at: "desc" }
     });
 
@@ -127,7 +119,6 @@ export async function GET() {
       github_synced_at: integration?.synced_at || null,
     });
   } catch (error: unknown) {
-    console.error("GET /api/portfolios error:", error);
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 });
+    return routeError("/api/portfolios", "GET", error);
   }
 }
