@@ -9,6 +9,14 @@ export class DomainService {
   private readonly teamId = process.env.VERCEL_TEAM_ID || "";
 
   /**
+   * Vercel 연동 자격증명이 갖춰졌는지 여부.
+   * 미설정은 오류가 아니라 "수동 DNS 안내" 경로를 뜻한다.
+   */
+  isConfigured(): boolean {
+    return Boolean(this.token && this.projectId);
+  }
+
+  /**
    * Vercel API 호출 공통 유틸리티
    */
   private async fetchVercel(path: string, options: RequestInit = {}) {

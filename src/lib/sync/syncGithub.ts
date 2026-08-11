@@ -88,19 +88,22 @@ export async function syncGithubData({
 
     const total = repos.length;
 
+    // 가져온 목록이 있을 때만 정리한다. 토큰 스코프를 잃으면 GitHub가 401이 아니라
+    // 200 + 빈 배열을 주므로, 빈 목록에서 지우면 멀쩡한 프로젝트를 전부 날린다.
+    // ponytail: repo가 실제로 0개가 된 경우 이전 프로젝트가 남는다. 잘못된 전량 삭제보다 낫다.
     const externalIds = repos.map((repo) => String(repo.id));
-    await prisma.rawProject.deleteMany({
-      where: externalIds.length
-        ? {
-            user_id: userId,
-            source: "github",
-            OR: [
-              { external_id: null },
-              { external_id: { notIn: externalIds } },
-            ],
-          }
-        : { user_id: userId, source: "github" },
-    });
+    if (externalIds.length) {
+      await prisma.rawProject.deleteMany({
+        where: {
+          user_id: userId,
+          source: "github",
+          OR: [
+            { external_id: null },
+            { external_id: { notIn: externalIds } },
+          ],
+        },
+      });
+    }
 
     // 2. 개별 리포지토리 처리
     for (const repo of repos) {

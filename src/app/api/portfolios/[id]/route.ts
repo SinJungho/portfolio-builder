@@ -81,8 +81,8 @@ export async function PATCH(
     }
 
     if (data.slug && data.slug !== portfolio?.slug) {
-      const existing = await prisma.portfolio.findFirst({
-        where: { slug: { equals: data.slug, mode: "insensitive" } },
+      const existing = await prisma.portfolio.findUnique({
+        where: { slug: data.slug },
       });
       if (existing) {
         return apiError("SLUG_CONFLICT", 409);

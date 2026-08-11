@@ -52,9 +52,8 @@ describe("syncGithubData", () => {
     expect(prisma.integration.upsert).toHaveBeenCalledWith(expect.objectContaining({
       update: expect.objectContaining({ access_token: "encrypted:fresh-token" }),
     }));
-    expect(prisma.rawProject.deleteMany).toHaveBeenCalledWith({
-      where: { user_id: "user-1", source: "github" },
-    });
+    // 빈 목록에서 정리하면 멀쩡한 프로젝트를 전부 지운다. 아무것도 지우지 않아야 한다.
+    expect(prisma.rawProject.deleteMany).not.toHaveBeenCalled();
   });
 
   it("fails the job when every listed repository fails to persist", async () => {

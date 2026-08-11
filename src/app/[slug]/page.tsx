@@ -1,6 +1,6 @@
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { prisma } from "@/lib/prisma";
-import { portfolioUrl } from "@/lib/portfolio-url";
+import { normalizePortfolioSlug, portfolioUrl } from "@/lib/portfolio-url";
 import PortfolioPreview from "@/preview/PortfolioPreview";
 import { resolveTheme } from "@/preview/themes";
 import { portfolioService } from "@/services/portfolio";
@@ -17,8 +17,8 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const portfolio = await prisma.portfolio.findFirst({
-    where: { slug: { equals: slug, mode: "insensitive" } },
+  const portfolio = await prisma.portfolio.findUnique({
+    where: { slug: normalizePortfolioSlug(slug) },
     select: {
       title: true,
       slug: true,

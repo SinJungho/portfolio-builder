@@ -1,1 +1,1 @@
-ALTER TABLE "Portfolio" ALTER COLUMN "theme" SET DEFAULT 'minimal';
+ALTER TABLE "portfolios" ALTER COLUMN "theme" SET DEFAULT 'minimal';

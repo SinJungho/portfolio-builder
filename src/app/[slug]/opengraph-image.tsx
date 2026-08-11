@@ -1,13 +1,14 @@
 import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
+import { normalizePortfolioSlug } from '@/lib/portfolio-url';
 export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   // Fetch portfolio and user data
-  const portfolio = await prisma.portfolio.findFirst({
-    where: { slug: { equals: slug, mode: 'insensitive' } },
+  const portfolio = await prisma.portfolio.findUnique({
+    where: { slug: normalizePortfolioSlug(slug) },
     include: {
       user: {
         select: {

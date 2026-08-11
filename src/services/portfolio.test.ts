@@ -5,7 +5,7 @@ import { portfolioService } from "./portfolio";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    portfolio: { findFirst: jest.fn() },
+    portfolio: { findUnique: jest.fn() },
     portfolioBlock: { findMany: jest.fn() },
     rawProject: { findMany: jest.fn(), aggregate: jest.fn() },
     feedItem: { findMany: jest.fn() },
@@ -14,7 +14,7 @@ jest.mock("@/lib/prisma", () => ({
 
 describe("PortfolioService public population", () => {
   it("never populates project IDs from another user's raw project records", async () => {
-    (prisma.portfolio.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.portfolio.findUnique as jest.Mock).mockResolvedValue({
       id: "portfolio-1",
       user_id: "owner-1",
       slug: "owner",
@@ -48,5 +48,20 @@ describe("PortfolioService public population", () => {
     expect(prisma.rawProject.findMany).toHaveBeenCalledWith({
       where: { id: { in: ["project-1"] }, user_id: "owner-1" },
     });
+  });
+
+  it("LIKE 와일드카드를 담은 slug로는 아무 포트폴리오도 매칭하지 않는다", async () => {
+    (prisma.portfolio.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await portfolioService.getPopulatedPortfolioBySlug("%");
+    await portfolioService.getPopulatedPortfolioBySlug("a_c");
+
+    // 정확 일치 조회여야 하고, LIKE 패턴 문자는 정규화 단계에서 사라진다.
+    expect(prisma.portfolio.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { slug: "" } }),
+    );
+    expect(prisma.portfolio.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { slug: "a-c" } }),
+    );
   });
 });

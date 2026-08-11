@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { GET } from "./route";
 
 jest.mock("@/lib/prisma", () => ({
-  prisma: { portfolio: { findFirst: jest.fn() } },
+  prisma: { portfolio: { findUnique: jest.fn() } },
 }));
 jest.mock("puppeteer-core", () => ({
   __esModule: true,
@@ -22,11 +22,11 @@ describe("GET /api/export/pdf", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(prisma.portfolio.findFirst).not.toHaveBeenCalled();
+    expect(prisma.portfolio.findUnique).not.toHaveBeenCalled();
   });
 
   it("공개 포트폴리오가 없으면 Chromium을 시작하지 않는다", async () => {
-    (prisma.portfolio.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.portfolio.findUnique as jest.Mock).mockResolvedValue(null);
 
     const response = await GET(
       new NextRequest("http://localhost/api/export/pdf?slug=valid-portfolio"),

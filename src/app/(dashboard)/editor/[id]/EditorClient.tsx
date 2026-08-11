@@ -216,8 +216,12 @@ export default function EditorClient({
       const oldIndex = blocks.findIndex((b: Block) => b.id === active.id);
       const newIndex = blocks.findIndex((b: Block) => b.id === over.id);
       setLastBlockOrder(blocks.map((block: Block) => ({ ...block, config: { ...block.config } })));
-      const newBlocks = arrayMove(blocks, oldIndex, newIndex);
-      newBlocks.forEach((b: Block, i: number) => (b.position = i));
+      // 스토어 객체는 immer로 동결돼 있어 직접 변형하면 TypeError가 난다. 복사본에 순서를 매긴다.
+      const newBlocks = arrayMove(blocks, oldIndex, newIndex).map((block: Block, i: number) => ({
+        ...block,
+        config: { ...block.config },
+        position: i,
+      }));
       void reorderBlocks(newBlocks).catch(() => {
         toast.error(errorMessage("SECTION_ORDER_SAVE_FAILED"));
       });

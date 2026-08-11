@@ -40,11 +40,16 @@ export async function POST(req: Request) {
     });
     if (conflict) return apiError("CONFLICT", 409);
 
-    try {
-      await domainService.addDomain(domain);
-    } catch (vercelError) {
-      logRouteWarning('/api/domains', 'POST', vercelError, 'Vercel domain registration failed');
-      return apiError("DOMAIN_SAVE_FAILED", 503);
+    // Vercel 연동이 없으면 도메인만 저장하고 수동 DNS 안내로 넘긴다.
+    // 실제 API 호출 실패만 저장 실패로 취급한다.
+    const isManualOnly = !domainService.isConfigured();
+    if (!isManualOnly) {
+      try {
+        await domainService.addDomain(domain);
+      } catch (vercelError) {
+        logRouteWarning('/api/domains', 'POST', vercelError, 'Vercel domain registration failed');
+        return apiError("DOMAIN_SAVE_FAILED", 503);
+      }
     }
 
     await prisma.portfolio.update({
@@ -52,7 +57,7 @@ export async function POST(req: Request) {
       data: { custom_domain: domain },
     });
 
-    return NextResponse.json({ success: true, domain });
+    return NextResponse.json({ success: true, domain, isManualOnly });
   } catch (error) {
     return routeError('/api/domains', 'POST', error);
   }

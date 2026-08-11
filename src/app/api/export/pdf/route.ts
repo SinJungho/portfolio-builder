@@ -7,6 +7,7 @@ import os from "os";
 import path from "path";
 import puppeteer, { Browser } from "puppeteer-core";
 import { apiError, logRouteError } from "@/lib/api/errors";
+import { normalizePortfolioSlug } from "@/lib/portfolio-url";
 
 /**
  * 허용된 디렉토리의 실제 Chromium 실행 파일인지 검증한다.
@@ -90,21 +91,23 @@ function validateTargetUrl(targetUrl: string): boolean {
 /** 포트폴리오 페이지를 A4 PDF로 변환한다. */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const slug = searchParams.get("slug");
+  const rawSlug = searchParams.get("slug");
 
   const slugRegex = /^[a-z0-9-]+$/i;
-  if (!slug || slug.length > 50 || !slugRegex.test(slug)) {
+  if (!rawSlug || rawSlug.length > 50 || !slugRegex.test(rawSlug)) {
     return apiError("PDF_INVALID_SLUG", 400);
   }
+  // 조회한 행과 렌더링할 주소가 항상 같은 slug를 가리키게 한다.
+  const slug = normalizePortfolioSlug(rawSlug);
 
   let browser: Browser | null = null;
 
   try {
-    const portfolio = await prisma.portfolio.findFirst({
-      where: { slug: { equals: slug, mode: "insensitive" }, is_published: true },
-      select: { id: true },
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { slug },
+      select: { id: true, is_published: true },
     });
-    if (!portfolio) return apiError("NOT_FOUND", 404);
+    if (!portfolio?.is_published) return apiError("NOT_FOUND", 404);
 
     const portfolioUrl = `${env.NEXT_PUBLIC_APP_URL}/${slug}?export=true`;
     if (!validateTargetUrl(portfolioUrl)) {

@@ -56,6 +56,16 @@ export default function HeroEditorModal({
       setValidationError(`${missing.join(", ")}을(를) 먼저 작성해 주세요.`);
       return;
     }
+    // 기존 값이 한도를 넘겨 저장돼 있으면 maxLength로는 못 막는다.
+    const tooLong = [
+      headline.length > 100 && "한 줄 제목(100자)",
+      subheadline.length > 200 && "짧은 소개(200자)",
+      bio.length > 500 && "자기소개(500자)",
+    ].filter(Boolean);
+    if (tooLong.length > 0) {
+      setValidationError(`${tooLong.join(", ")} 길이를 줄여 주세요.`);
+      return;
+    }
     setValidationError(null);
     onSave({
       ...initialConfig,
@@ -98,6 +108,7 @@ export default function HeroEditorModal({
             <Input
               id="hero-headline"
               value={headline}
+              maxLength={100}
               aria-invalid={Boolean(validationError && !headline.trim())}
               required
               onChange={(e) => setHeadline(e.target.value)}
@@ -113,6 +124,7 @@ export default function HeroEditorModal({
             <Input
               id="hero-subheadline"
               value={subheadline}
+              maxLength={200}
               aria-invalid={Boolean(validationError && !subheadline.trim())}
               required
               onChange={(e) => setSubheadline(e.target.value)}
@@ -128,6 +140,7 @@ export default function HeroEditorModal({
             <textarea
               id="hero-bio"
               value={bio}
+              maxLength={500}
               onChange={(e) => setBio(e.target.value)}
               placeholder="본인에 대한 상세한 소개를 작성해 주세요."
               className="w-full bg-spotify-dark-surface border border-white/5 text-white p-4 rounded-xl focus:border-spotify-green outline-none min-h-[150px] resize-y"

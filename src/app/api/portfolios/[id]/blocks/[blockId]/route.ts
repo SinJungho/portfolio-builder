@@ -51,7 +51,12 @@ export async function PATCH(
         block_type: block.block_type,
         config: mergedConfig,
       });
-      if (!parsedConfig.success) return apiError("INVALID_REQUEST", 400);
+      if (!parsedConfig.success) {
+        // 어떤 필드가 걸렸는지 남겨야 클라이언트 가드가 어긋났을 때 진단이 된다.
+        return apiError("INVALID_REQUEST", 400, {
+          issues: parsedConfig.error.issues.map((issue) => issue.path.join(".")),
+        });
+      }
       updateData.config = parsedConfig.data.config;
     }
 

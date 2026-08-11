@@ -43,15 +43,18 @@ export async function POST(req: Request) {
     }
 
     const preferredSlug = normalizePortfolioSlug(requestedSlug || dbUser.github_login || "");
-    const baseSlug = preferredSlug.length >= 3
+    // 접미사를 붙여도 normalizePortfolioSlug의 50자 한도를 넘지 않게 자리를 남긴다.
+    // 넘기면 조회 시 잘려서 정작 만든 포트폴리오를 못 찾는다.
+    const baseSlug = (preferredSlug.length >= 3
       ? preferredSlug
-      : `user-${userId.substring(0, 5).toLowerCase()}`;
+      : `user-${userId.substring(0, 5).toLowerCase()}`
+    ).slice(0, 47);
     let finalSlug: string | null = null;
 
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
-      const existing = await prisma.portfolio.findFirst({
-        where: { slug: { equals: candidate, mode: "insensitive" } },
+      const existing = await prisma.portfolio.findUnique({
+        where: { slug: candidate },
       });
 
       if (!existing) {

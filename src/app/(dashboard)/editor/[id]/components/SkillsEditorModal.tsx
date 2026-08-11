@@ -50,6 +50,7 @@ export default function SkillsEditorModal({
   const [skills, setSkills] = useState<SkillItem[]>(
     (initialConfig.skills as SkillItem[]) || [],
   );
+  const [validationError, setValidationError] = useState<string | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const isDirty =
     JSON.stringify(skills) !== JSON.stringify((initialConfig.skills as SkillItem[]) || []);
@@ -61,9 +62,15 @@ export default function SkillsEditorModal({
   );
 
   const handleSave = () => {
+    // 이름이 빈 항목은 저장이 거부되므로 원인을 알려주고 막는다.
+    if (skills.some((skill) => !skill.name.trim())) {
+      setValidationError("이름이 비어 있는 기술이 있어요. 채우거나 삭제해 주세요.");
+      return;
+    }
+    setValidationError(null);
     onSave({
       ...initialConfig,
-      skills,
+      skills: skills.map((skill) => ({ ...skill, name: skill.name.trim() })),
     });
   };
 
@@ -104,6 +111,11 @@ export default function SkillsEditorModal({
         <p id="skills-editor-description" className="text-[13px] leading-relaxed text-spotify-silver">
           채용 담당자가 빠르게 파악할 수 있도록 자주 사용하는 기술과 숙련도를 정리해요.
         </p>
+        {validationError && (
+          <p role="alert" className="rounded-xl border border-spotify-negative/30 bg-spotify-negative/10 px-4 py-3 text-[13px] font-bold text-spotify-negative">
+            {validationError}
+          </p>
+        )}
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -114,6 +126,7 @@ export default function SkillsEditorModal({
                 variant="ghost"
                 size="sm"
                 onClick={addSkill}
+                disabled={skills.length >= 20}
                 className="text-spotify-green hover:text-spotify-green hover:bg-spotify-green/10 text-xs font-bold cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> 항목 추가
@@ -131,6 +144,8 @@ export default function SkillsEditorModal({
                       value={skill.name}
                       onChange={(e) => updateSkill(index, "name", e.target.value)}
                       placeholder="기술명 (예: React)"
+                      maxLength={50}
+                      aria-invalid={Boolean(validationError && !skill.name.trim())}
                       aria-label={`기술 ${index + 1} 이름`}
                       className="bg-transparent border-white/10 text-white h-9 text-sm"
                     />

@@ -248,9 +248,10 @@ export async function generatePortfolio(params: {
       block_type: "hero",
       position: 0,
       config: {
-        headline: user.name || user.github_login || "Developer",
-        subheadline,
-        bio: heroBio,
+        // BlockConfigSchema의 hero 길이 한도. 넘겨서 시드되면 이후 hero 저장이 전부 막힌다.
+        headline: (user.name || user.github_login || "Developer").slice(0, 100),
+        subheadline: subheadline.slice(0, 200),
+        bio: heroBio.slice(0, 500),
         show_github_stats: true,
       },
       is_visible: true,

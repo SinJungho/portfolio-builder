@@ -3,6 +3,7 @@
 import { POST } from "./route";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { normalizePortfolioSlug } from "@/lib/portfolio-url";
 
 jest.mock("@/auth", () => ({ auth: jest.fn() }));
 jest.mock("@/lib/prisma", () => ({
@@ -39,6 +40,27 @@ describe("POST /api/portfolios", () => {
     );
     expect(prisma.portfolio.create).not.toHaveBeenCalled();
     logWarning.mockRestore();
+  });
+
+  it("긴 slug가 충돌해도 조회 가능한 길이(50자)를 넘지 않는다", async () => {
+    const longSlug = "a".repeat(50);
+    // 첫 후보는 이미 사용 중, 두 번째 후보에서 통과시킨다.
+    (prisma.portfolio.findUnique as jest.Mock)
+      .mockResolvedValueOnce({ id: "taken" })
+      .mockResolvedValue(null);
+
+    const response = await POST(
+      new Request("http://localhost/api/portfolios", {
+        method: "POST",
+        body: JSON.stringify({ slug: longSlug }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    const created = (prisma.portfolio.create as jest.Mock).mock.calls[0][0].data.slug;
+    expect(created.length).toBeLessThanOrEqual(50);
+    // 저장한 값이 정규화 후에도 그대로여야 공개 페이지에서 다시 찾을 수 있다.
+    expect(normalizePortfolioSlug(created)).toBe(created);
   });
 
   it("logs internal errors while returning the shared user message", async () => {

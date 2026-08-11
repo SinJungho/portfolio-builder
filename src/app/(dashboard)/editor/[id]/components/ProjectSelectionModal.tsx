@@ -98,7 +98,11 @@ export default function ProjectSelectionModal({
   };
 
   const handleSave = () => {
-    onSave(tempSelectedIds, tempCustomDescriptions);
+    // 선택 해제한 프로젝트의 설명은 함께 버린다. 남겨두면 저장 한도(3개)를 넘겨 저장이 막힌다.
+    const descriptions = Object.fromEntries(
+      Object.entries(tempCustomDescriptions).filter(([id]) => tempSelectedIds.includes(id)),
+    );
+    onSave(tempSelectedIds, descriptions);
   };
 
   return (

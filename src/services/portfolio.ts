@@ -17,8 +17,8 @@ export class PortfolioService {
    * Find a portfolio by Slug
    */
   async findBySlug(slug: string) {
-    return prisma.portfolio.findFirst({
-      where: { slug: { equals: slug, mode: 'insensitive' } },
+    return prisma.portfolio.findUnique({
+      where: { slug: normalizePortfolioSlug(slug) },
     });
   }
 
@@ -33,54 +33,13 @@ export class PortfolioService {
   }
 
   /**
-   * Generate a unique slug based on github_login
-   */
-  async generateUniqueSlug(baseSlug: string): Promise<string> {
-    const normalized = normalizePortfolioSlug(baseSlug);
-    const slug = normalized.length >= 3 ? normalized : 'user';
-    let counter = 1;
-    let finalSlug = slug;
-
-    while (true) {
-      const existing = await this.findBySlug(finalSlug);
-      if (!existing) return finalSlug;
-
-      counter++;
-      finalSlug = `${slug}-${counter}`;
-    }
-  }
-
-  /**
-   * Create a new portfolio record (Pre-generation)
-   */
-  async createEmpty(userId: string, data: { slug?: string; theme?: string }) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-
-    // 1. Slug logic
-    const githubLogin = user?.github_login || 'user';
-    const baseSlug = data.slug || githubLogin;
-    const finalSlug = await this.generateUniqueSlug(baseSlug);
-
-    // 2. Create
-    return prisma.portfolio.create({
-      data: {
-        user_id: userId,
-        slug: finalSlug,
-        theme: data.theme || 'minimal',
-        generation_mode: 'auto',
-        auto_published: false,
-      },
-    });
-  }
-
-  /**
    * 포트폴리오 slug를 바탕으로 포트폴리오 상세 정보와 하위 블록들(프로젝트, 블로그 피드 등)을
    * 일괄 일치시켜(Populate) 완전히 가공된 데이터로 반환합니다.
    * N+1 쿼리 최적화를 위해 프로젝트 조회는 단일 쿼리로 일괄 처리(Batch Fetching)합니다.
    */
   async getPopulatedPortfolioBySlug(slug: string) {
-    const portfolio = await prisma.portfolio.findFirst({
-      where: { slug: { equals: slug, mode: 'insensitive' } },
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { slug: normalizePortfolioSlug(slug) },
       include: {
         user: {
           select: { name: true, github_login: true },

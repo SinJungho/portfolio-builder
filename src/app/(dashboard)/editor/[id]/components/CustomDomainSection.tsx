@@ -95,8 +95,9 @@ function DNSRecordItem({
  * 커스텀 도메인을 설정하고 연결 상태를 확인한다.
  */
 export default function CustomDomainSection() {
-  const { customDomain, setCustomDomain } = usePortfolioStore();
+  const { customDomain, setCustomDomain, isSaving } = usePortfolioStore();
   const inputRef = useRef<HTMLInputElement>(null);
+  const checkedDomainRef = useRef<string | null>(null);
   const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   // 연결 완료 여부는 실제 DNS 검증 결과로만 결정한다.
@@ -132,9 +133,13 @@ export default function CustomDomainSection() {
     }
   };
 
-  // 저장된 도메인의 상태를 처음 한 번 확인한다.
+  // 저장된 도메인의 상태를 확인한다.
+  // 저장 중에는 낙관적 업데이트만 반영된 상태라 조회가 404가 난다. 저장이 끝난 뒤에 확인한다.
+  // isSaving은 에디터 전역 상태라 도메인이 실제로 바뀔 때만 조회하도록 한 번 더 거른다.
   useEffect(() => {
-    if (!customDomain) return;
+    if (!customDomain || isSaving) return;
+    if (checkedDomainRef.current === customDomain) return;
+    checkedDomainRef.current = customDomain;
     let cancelled = false;
     fetch(`/api/domains/${customDomain}`)
       .then(async (res) => {
@@ -151,7 +156,7 @@ export default function CustomDomainSection() {
     return () => {
       cancelled = true;
     };
-  }, [customDomain]);
+  }, [customDomain, isSaving]);
 
   const handleCopyToClipboard = async (value: string, successMessage: string) => {
     try {

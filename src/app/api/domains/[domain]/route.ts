@@ -28,6 +28,11 @@ export async function GET(
     });
     if (!portfolio) return apiError("NOT_FOUND", 404);
 
+    // Vercel 연동이 없으면 오류가 아니라 수동 DNS 설정 대기 상태다.
+    if (!domainService.isConfigured()) {
+      return NextResponse.json({ configured: false, isManualOnly: true });
+    }
+
     // Vercel에서 도메인 상태를 조회한다.
     const status = await domainService.getDomainStatus(domain);
 
