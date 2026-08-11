@@ -4,21 +4,19 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DesignTokenSchema } from "@/schemas/portfolio";
+import { DesignTokenSchema, PortfolioThemeSchema } from "@/schemas/portfolio";
 import {
   getMissingPortfolioReadiness,
   getSelectedProjectIds,
 } from "@/lib/portfolio-readiness";
 
 const updatePortfolioSchema = z.object({
-  theme: z
-    .enum(["spotify", "minimal", "midnight", "ocean", "forest", "sunset", "minimalist", "creative", "corporate", "dark", "pastel", "tech"])
-    .optional(),
-  slug: z.string().optional(),
-  title: z.string().optional(),
+  theme: PortfolioThemeSchema.optional(),
+  slug: z.string().regex(/^[a-z0-9-]+$/).min(3).max(50).optional(),
+  title: z.string().trim().max(255).optional(),
   is_published: z.boolean().optional(),
   design_tokens: DesignTokenSchema.optional(),
-});
+}).refine((value) => Object.values(value).some((item) => item !== undefined));
 
 export async function PATCH(
   req: Request,
@@ -29,7 +27,7 @@ export async function PATCH(
     const { error, portfolio } = await validatePortfolioOwnership(id);
     if (error) return error;
 
-    const json = await req.json().catch(() => ({}));
+    const json = await req.json().catch(() => null);
 
     const {
       success,
@@ -54,19 +52,24 @@ export async function PATCH(
           config: block.config as Record<string, unknown>,
         }));
         const projectIds = getSelectedProjectIds(readinessBlocks);
-        const availableProjectIds = projectIds.length
+        const availableProjects = projectIds.length
           ? (await prisma.rawProject.findMany({
               where: {
                 id: { in: projectIds },
                 user_id: portfolio.user_id,
                 is_fork: false,
               },
-              select: { id: true },
-            })).map((project) => project.id)
+              select: { id: true, description: true, ai_summary: true },
+            }))
           : [];
+        const availableProjectIds = availableProjects.map((project) => project.id);
+        const describedProjectIds = availableProjects
+          .filter((project) => Boolean(project.description?.trim() || project.ai_summary?.trim()))
+          .map((project) => project.id);
         const missing = getMissingPortfolioReadiness(
           readinessBlocks,
           availableProjectIds,
+          describedProjectIds,
         );
 
         if (missing.length) {
@@ -78,8 +81,8 @@ export async function PATCH(
     }
 
     if (data.slug && data.slug !== portfolio?.slug) {
-      const existing = await prisma.portfolio.findUnique({
-        where: { slug: data.slug },
+      const existing = await prisma.portfolio.findFirst({
+        where: { slug: { equals: data.slug, mode: "insensitive" } },
       });
       if (existing) {
         return apiError("SLUG_CONFLICT", 409);

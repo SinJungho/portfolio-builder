@@ -1,9 +1,6 @@
 "use client";
 
 import { Activity, Clock3, Code2, FolderGit2, Star } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import type { ThemeInput } from "react-activity-calendar";
-import { GitHubCalendar } from "react-github-calendar";
 
 const PROJECTS = [
   { name: "AI 포트폴리오 빌더", stars: "128", language: "TypeScript", updatedAt: "3시간 전", languageColor: "#3178c6" },
@@ -19,22 +16,18 @@ const TECH_STACKS = [
   { name: "Tailwind", color: "#38bdf8" },
 ];
 
-const SPOTIFY_THEME: ThemeInput = {
-  dark: [
-    "#1f1f1f",
-    "rgba(30,215,96,0.15)",
-    "rgba(30,215,96,0.40)",
-    "rgba(30,215,96,0.70)",
-    "#1ed760",
-  ],
-};
-
-function calcBlockSize(containerWidth: number): number {
-  const margin = 2;
-  const weeks = 53;
-  const size = Math.floor((containerWidth + margin) / weeks) - margin;
-  return Math.min(12, Math.max(4, size));
-}
+const CONTRIBUTION_TOTAL = 1_428;
+const CONTRIBUTION_WEIGHTS = Array.from({ length: 53 * 7 }, (_, index) =>
+  (index * 17 + (index % 5) * 3) % 7,
+);
+const totalWeight = CONTRIBUTION_WEIGHTS.reduce((sum, weight) => sum + weight, 0);
+let remainingContributions = CONTRIBUTION_TOTAL;
+export const CONTRIBUTION_DAYS = CONTRIBUTION_WEIGHTS.map((weight, index) => {
+  if (index === CONTRIBUTION_WEIGHTS.length - 1) return remainingContributions;
+  const count = Math.round((weight / totalWeight) * CONTRIBUTION_TOTAL);
+  remainingContributions -= count;
+  return count;
+});
 
 function StackLabel({ name, color }: { name: string; color: string }) {
   return (
@@ -49,38 +42,8 @@ function StackLabel({ name, color }: { name: string; color: string }) {
 }
 
 export default function MockPortfolio() {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [blockSize, setBlockSize] = useState(9);
-  const [calKey, setCalKey] = useState(0);
-  const [mounted, setMounted] = useState(false);
-  const prevSizeRef = useRef(9);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    const el = wrapperRef.current;
-    if (!el) return;
-
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0].contentRect.width;
-      if (!width) return;
-
-      const next = calcBlockSize(width);
-      if (next !== prevSizeRef.current) {
-        prevSizeRef.current = next;
-        setBlockSize(next);
-        setCalKey((k) => k + 1);
-      }
-    });
-
-    observer.observe(el);
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
-  }, []);
-
   return (
-    <div className="relative max-w-[840px] mx-auto rounded-3xl overflow-hidden shadow-spotify bg-spotify-near-black border border-white/5">
+    <div className="relative max-w-[840px] mx-auto rounded-lg overflow-hidden shadow-spotify bg-spotify-near-black border border-white/5">
       {/* 브라우저 상단 바 */}
       <div className="flex items-center gap-3 px-6 py-4 bg-spotify-dark-surface border-b border-white/5">
         <div className="flex gap-2">
@@ -104,7 +67,7 @@ export default function MockPortfolio() {
             <div className="mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-spotify-dark-surface bg-gradient-to-br from-spotify-green to-spotify-green-border text-2xl font-black text-black shadow-spotify-md sm:h-24 sm:w-24">
               KJ
             </div>
-            <h3 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">김재민</h3>
+            <h2 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">김재민</h2>
             <p className="mt-2 flex items-center gap-1.5 text-[12px] font-bold tracking-[0.08em] text-spotify-green sm:text-[13px]">
               <Code2 size={14} aria-hidden="true" />
               프론트엔드 개발자
@@ -119,19 +82,19 @@ export default function MockPortfolio() {
           <section className="min-w-0" aria-labelledby="featured-repositories-title">
             <div className="mb-4 flex items-center gap-2">
               <FolderGit2 size={17} className="text-spotify-green" aria-hidden="true" />
-              <h4 id="featured-repositories-title" className="text-[13px] font-bold tracking-[0.08em] text-white">
+              <h3 id="featured-repositories-title" className="text-[13px] font-bold tracking-[0.08em] text-white">
                 대표 리포지토리
-              </h4>
+              </h3>
               <span className="text-[11px] font-medium text-spotify-silver">4개</span>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {PROJECTS.map((project) => (
                 <article
                   key={project.name}
-                  className="group rounded-2xl border border-white/5 bg-spotify-dark-surface p-4 transition-colors duration-300 hover:border-white/10 hover:bg-spotify-mid-dark"
+                  className="group rounded-md border border-white/5 bg-spotify-dark-surface p-4 transition-colors duration-300 hover:border-white/10 hover:bg-spotify-mid-dark"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h5 className="text-[14px] font-bold leading-snug text-white">{project.name}</h5>
+                    <h4 className="text-[14px] font-bold leading-snug text-white">{project.name}</h4>
                     <span
                       className="inline-flex shrink-0 items-center gap-1 border-l-2 bg-white/[0.035] px-1.5 py-1 font-mono text-[9px] font-medium text-spotify-silver"
                       style={{ borderLeftColor: project.languageColor }}
@@ -162,9 +125,9 @@ export default function MockPortfolio() {
             <div>
               <div className="flex items-center gap-2 text-spotify-green">
                 <Activity size={16} aria-hidden="true" />
-                <h4 id="contribution-title" className="text-[13px] font-bold tracking-[0.06em] text-white">
+                <h3 id="contribution-title" className="text-[13px] font-bold tracking-[0.06em] text-white">
                   최근 1년의 기여 활동
-                </h4>
+                </h3>
               </div>
               <p className="mt-1 text-[11px] font-medium text-spotify-silver">
                 코드와 프로젝트에 남긴 기록
@@ -173,25 +136,23 @@ export default function MockPortfolio() {
             <div className="shrink-0 border-l-2 border-spotify-green pl-3 text-right">
               <p className="text-[10px] font-medium tracking-[0.08em] text-spotify-silver">총 기여</p>
               <p className="mt-0.5 text-lg font-black leading-none tracking-tight text-white">
-                1,428<span className="ml-1 text-[11px] font-bold text-spotify-silver">회</span>
+                {CONTRIBUTION_TOTAL.toLocaleString()}<span className="ml-1 text-[11px] font-bold text-spotify-silver">회</span>
               </p>
             </div>
           </div>
-          <div ref={wrapperRef} className="w-full overflow-hidden rounded-2xl border border-white/5 bg-spotify-dark-surface p-4 sm:p-5">
-            {mounted && (
-              <GitHubCalendar
-                key={calKey}
-                username="torvalds"
-                colorScheme="dark"
-                theme={SPOTIFY_THEME}
-                blockSize={blockSize}
-                blockMargin={2}
-                fontSize={9}
-                showColorLegend={false}
-                showTotalCount={false}
-                style={{ color: "#b3b3b3", width: "100%", maxWidth: "100%" }}
-              />
-            )}
+          <div className="w-full overflow-hidden rounded-md border border-white/5 bg-spotify-dark-surface p-4 sm:p-5">
+            <div
+              className="grid grid-flow-col grid-rows-7 gap-1"
+              role="img"
+              aria-label={`김재민의 예시 기여 활동 ${CONTRIBUTION_TOTAL.toLocaleString()}회`}
+            >
+              {CONTRIBUTION_DAYS.map((count, index) => (
+                <span
+                  key={index}
+                  className={`aspect-square rounded-[2px] ${count === 0 ? "bg-white/5" : count < 3 ? "bg-spotify-green/25" : count < 5 ? "bg-spotify-green/50" : "bg-spotify-green"}`}
+                />
+              ))}
+            </div>
           </div>
         </section>
       </div>

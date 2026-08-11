@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
-  NEXTAUTH_SECRET: z.string().min(1),
+  AUTH_SECRET: z.string().min(1).refine((value) => value !== '[SENSITIVE]', 'AUTH_SECRET must be a real secret'),
   AUTH_GITHUB_ID: z.string().min(1),
   AUTH_GITHUB_SECRET: z.string().min(1),
   UPSTASH_REDIS_REST_URL: z.string().url(),
@@ -12,7 +12,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
   ENCRYPTION_KEY: z.string().length(64), // hex 인코딩 기준 32바이트 = 64자
   GITHUB_WEBHOOK_SECRET: z.string().min(1),
-  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_DSN: z.preprocess(
+    (value) => value === '' ? undefined : value,
+    z.string().url().optional(),
+  ),
   SUPABASE_STORAGE_ENDPOINT: z.string().url().optional(),
   SUPABASE_STORAGE_ACCESS_KEY: z.string().min(1).optional(),
   SUPABASE_STORAGE_SECRET_KEY: z.string().min(1).optional(),

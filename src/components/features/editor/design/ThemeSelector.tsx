@@ -42,7 +42,7 @@ export default function ThemeSelector() {
           포트폴리오 분위기
           </h3>
         </div>
-        <span className="text-[11px] font-bold text-spotify-silver bg-white/5 px-3 py-1 rounded-full tracking-spotify">
+        <span className="text-[11px] font-bold text-spotify-silver bg-white/5 px-3 py-1 rounded-full">
           결과를 보고 선택해요
         </span>
       </header>
@@ -72,7 +72,7 @@ export default function ThemeSelector() {
               }
             }}
             className={`
-              group relative flex flex-col gap-4 p-4 rounded-2xl transition-all duration-200 text-left overflow-hidden border border-transparent
+              group relative flex flex-col gap-4 p-4 rounded-lg transition-all duration-200 text-left overflow-hidden border border-transparent
               ${
                 theme === themeItem.id
                   ? "bg-spotify-mid-dark shadow-spotify-md border-white/10"
@@ -109,7 +109,7 @@ export default function ThemeSelector() {
               style={{ backgroundColor: themeItem.bg, color: themeItem.text, borderColor: themeItem.cardBorder }}
               aria-hidden="true"
             >
-              <div className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-50">예시 미리보기</div>
+              <div className="text-[9px] font-bold  opacity-50">예시 미리보기</div>
               <div className="flex items-center justify-between gap-2 text-[10px] font-bold opacity-70">
                 <span>김민준</span>
                 <span>Frontend Developer</span>

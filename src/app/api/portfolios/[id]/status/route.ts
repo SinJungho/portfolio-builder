@@ -43,24 +43,29 @@ export async function GET(
       config: block.config as Record<string, unknown>,
     }));
     const projectIds = getSelectedProjectIds(readinessBlocks);
-    const availableProjectIds = projectIds.length
+    const availableProjects = projectIds.length
       ? (await prisma.rawProject.findMany({
           where: {
             id: { in: projectIds },
             user_id: portfolio.user_id,
             is_fork: false,
           },
-          select: { id: true },
-        })).map((project) => project.id)
+          select: { id: true, description: true, ai_summary: true },
+        }))
       : [];
+    const availableProjectIds = availableProjects.map((project) => project.id);
+    const describedProjectIds = availableProjects
+      .filter((project) => Boolean(project.description?.trim() || project.ai_summary?.trim()))
+      .map((project) => project.id);
 
     return NextResponse.json({
       is_published: portfolio.is_published,
       published_url: portfolio.slug ? `/${portfolio.slug}` : null,
-      is_ready: isPortfolioReady(readinessBlocks, availableProjectIds),
+      is_ready: isPortfolioReady(readinessBlocks, availableProjectIds, describedProjectIds),
       missing_items: getMissingPortfolioReadiness(
         readinessBlocks,
         availableProjectIds,
+        describedProjectIds,
       ),
     });
   } catch (error: unknown) {

@@ -150,7 +150,7 @@ export default function DashboardPage() {
   if (isError || !data) {
     return (
       <div className="max-w-6xl mx-auto py-12 px-6">
-        <Alert variant="destructive" className="flex items-center justify-between gap-4 bg-spotify-negative/10 border-spotify-negative/20 text-spotify-negative rounded-2xl">
+        <Alert variant="destructive" className="flex items-center justify-between gap-4 bg-spotify-negative/10 border-spotify-negative/20 text-spotify-negative rounded-lg">
           <div className="flex items-center gap-3">
             <AlertTriangle aria-hidden="true" className="h-4 w-4" />
             <AlertDescription className="font-bold">포트폴리오를 불러오지 못했어요. 다시 시도해 주세요.</AlertDescription>
@@ -165,6 +165,7 @@ export default function DashboardPage() {
 
   const { portfolios, github_connected, github_synced_at } = data;
   const availableProjectIds = (data.available_project_ids as string[] | undefined) ?? [];
+  const describedProjectIds = (data.described_project_ids as string[] | undefined) ?? [];
   const syncFailure = syncJob?.status === "failed"
     ? syncJob.error || errorMessage("SYNC_FAILED")
     : syncError;
@@ -172,14 +173,14 @@ export default function DashboardPage() {
   const hasGithubSync = Boolean(githubSyncDate && !Number.isNaN(githubSyncDate.getTime()));
   const hasDraft = portfolios.some((portfolio: { is_published: boolean }) => !portfolio.is_published);
   const hasReadyDraft = portfolios.some((portfolio: { is_published: boolean; blocks: { block_type: string; is_visible: boolean; config: Record<string, unknown> }[] }) =>
-    !portfolio.is_published && getPortfolioReadiness(portfolio.blocks, availableProjectIds).every((item) => item.complete),
+    !portfolio.is_published && getPortfolioReadiness(portfolio.blocks, availableProjectIds, describedProjectIds).every((item) => item.complete),
   );
   const hasPublishedPortfolio = portfolios.some((portfolio: { is_published: boolean }) => portfolio.is_published);
   const mostAdvancedDraft = (portfolios as DashboardPortfolio[])
     .filter((portfolio) => !portfolio.is_published)
     .map((portfolio) => ({
       portfolio,
-      readiness: getPortfolioReadiness(portfolio.blocks, availableProjectIds),
+      readiness: getPortfolioReadiness(portfolio.blocks, availableProjectIds, describedProjectIds),
     }))
     .sort((a, b) => b.readiness.filter((item) => item.complete).length - a.readiness.filter((item) => item.complete).length)[0];
   const nextDraftItem = mostAdvancedDraft?.readiness.find((item) => !item.complete);
@@ -232,7 +233,7 @@ export default function DashboardPage() {
           </ol>
           )}
           {mostAdvancedDraft && (
-            <div className="flex flex-col gap-3 rounded-2xl bg-spotify-dark-surface p-4 shadow-spotify-md sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-lg bg-spotify-dark-surface p-4 shadow-spotify-md sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[12px] font-bold text-spotify-green">다음 한 가지</p>
                 <p className="mt-1 text-[15px] font-bold text-white">{mostAdvancedDraft.portfolio.title || mostAdvancedDraft.portfolio.slug} {nextDraftItem ? `· ${nextDraftItem.label}` : "· 공개 전 확인"}</p>
@@ -254,7 +255,7 @@ export default function DashboardPage() {
           <div
             role="region"
             aria-label="GitHub 연동 상태 경고"
-            className="w-full p-4 sm:p-6 bg-spotify-warning/10 border border-spotify-warning/20 rounded-2xl text-spotify-warning flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
+            className="w-full p-4 sm:p-6 bg-spotify-warning/10 border border-spotify-warning/20 rounded-lg text-spotify-warning flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
           >
             <div className="flex min-w-0 items-center gap-3">
               <div
@@ -277,7 +278,7 @@ export default function DashboardPage() {
           <div
             role="alert"
             aria-live="assertive"
-            className="w-full p-4 sm:p-5 bg-spotify-negative/10 border border-spotify-negative/30 rounded-2xl text-spotify-negative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
+            className="w-full p-4 sm:p-5 bg-spotify-negative/10 border border-spotify-negative/30 rounded-lg text-spotify-negative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-spotify-md"
           >
             <div className="min-w-0">
               <p className="font-bold">GitHub 동기화에 실패했어요.</p>
@@ -334,7 +335,7 @@ export default function DashboardPage() {
         </div>
 
         {portfolios.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-16 md:p-24 bg-spotify-dark-surface rounded-2xl gap-8 text-center shadow-spotify">
+          <div className="flex flex-col items-center justify-center p-16 md:p-24 bg-spotify-dark-surface rounded-lg gap-8 text-center shadow-spotify">
             <div
               className="p-8 bg-spotify-mid-dark rounded-full text-spotify-green shadow-spotify-md"
               aria-hidden="true"
@@ -367,7 +368,7 @@ export default function DashboardPage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 p-0 m-0"
           >
             {[...portfolios].sort((a, b) => {
-              const progress = (portfolio: typeof a) => getPortfolioReadiness(portfolio.blocks, availableProjectIds).filter((item) => item.complete).length;
+              const progress = (portfolio: typeof a) => getPortfolioReadiness(portfolio.blocks, availableProjectIds, describedProjectIds).filter((item) => item.complete).length;
               if (a.is_published !== b.is_published) return Number(a.is_published) - Number(b.is_published);
               return progress(b) - progress(a);
             }).map(
@@ -386,21 +387,22 @@ export default function DashboardPage() {
                   p.is_published,
                   p._count.blocks,
                 );
-                const readiness = getPortfolioReadiness(p.blocks, availableProjectIds);
+                const readiness = getPortfolioReadiness(p.blocks, availableProjectIds, describedProjectIds);
                 const completeCount = readiness.filter((item) => item.complete).length;
                 const nextItem = readiness.find((item) => !item.complete);
                 const stateLabel = state === "preview" && nextItem ? "작성 중" : portfolioStateLabel[state];
-                    const publicUrl = p.slug
-                      ? portfolioUrl(p.slug, p.custom_domain)
-                      : null;
-                    const publicLabel = p.slug
-                      ? portfolioUrlLabel(p.slug, p.custom_domain)
-                      : "주소 준비 중";
+                const publicUrl = p.slug
+                  ? portfolioUrl(p.slug, p.custom_domain)
+                  : null;
+                const publicLabel = p.slug
+                  ? portfolioUrlLabel(p.slug, p.custom_domain)
+                  : "주소 준비 중";
+                const addressLabel = state === "published" ? "공개 주소" : "예정 주소";
 
                 return (
                   <li
                   key={p.id}
-                  className="group relative flex flex-col bg-spotify-dark-surface rounded-2xl overflow-hidden shadow-spotify-md hover:bg-spotify-mid-dark transition-colors duration-300 min-h-[300px] list-none"
+                  className="group relative flex flex-col bg-spotify-dark-surface rounded-lg overflow-hidden shadow-spotify-md hover:bg-spotify-mid-dark transition-colors duration-300 min-h-[300px] list-none"
                 >
                   <div className="p-7 flex-1 flex flex-col items-start gap-5">
                     <div className="flex w-full items-start justify-between gap-4">
@@ -417,7 +419,7 @@ export default function DashboardPage() {
                             aria-hidden="true"
                           />
                           <span className="text-[12px] font-medium text-spotify-silver truncate tracking-tight">
-                            <span className="sr-only">공개 URL: </span>
+                            <span className="font-bold">{addressLabel}: </span>
                             {publicLabel}
                           </span>
                         </div>
@@ -510,7 +512,7 @@ export default function DashboardPage() {
                             />
                           </button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
+                        <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-lg shadow-spotify">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-[22px] font-bold text-white">
                               포트폴리오를 삭제할까요?

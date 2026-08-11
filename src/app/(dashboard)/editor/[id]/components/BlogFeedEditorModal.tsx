@@ -1,12 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
+import EditorSurface from "./EditorSurface";
 import { Switch } from "@/components/ui/switch";
-import { X } from "lucide-react";
 import React, { useRef, useState } from "react";
 
 interface BlogFeedEditorModalProps {
@@ -41,8 +40,6 @@ export default function BlogFeedEditorModal({
     titleRef,
   );
 
-  if (!isOpen) return null;
-
   const handleSave = () => {
     onSave({
       ...initialConfig,
@@ -52,31 +49,21 @@ export default function BlogFeedEditorModal({
   };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="blog-feed-editor-title" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={requestClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
-            type="button"
-            aria-label="블로그 피드 편집 닫기"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <h3 ref={titleRef} id="blog-feed-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            블로그 피드 편집
-          </h3>
-        </div>
-        <Button
-          className="btn-pill-primary h-11 px-8 font-bold cursor-pointer"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          적용하기
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
+    <EditorSurface
+      isOpen={isOpen}
+      onClose={requestClose}
+      onSave={handleSave}
+      isSaving={isSaving}
+      isDirty={isDirty}
+      title="블로그 피드 편집"
+      closeLabel="블로그 피드 편집 닫기"
+      titleId="blog-feed-editor-title"
+      descriptionId="blog-feed-editor-description"
+      titleRef={titleRef}
+      dialogRef={dialogRef}
+      onKeyDown={handleDialogKeyDown}
+      contentClassName="mx-auto w-full max-w-3xl space-y-8"
+    >
         <div className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="blog-max-items" className="text-xs font-bold text-spotify-silver">
@@ -86,19 +73,19 @@ export default function BlogFeedEditorModal({
               id="blog-max-items"
               type="number"
               min="1"
-              max="12"
+              max="6"
               value={maxItems}
-              onChange={(e) => setMaxItems(Math.min(12, Math.max(1, parseInt(e.target.value) || 1)))}
+              onChange={(e) => setMaxItems(Math.min(6, Math.max(1, parseInt(e.target.value) || 1)))}
               className="bg-spotify-dark-surface border-white/5 text-white h-12 rounded-xl focus:border-spotify-green"
             />
-            <p className="text-[11px] text-spotify-silver pt-1">
-              최신 글부터 최대 12개까지 보여줄 수 있어요.
+            <p id="blog-feed-editor-description" className="text-[11px] text-spotify-silver pt-1">
+              최신 글부터 최대 6개까지 보여줄 수 있어요.
             </p>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-spotify-dark-surface border border-white/5 rounded-xl mt-4">
             <div className="space-y-0.5">
-              <Label className="text-[14px] font-bold text-white">
+              <Label htmlFor="blog-show-thumbnail" className="text-[14px] font-bold text-white">
                 썸네일을 보여줄까요?
               </Label>
               <p className="text-[12px] text-spotify-silver">
@@ -106,14 +93,15 @@ export default function BlogFeedEditorModal({
               </p>
             </div>
             <Switch
+              id="blog-show-thumbnail"
+              aria-label="블로그 썸네일 표시"
               checked={showThumbnail}
               onCheckedChange={setShowThumbnail}
               className="data-[state=checked]:bg-spotify-green cursor-pointer"
             />
           </div>
         </div>
-      </div>
       <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
-    </div>
+    </EditorSurface>
   );
 }

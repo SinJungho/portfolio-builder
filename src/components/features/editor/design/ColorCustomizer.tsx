@@ -45,7 +45,7 @@ export default function ColorCustomizer() {
         </h3>
       </header>
 
-      <article className="bg-spotify-dark-surface p-8 rounded-2xl shadow-spotify-md border border-white/5 space-y-8">
+      <article className="bg-spotify-dark-surface p-8 rounded-lg shadow-spotify-md border border-white/5 space-y-8">
           <div className="flex items-center gap-6">
           <div
             className="w-20 h-20 rounded-full shadow-spotify border border-white/10 shrink-0 transition-transform duration-500"

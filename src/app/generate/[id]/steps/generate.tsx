@@ -80,13 +80,13 @@ export default function GenerateStep({
       return (
         <div
           className="
-            w-full max-w-[480px] rounded-[32px]
+            w-full max-w-[480px] rounded-lg
             border border-white/5 bg-spotify-dark-surface
             px-6 sm:px-8 py-10 sm:py-12 text-center
             shadow-spotify
           "
         >
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-spotify-negative/10">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-lg bg-spotify-negative/10">
             <AlertCircle className="w-10 h-10 text-spotify-negative" />
           </div>
           <h2 className="text-[24px] font-extrabold tracking-[-1px] text-white mb-2">
@@ -117,7 +117,7 @@ export default function GenerateStep({
               inline-flex items-center gap-2
               rounded-full border border-spotify-silver/30
               bg-transparent px-8 py-4
-              text-[15px] font-bold text-white uppercase tracking-spotify
+              text-[15px] font-bold text-white
               transition-all duration-200
               hover:border-white hover:scale-105 active:scale-95
               focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green
@@ -139,35 +139,23 @@ export default function GenerateStep({
         <div className="flex flex-col items-center gap-8 w-full max-w-[520px] text-white">
           <div
             className="
-              w-full rounded-[32px]
+              w-full rounded-lg
               border border-white/5 bg-spotify-dark-surface
               overflow-hidden
               shadow-spotify
               transition-all duration-500
             "
           >
-            <div
-              className="h-2.5"
-              style={{
-                background: "linear-gradient(90deg, #1ed760, #1db954)",
-              }}
-            />
+            <div className="h-2.5 bg-spotify-green" />
 
             <div className="flex flex-col items-center gap-8 px-6 sm:px-10 py-10 sm:py-12 text-center">
-              <div
-                className="flex h-20 sm:h-24 w-20 sm:w-24 items-center justify-center rounded-[24px] sm:rounded-[32px]"
-                style={{
-                  background: "linear-gradient(135deg, #1ed760, #1db954)",
-                  boxShadow: "0 12px 32px rgba(30,215,96,0.3)",
-                  transform: "rotate(-4deg)",
-                }}
-              >
+              <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-spotify-green sm:h-24 sm:w-24">
                 <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 text-black fill-black" />
               </div>
 
               <div className="space-y-3">
                 <h2 className="text-[26px] sm:text-[32px] font-extrabold tracking-[-1px] sm:tracking-[-1.5px] text-white leading-[1.2]">
-                  초안이 준비되었습니다! 🎉
+                  초안이 준비됐어요
                 </h2>
                 <p className="text-sm sm:text-[16px] text-spotify-silver font-medium">
                   에디터에서 미리보기를 확인한 뒤 공개하세요.
@@ -189,12 +177,12 @@ export default function GenerateStep({
             <div
               className="
                 flex w-full items-start gap-4
-                rounded-[28px] px-6 py-5
+                rounded-lg px-6 py-5
                 bg-spotify-dark-surface border border-white/5
                 shadow-spotify animate-in fade-in slide-in-from-bottom-4 duration-700
               "
             >
-              <div className="p-2.5 rounded-2xl bg-spotify-green/10 text-spotify-green shrink-0">
+              <div className="p-2.5 rounded-lg bg-spotify-green/10 text-spotify-green shrink-0">
                 <Sparkles className="w-6 h-6 fill-current" />
               </div>
               <div className="text-[14px] text-spotify-silver leading-[1.7] text-left">
@@ -217,7 +205,7 @@ export default function GenerateStep({
                 <button
                   type="button"
                   onClick={() =>
-                    router.push(`/generate/${portfolioId}?step=adjust`)
+                    router.push(`/editor/${portfolioId}?focus=contact`)
                   }
                   className="mt-2 flex items-center gap-1 font-bold text-spotify-green transition-all hover:gap-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green cursor-pointer"
                 >
@@ -242,14 +230,14 @@ export default function GenerateStep({
     return (
       <div
         className="
-          w-full max-w-[460px] rounded-[32px]
+          w-full max-w-[460px] rounded-lg
           border border-white/5 bg-spotify-dark-surface
           px-10 py-12 text-center
           shadow-spotify
         "
       >
         <div className="flex flex-col items-center gap-8" aria-live="polite">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[28px] shadow-sm border border-white/5 bg-spotify-mid-dark">
+          <div className="flex h-20 w-20 items-center justify-center rounded-lg shadow-sm border border-white/5 bg-spotify-mid-dark">
             <Loader2 className="w-10 h-10 animate-spin text-spotify-green" />
           </div>
 
@@ -260,14 +248,13 @@ export default function GenerateStep({
             <p className="text-[15px] text-spotify-silver font-medium whitespace-pre-wrap leading-[1.6]">
               잠시만 기다려 주세요.
               <br />
-              AI가 당신만을 위한 맞춤형 포트폴리오를 제작하고 있습니다.
+              프로젝트를 읽고 포트폴리오 초안을 만들고 있어요.
             </p>
           </div>
 
           <div className="w-full space-y-4">
             <div className="w-full h-3 bg-spotify-mid-dark rounded-full overflow-hidden p-[3px] border border-white/5">
               <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
                 role="progressbar"
                 aria-label="포트폴리오 생성 진행률"
                 aria-valuemin={0}
@@ -275,16 +262,15 @@ export default function GenerateStep({
                 aria-valuenow={progress}
                 style={{
                   width: `${Math.max(progress, 5)}%`,
-                  background: "linear-gradient(90deg, #1ed760, #1db954)",
-                  boxShadow: "0 0 12px rgba(30,215,96,0.4)",
                 }}
+                className="h-full rounded-full bg-spotify-green transition-all duration-700 ease-out"
               />
             </div>
             <div className="flex justify-center flex-col items-center gap-1">
               <span className="text-[13px] font-bold font-mono text-spotify-green">
                 {progress}%
               </span>
-              <span className="text-[11px] font-bold text-spotify-silver uppercase tracking-widest">
+              <span className="text-[11px] font-bold text-spotify-silver">
                 포트폴리오 생성 중
               </span>
             </div>
@@ -295,7 +281,7 @@ export default function GenerateStep({
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-spotify-near-black px-6 py-12">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-spotify-near-black px-6 py-12">
       <div
         className="
           pointer-events-none absolute inset-0

@@ -44,6 +44,7 @@ export const getSelectedProjectIds = (blocks: ReadinessBlock[]) =>
 export const getPortfolioReadiness = (
   blocks: ReadinessBlock[],
   availableProjectIds?: Iterable<string>,
+  describedProjectIds?: Iterable<string>,
 ): PortfolioReadinessItem[] => {
   const visible = (type: string) =>
     blocks.find((block) => block.block_type === type && block.is_visible);
@@ -53,6 +54,16 @@ export const getPortfolioReadiness = (
   const availableProjects = availableProjectIds === undefined
     ? null
     : new Set(availableProjectIds);
+  const describedProjects = describedProjectIds === undefined
+    ? null
+    : new Set(describedProjectIds);
+  const customDescriptions = visible("project_grid")?.config.custom_descriptions;
+  const hasProjectDescription = (projectId: string) =>
+    describedProjects === null ||
+    describedProjects.has(projectId) ||
+    (customDescriptions !== null &&
+      typeof customDescriptions === "object" &&
+      hasText((customDescriptions as Record<string, unknown>)[projectId]));
 
   return [
     {
@@ -71,9 +82,9 @@ export const getPortfolioReadiness = (
     },
     {
       id: "hero-bio",
-      label: "상세 소개",
-      complete: hasText(hero?.bio),
-      action: "소개 작성하기",
+      label: "상세 소개 (선택)",
+      complete: true,
+      action: "소개 다듬기",
       destination: "hero",
     },
     {
@@ -84,7 +95,7 @@ export const getPortfolioReadiness = (
         projectIds.some(
           (projectId) => hasText(projectId) && (
             availableProjects === null || availableProjects.has(projectId)
-          ),
+          ) && hasProjectDescription(projectId),
         ),
       action: "프로젝트 고르기",
       destination: "projects",
@@ -153,9 +164,11 @@ export const getPortfolioReadinessGroups = (
 export const getMissingPortfolioReadiness = (
   blocks: ReadinessBlock[],
   availableProjectIds?: Iterable<string>,
-) => getPortfolioReadiness(blocks, availableProjectIds).filter((item) => !item.complete);
+  describedProjectIds?: Iterable<string>,
+) => getPortfolioReadiness(blocks, availableProjectIds, describedProjectIds).filter((item) => !item.complete);
 
 export const isPortfolioReady = (
   blocks: ReadinessBlock[],
   availableProjectIds?: Iterable<string>,
-) => getMissingPortfolioReadiness(blocks, availableProjectIds).length === 0;
+  describedProjectIds?: Iterable<string>,
+) => getMissingPortfolioReadiness(blocks, availableProjectIds, describedProjectIds).length === 0;

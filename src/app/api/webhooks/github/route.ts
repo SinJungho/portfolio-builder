@@ -5,6 +5,15 @@ import { projectService } from '@/services/project';
 import { env } from '@/lib/env';
 import { revalidatePath } from 'next/cache';
 import { apiError, logRouteError, logRouteWarning, routeError } from '@/lib/api/errors';
+import { z } from 'zod';
+
+const pushPayloadSchema = z.object({
+  repository: z.object({
+    id: z.number().int().nonnegative(),
+    pushed_at: z.union([z.string(), z.number()]),
+    owner: z.object({ id: z.number().int().nonnegative() }),
+  }),
+});
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -23,13 +32,17 @@ export async function POST(req: NextRequest) {
     // 이벤트를 처리한다.
     switch (event) {
       case 'push': {
-        const repositoryId = payload.repository.id.toString();
-        const senderId = payload.sender.id;
-        const pushedAt = new Date(payload.repository.pushed_at);
+        const parsed = pushPayloadSchema.safeParse(payload);
+        if (!parsed.success) return apiError('WEBHOOK_BAD_REQUEST', 400);
+        const repositoryId = parsed.data.repository.id.toString();
+        const ownerId = parsed.data.repository.owner.id;
+        const rawPushedAt = parsed.data.repository.pushed_at;
+        const pushedAt = new Date(typeof rawPushedAt === 'number' ? rawPushedAt * 1000 : rawPushedAt);
+        if (Number.isNaN(pushedAt.getTime())) return apiError('WEBHOOK_BAD_REQUEST', 400);
 
         // GitHub ID로 사용자를 찾는다.
         const user = await prisma.user.findUnique({
-          where: { github_id: BigInt(senderId) }
+          where: { github_id: BigInt(ownerId) }
         });
 
         if (user) {

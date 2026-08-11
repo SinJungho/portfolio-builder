@@ -50,7 +50,7 @@ export function BlogFeedForm({ onConnect, isPending }: BlogFeedFormProps) {
   return (
     <form
       onSubmit={handleConnectSubmit}
-      className="mt-2 p-4 bg-white/5 border border-white/5 rounded-2xl space-y-4 animate-in slide-in-from-top-2 duration-300"
+      className="mt-2 p-4 bg-white/5 border border-white/5 rounded-lg space-y-4 animate-in slide-in-from-top-2 duration-300"
       noValidate
     >
       <div className="space-y-4">

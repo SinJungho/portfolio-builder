@@ -31,11 +31,11 @@ export function BlogIntegrationCard({
       <article
         aria-busy="true"
         aria-label="블로그 피드 연동 정보 로딩 중"
-        className="p-7 bg-spotify-dark-surface rounded-2xl border border-white/5 flex flex-col items-stretch gap-6 animate-pulse"
+        className="p-7 bg-spotify-dark-surface rounded-lg border border-white/5 flex flex-col items-stretch gap-6 animate-pulse"
       >
         <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
           <div className="flex items-start gap-6">
-            <div className="w-14 h-14 shrink-0 rounded-2xl bg-white/5 border border-white/5" />
+            <div className="w-14 h-14 shrink-0 rounded-lg bg-white/5 border border-white/5" />
 
             <div className="space-y-3 flex-1">
               <header className="flex items-center gap-3">
@@ -59,11 +59,11 @@ export function BlogIntegrationCard({
   const theme = getProviderStyles(blogIntegration?.provider);
 
   return (
-    <article className="p-7 bg-spotify-dark-surface rounded-2xl border border-white/5 flex flex-col items-stretch gap-6 hover:bg-spotify-mid-dark transition-colors group">
+    <article className="p-7 bg-spotify-dark-surface rounded-lg border border-white/5 flex flex-col items-stretch gap-6 hover:bg-spotify-mid-dark transition-colors group">
       <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
         <div className="flex items-start gap-6">
           <div
-            className={`w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 ${theme.bg}`}
+            className={`w-14 h-14 shrink-0 rounded-lg flex items-center justify-center border transition-all duration-500 group-hover:scale-110 ${theme.bg}`}
           >
             <Rss
               className={`w-7 h-7 ${theme.text}`}

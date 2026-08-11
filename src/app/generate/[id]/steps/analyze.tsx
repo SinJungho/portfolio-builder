@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Loader2, LogIn } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
@@ -67,9 +68,9 @@ export default function AnalyzeStep({
 
   if (error || errorMsg || isTimedOut) {
     return (
-      <div className="flex flex-col items-center gap-8 text-center max-w-sm w-full bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500">
+      <div className="flex flex-col items-center gap-8 text-center max-w-sm w-full bg-spotify-dark-surface p-8 md:p-10 rounded-lg border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500">
         <div className="relative">
-          <div className="w-20 h-20 bg-spotify-negative/10 rounded-[28px] flex items-center justify-center">
+          <div className="w-20 h-20 bg-spotify-negative/10 rounded-lg flex items-center justify-center">
             {isAuthError ? (
               <LogIn className="w-10 h-10 text-spotify-negative" />
             ) : (
@@ -99,8 +100,8 @@ export default function AnalyzeStep({
         <div className="flex flex-col gap-3 w-full">
           {isAuthError ? (
             <button
-              onClick={() => (window.location.href = "/api/auth/signin/github")}
-              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+              onClick={() => signIn("github", { callbackUrl: `/generate/${portfolioId}?step=connect` })}
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
             >
               GitHub 다시 연동하기
             </button>
@@ -111,7 +112,7 @@ export default function AnalyzeStep({
                 setIsTimedOut(false);
                 refetch();
               }}
-              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
             >
               다시 시도하기
             </button>
@@ -119,7 +120,7 @@ export default function AnalyzeStep({
 
           <button
             onClick={() => router.push("/")}
-            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold uppercase tracking-spotify transition-all cursor-pointer"
+            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold transition-all cursor-pointer"
           >
             대시보드로 돌아가기
           </button>
@@ -135,7 +136,7 @@ export default function AnalyzeStep({
       : `레포지토리 분석 중... (${data?.synced_count || 0}개 완료)`;
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-md bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify">
+    <div className="flex flex-col items-center gap-6 w-full max-w-md bg-spotify-dark-surface p-8 md:p-10 rounded-lg border border-white/5 shadow-spotify">
       <Loader2 className="w-12 h-12 animate-spin text-spotify-green mb-2" />
       <div className="text-lg font-bold text-white tracking-tight text-center">
         {statusLabel}

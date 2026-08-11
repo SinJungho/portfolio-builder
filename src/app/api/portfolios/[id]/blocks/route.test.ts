@@ -12,6 +12,7 @@ jest.mock("@/lib/prisma", () => ({
     portfolioBlock: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -32,6 +33,7 @@ describe("POST /api/portfolios/[id]/blocks", () => {
       portfolio: { id: "portfolio-1", user_id: "user-1", slug: "portfolio" },
     });
     (prisma.portfolioBlock.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.portfolioBlock.count as jest.Mock).mockResolvedValue(0);
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({
       name: "신정호",
       github_login: "SinJungho",

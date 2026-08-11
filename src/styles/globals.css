@@ -39,13 +39,16 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* 라운드 스케일은 3단계만 쓴다: 카드/패널 = rounded-lg(8px),
+     카드 안 작은 요소 = rounded-md(6px), 버튼/배지/아바타 = rounded-full.
+     그 사이 값을 새로 만들면 헤어라인 경계가 흐려진다. */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
   
   --tracking-spotify: 1.4px;
   --tracking-spotify-wide: 2px;
@@ -71,6 +74,8 @@
 }
 
 :root {
+  --font-sans: "Pretendard Variable", system-ui, sans-serif;
+
   /* Spotify Inspired Dark Theme as Default */
   --background: #121212;
   --foreground: #ffffff;
@@ -134,7 +139,8 @@ html {
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+    /* 한글 조판: 단어 단위로 줄바꿈해야 읽힌다. 라틴 기준 기본값은 음절을 끊는다. */
+    word-break: keep-all;
   }
 }
 

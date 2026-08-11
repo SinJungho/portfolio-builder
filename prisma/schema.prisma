@@ -17,9 +17,6 @@ model User {
   github_id          BigInt?   @unique
   github_bio         String?
   github_bio_verified Boolean  @default(false)
-  plan               String    @default("free") @db.VarChar(20)  // free | pro | team
-  plan_expires_at    DateTime?
-  ai_credits         Int       @default(3)
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
 
@@ -128,7 +125,7 @@ model Portfolio {
   design_tokens    Json?
   generation_mode  String    @default("auto") @db.VarChar(20)
   auto_published   Boolean   @default(true)
-  custom_domain    String?
+  custom_domain    String?   @unique
   is_published     Boolean   @default(false)
   seo_title        String?   @db.VarChar(255)
   seo_description  String?

@@ -74,7 +74,7 @@ export default function TypographyAndDetails() {
           <SelectTrigger className="h-14 rounded-full border-none bg-spotify-dark-surface shadow-spotify-md font-bold text-white hover:bg-spotify-mid-dark transition-colors px-6">
           <SelectValue placeholder="읽는 인상 선택" />
           </SelectTrigger>
-          <SelectContent className="bg-spotify-mid-dark border-none rounded-2xl shadow-spotify p-2 text-white">
+          <SelectContent className="bg-spotify-mid-dark border-none rounded-lg shadow-spotify p-2 text-white">
             {fontOptions.map((font: OptionItem) => (
               <SelectItem
                 key={font.id}
@@ -107,7 +107,7 @@ export default function TypographyAndDetails() {
           <SelectTrigger className="h-14 rounded-full border-none bg-spotify-dark-surface shadow-spotify-md font-bold text-white hover:bg-spotify-mid-dark transition-colors px-6">
           <SelectValue placeholder="정보 밀도 선택" />
           </SelectTrigger>
-          <SelectContent className="bg-spotify-mid-dark border-none rounded-2xl shadow-spotify p-2 text-white">
+          <SelectContent className="bg-spotify-mid-dark border-none rounded-lg shadow-spotify p-2 text-white">
             {spacingOptions.map((spacing: OptionItem) => (
               <SelectItem
                 key={spacing.id}
@@ -133,7 +133,7 @@ export default function TypographyAndDetails() {
           </div>
           <h4 className="text-[16px] font-bold text-white">카드 인상</h4>
         </div>
-        <div className="grid grid-cols-5 gap-3 bg-spotify-near-black p-3 rounded-[32px] shadow-inner border border-white/5">
+        <div className="grid grid-cols-5 gap-3 bg-spotify-near-black p-3 rounded-lg shadow-inner border border-white/5">
           {radiusOptions.map((radius: OptionItem) => (
             <button
               key={radius.id}
@@ -142,7 +142,7 @@ export default function TypographyAndDetails() {
               aria-label={getDesignChoiceLabel("borderRadius", radius.id)}
               onClick={() => updateToken("borderRadius", radius.id)}
               className={cn(
-                "flex flex-col items-center justify-center py-5 rounded-2xl transition-all",
+                "flex flex-col items-center justify-center py-5 rounded-lg transition-all",
                 selectedRadius === radius.id
                   ? "bg-spotify-mid-dark text-spotify-green shadow-spotify-md font-bold scale-[1.05]"
                   : "text-spotify-silver hover:text-white hover:bg-white/5 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green",
@@ -173,7 +173,7 @@ export default function TypographyAndDetails() {
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-white/5 bg-spotify-near-black p-5" aria-label="읽는 방식 미리보기">
+      <div className="rounded-lg border border-white/5 bg-spotify-near-black p-5" aria-label="읽는 방식 미리보기">
         <p className="mb-3 text-[11px] font-bold text-spotify-silver">이 설정으로 보이는 모습</p>
         <div
           className="rounded-xl bg-spotify-dark-surface p-5 text-white"

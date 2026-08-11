@@ -3,6 +3,7 @@
 import { ArrowUpRight, Calendar, Code2, Star } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { parseProjectSummary } from "../project-summary";
 import type { ThemeTokens } from "../themes";
 
 interface ProjectGridBlockProps {
@@ -25,37 +26,6 @@ interface ProjectGridBlockProps {
   portfolioId?: string;
   blockId?: string;
   isCompactPreview?: boolean;
-}
-
-interface ParsedSummary {
-  headline: string | null;
-  highlights: string[];
-  demo_url: string | null;
-  role: string | null;
-}
-
-function parseSummary(summary: string | null): ParsedSummary {
-  if (!summary)
-    return { headline: null, highlights: [], demo_url: null, role: null };
-  try {
-    const trimmed = summary.trim();
-    if (trimmed.startsWith("{")) {
-      const data = JSON.parse(trimmed);
-      return {
-        headline: data.headline || null,
-        highlights: Array.isArray(data.highlights)
-          ? data.highlights.filter(
-              (x: unknown): x is string => typeof x === "string",
-            )
-          : [],
-        demo_url: data.demo_url || null,
-        role: data.role || null,
-      };
-    }
-  } catch {
-    return { headline: summary, highlights: [], demo_url: null, role: null };
-  }
-  return { headline: summary, highlights: [], demo_url: null, role: null };
 }
 
 export default function ProjectGridBlock({
@@ -148,14 +118,13 @@ function ProjectRow({
   blockId?: string;
   isCompactPreview: boolean;
 }) {
-  const { headline, highlights, demo_url, role } = parseSummary(p.ai_summary);
+  const { headline, highlights, demo_url, role } = parseProjectSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
   const normalizedCustomDescription = customDescription?.trim() ? customDescription : undefined;
   const outcome =
     normalizedCustomDescription || headline || highlights[0] || p.description;
   const primaryUrl = demo_url || p.html_url;
   const primaryLabel = demo_url ? "데모 보기" : "GitHub 보기";
-  const num = String(index + 1).padStart(2, "0");
   // 첫 프로젝트만 대표작으로 강조한다.
   const isFlagship = index === 0;
   // 대표작에는 중복을 제외한 하이라이트를 최대 2개 표시한다.
@@ -190,14 +159,7 @@ function ProjectRow({
 
   const body = (
     <>
-      <div className="w-full flex gap-4 sm:gap-5 flex-1 min-w-0">
-        <span
-          className="block text-[13px] sm:text-[15px] font-bold tabular-nums pt-0.5 sm:pt-1 w-5 sm:w-7 shrink-0"
-          style={{ color: t.textMuted }}
-          aria-hidden="true"
-        >
-          {num}
-        </span>
+      <div className="w-full flex flex-1 min-w-0">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h3
@@ -301,7 +263,7 @@ function ProjectRow({
       // 링크 이름에 프로젝트 요약과 이동 동작을 포함한다.
       aria-label={
         outcome
-          ? `${p.name} — ${outcome.slice(0, 100)}, ${primaryLabel}`
+          ? `${p.name}, ${outcome.slice(0, 100)}, ${primaryLabel}`
           : `${p.name}, ${primaryLabel}`
       }
     >

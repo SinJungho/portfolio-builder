@@ -205,7 +205,7 @@ export default function AdjustStep({
 
   const SettingsPanelComponent = (
     <div className="space-y-6">
-      <div className="bg-spotify-dark-surface border border-white/5 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-spotify text-white">
+      <div className="bg-spotify-dark-surface border border-white/5 rounded-lg p-5 sm:p-6 md:p-8 shadow-spotify text-white">
         <DesignEditor />
       </div>
       <DomainSettingsPanel
@@ -221,7 +221,7 @@ export default function AdjustStep({
   );
 
   return (
-    <div className="relative min-h-screen bg-spotify-near-black pb-24 text-white">
+    <div className="relative min-h-[100dvh] bg-spotify-near-black pb-24 text-white">
       <div
         className="
           pointer-events-none absolute inset-0

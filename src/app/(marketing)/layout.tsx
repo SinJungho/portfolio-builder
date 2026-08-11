@@ -7,9 +7,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-spotify-near-black min-h-screen">
+    <div className="min-h-[100dvh] bg-spotify-near-black font-[system-ui,sans-serif]">
       <Header />
-      {children}
+      <main>{children}</main>
       <Footer />
     </div>
   );

@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MarkdownEditor from "@/components/ui/MarkdownEditor";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
+import EditorSurface from "./EditorSurface";
 import { Check, ChevronDown, ChevronUp, GitFork, Search, Star, X } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
@@ -43,6 +43,7 @@ export default function ProjectSelectionModal({
   const [tempCustomDescriptions, setTempCustomDescriptions] = useState<
     Record<string, string>
   >(() => initialCustomDescriptions);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isDirty =
     JSON.stringify(tempSelectedIds) !== JSON.stringify(initialFeaturedIds) ||
@@ -54,13 +55,26 @@ export default function ProjectSelectionModal({
     searchInputRef,
   );
 
-  if (!isOpen) return null;
-
-  const filteredProjects = rawProjects.filter(
-    (project: RawProject) =>
-      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredProjects = rawProjects
+    .filter(
+      (project: RawProject) =>
+        project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+    .sort((a, b) => {
+      const aSelected = tempSelectedIds.indexOf(a.id);
+      const bSelected = tempSelectedIds.indexOf(b.id);
+      if (aSelected >= 0 || bSelected >= 0) {
+        if (aSelected < 0) return 1;
+        if (bSelected < 0) return -1;
+        return aSelected - bSelected;
+      }
+      if (Boolean(a.is_featured) !== Boolean(b.is_featured)) return a.is_featured ? -1 : 1;
+      return b.stargazers_count - a.stargazers_count;
+    });
+  const selectedProjects = tempSelectedIds
+    .map((id) => rawProjects.find((project) => project.id === id))
+    .filter((project): project is RawProject => Boolean(project));
 
   const toggleTempProject = (id: string) => {
     setTempSelectedIds((prevIds: string[]) =>
@@ -88,36 +102,51 @@ export default function ProjectSelectionModal({
   };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="project-selection-title" aria-describedby="project-selection-description" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
-      {/* 모달 헤더 영역 */}
-      <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={requestClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
-            type="button"
-            aria-label="프로젝트 선택 닫기"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <h3 id="project-selection-title" className="text-[18px] font-bold text-white">
-            대표 프로젝트 선택 ({tempSelectedIds.length}/{MAX_FEATURED_PROJECTS})
-          </h3>
-        </div>
-        <Button
-          className="btn-pill-primary h-11 px-8 font-bold cursor-pointer"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          적용하기
-        </Button>
-      </div>
-
-      {/* 모달 콘텐츠 본문 영역 */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-5xl mx-auto w-full">
+    <EditorSurface
+      isOpen={isOpen}
+      onClose={requestClose}
+      onSave={handleSave}
+      isSaving={isSaving}
+      isDirty={isDirty}
+      title={`대표 프로젝트 선택 (${tempSelectedIds.length}/${MAX_FEATURED_PROJECTS})`}
+      closeLabel="프로젝트 선택 닫기"
+      titleId="project-selection-title"
+      descriptionId="project-selection-description"
+      titleRef={titleRef}
+      dialogRef={dialogRef}
+      onKeyDown={handleDialogKeyDown}
+      contentClassName="mx-auto w-full max-w-5xl"
+    >
         {/* 검색 폼 */}
         <div className="mb-8 space-y-4">
-          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">채용 담당자에게 보여줄 대표 프로젝트를 최대 3개 선택하세요. 선택한 순서대로 공개돼요.</p>
+          <p id="project-selection-description" className="text-sm font-medium text-spotify-silver">채용 담당자에게 보여줄 대표 프로젝트를 최대 3개 선택하세요. 역할과 결과가 가장 잘 보이는 작업부터 골라 선택한 순서대로 공개해요.</p>
+          <p className="sr-only" aria-live="polite">
+            대표 프로젝트 {tempSelectedIds.length}개 선택됨, 최대 {MAX_FEATURED_PROJECTS}개
+          </p>
+          {selectedProjects.length > 0 && (
+            <section aria-labelledby="selected-projects-heading" className="rounded-lg border border-spotify-green/20 bg-spotify-green/[0.06] p-4">
+              <h3 id="selected-projects-heading" className="text-[12px] font-bold text-spotify-green">
+                공개 순서
+              </h3>
+              <ol className="mt-3 flex flex-wrap gap-2">
+                {selectedProjects.map((project, index) => (
+                  <li key={project.id} className="flex min-h-11 items-center gap-1 rounded-full border border-white/10 bg-spotify-near-black pl-3 text-[12px] font-bold text-white">
+                    <span className="text-spotify-green">{index + 1}</span>
+                    <span className="max-w-40 truncate">{project.name}</span>
+                    <button type="button" onClick={() => moveTempProject(project.id, -1)} disabled={index === 0} aria-label={`${project.name} 순서 앞으로 이동`} className="flex h-11 w-9 items-center justify-center rounded-full hover:bg-white/10 disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
+                      <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                    <button type="button" onClick={() => moveTempProject(project.id, 1)} disabled={index === selectedProjects.length - 1} aria-label={`${project.name} 순서 뒤로 이동`} className="flex h-11 w-9 items-center justify-center rounded-full hover:bg-white/10 disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
+                      <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                    <button type="button" onClick={() => toggleTempProject(project.id)} aria-label={`${project.name} 선택 해제`} className="flex h-11 w-9 items-center justify-center rounded-full hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green">
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
           <div className="relative">
             <Label htmlFor="project-search" className="sr-only">프로젝트 검색</Label>
             <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-spotify-silver" />
@@ -140,7 +169,7 @@ export default function ProjectSelectionModal({
             <Card
               key={project.id}
               className={`
-                relative p-6 rounded-3xl border transition-all duration-300 group
+                relative p-6 rounded-lg border transition-all duration-300 group
                 ${
                   tempSelectedIds.includes(project.id)
                     ? "border-spotify-green bg-spotify-green/5 ring-1 ring-spotify-green/30 text-white shadow-spotify"
@@ -149,27 +178,9 @@ export default function ProjectSelectionModal({
               `}
             >
               {tempSelectedIds.includes(project.id) && (
-                <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-spotify-green/15 px-2 py-1 text-[10px] font-bold text-spotify-green">
-                  <span>대표 {String(tempSelectedIds.indexOf(project.id) + 1).padStart(2, "0")}</span>
-                  <button
-                    type="button"
-                    onClick={() => moveTempProject(project.id, -1)}
-                    disabled={tempSelectedIds.indexOf(project.id) === 0}
-                    aria-label={`${project.name} 순서 위로 이동`}
-                    className="rounded-full p-0.5 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green disabled:opacity-30"
-                  >
-                    <ChevronUp className="h-3 w-3" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moveTempProject(project.id, 1)}
-                    disabled={tempSelectedIds.indexOf(project.id) === tempSelectedIds.length - 1}
-                    aria-label={`${project.name} 순서 아래로 이동`}
-                    className="rounded-full p-0.5 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green disabled:opacity-30"
-                  >
-                    <ChevronDown className="h-3 w-3" aria-hidden="true" />
-                  </button>
-                </div>
+                <span className="absolute left-3 top-3 rounded-full bg-spotify-green/15 px-2 py-1 text-[10px] font-bold text-spotify-green">
+                  대표 {String(tempSelectedIds.indexOf(project.id) + 1).padStart(2, "0")}
+                </span>
               )}
 
               {/* 선택 여부 체크박스 표시 */}
@@ -252,8 +263,7 @@ export default function ProjectSelectionModal({
             </div>
           )}
         </div>
-      </div>
       <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={searchInputRef} />
-    </div>
+    </EditorSurface>
   );
 }

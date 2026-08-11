@@ -47,7 +47,7 @@ export default function DesignEditor() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
-      <header className="flex flex-col gap-4 rounded-2xl border border-white/5 bg-spotify-dark-surface p-5">
+      <header className="flex flex-col gap-4 rounded-lg border border-white/5 bg-spotify-dark-surface p-5">
         <div>
           <p className="text-[12px] font-bold text-spotify-green">채용 담당자가 읽기 좋은 기본 설정</p>
           <h2 className="mt-2 text-[20px] font-bold text-white">포트폴리오 분위기와 읽는 방식을 정해요</h2>
@@ -67,7 +67,7 @@ export default function DesignEditor() {
                 채용 기본 설정으로 되돌리기
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-3xl border-none bg-spotify-dark-surface shadow-spotify">
+            <AlertDialogContent className="rounded-lg border-none bg-spotify-dark-surface shadow-spotify">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-[20px] font-bold text-white">기본 설정으로 되돌릴까요?</AlertDialogTitle>
                 <AlertDialogDescription className="text-[13px] leading-relaxed text-spotify-silver">
@@ -102,9 +102,9 @@ export default function DesignEditor() {
       )}
       <AccessibilityAlert />
       <ThemeSelector />
-      <details className="group rounded-2xl border border-white/5 bg-spotify-dark-surface p-5">
+      <details className="group rounded-lg border border-white/5 bg-spotify-dark-surface p-5">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green">
-          <span>세부 인상 조정 <span className="ml-2 text-[12px] font-medium text-spotify-silver">읽기 편한 글꼴, 정보 밀도, 카드 인상을 바꿔요.</span></span>
+          <span>고급 조정 <span className="ml-2 text-[12px] font-medium text-spotify-silver">추천 설정은 그대로 두고 색·글꼴·정보 밀도만 바꿔요.</span></span>
           <ChevronDown className="h-4 w-4 shrink-0 text-spotify-silver transition-transform group-open:rotate-180" aria-hidden="true" />
         </summary>
         <div className="mt-8 space-y-10"><ColorCustomizer /><TypographyAndDetails /></div>

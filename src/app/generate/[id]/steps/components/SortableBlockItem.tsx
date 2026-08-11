@@ -75,7 +75,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
       style={style}
       onFocus={() => onFocusBlock?.(block.id)}
       className={`
-        group flex flex-col gap-4 rounded-[20px] border border-white/5 bg-spotify-dark-surface p-4 text-white transition-all duration-300 sm:p-5
+        group flex flex-col gap-4 rounded-lg border border-white/5 bg-spotify-dark-surface p-4 text-white transition-all duration-300 sm:p-5
         ${!block.is_visible ? "opacity-70 bg-spotify-mid-dark/50" : "shadow-spotify hover:bg-spotify-mid-dark"}
         ${isDragging ? "ring-1 ring-spotify-green shadow-[0_12px_32px_rgba(30,215,96,0.2)] scale-[1.02]" : ""}
       `}
@@ -85,8 +85,8 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
           type="button"
           {...attributes}
           {...listeners}
-          className="cursor-grab rounded-lg p-2.5 text-spotify-silver transition-colors hover:bg-white/5 hover:text-white active:cursor-grabbing"
-          aria-label="섹션 순서 변경"
+          className="flex min-h-11 min-w-11 cursor-grab items-center justify-center rounded-lg text-spotify-silver transition-colors hover:bg-white/5 hover:text-white active:cursor-grabbing"
+          aria-label="콘텐츠 순서 변경"
           title="스페이스바와 방향키 또는 드래그로 순서 변경"
         >
           <GripVertical className="w-5 h-5" />
@@ -104,14 +104,14 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
           </h3>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             {block.is_ai_generated && (
-              <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 bg-spotify-green/10 text-spotify-green rounded-md tracking-wider">
+              <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-spotify-green/10 text-spotify-green rounded-md">
                 AI 생성
               </span>
             )}
             {["project_grid", "hero", "skills", "blog_feed", "contact"].includes(block.block_type) && (
               <button
                 onClick={() => onOpenProjectEditor(block)}
-                className="group/edit inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-spotify-green/10 px-3 py-1.5 text-[12px] font-bold text-spotify-green transition-all duration-300 hover:bg-spotify-green hover:text-black active:scale-95"
+                className="group/edit inline-flex min-h-11 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-spotify-green/10 px-3 py-1.5 text-[12px] font-bold text-spotify-green transition-all duration-300 hover:bg-spotify-green hover:text-black active:scale-95"
               >
                 <Settings className="w-3.5 h-3.5 transition-transform group-hover/edit:rotate-45" />
                 <span>
@@ -119,7 +119,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
                     ? "프로젝트 편집"
                     : block.block_type === "contact"
                       ? "연락처 편집"
-                      : "섹션 편집"}
+                      : "콘텐츠 편집"}
                 </span>
               </button>
             )}
@@ -136,19 +136,19 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
             checked={block.is_visible}
             onCheckedChange={() => onToggle(block.id)}
             className="scale-100 cursor-pointer data-[state=checked]:bg-spotify-green"
-            aria-label={`${blockDisplayName[block.block_type] || block.block_type} 섹션 ${block.is_visible ? "공개 중" : "숨김"}`}
+            aria-label={`${blockDisplayName[block.block_type] || block.block_type} 콘텐츠 ${block.is_visible ? "공개 중" : "숨김"}`}
           />
         </div>
 
         <div className="flex items-center">
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-            <AlertDialogContent className="w-[90vw] max-w-[400px] rounded-3xl border border-white/5 bg-spotify-dark-surface shadow-spotify p-8 z-50 text-white">
+            <AlertDialogContent className="w-[90vw] max-w-[400px] rounded-lg border border-white/5 bg-spotify-dark-surface shadow-spotify p-8 z-50 text-white">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-[20px] font-extrabold text-white">
-                  섹션을 완전히 삭제할까요?
+                  콘텐츠를 완전히 삭제할까요?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-[15px] font-medium leading-relaxed text-spotify-silver font-normal">
-                  이 섹션과 관련된 모든 설정이 영구적으로 삭제됩니다. 보이지
+                  이 콘텐츠와 관련된 모든 설정이 영구적으로 삭제됩니다. 보이지
                   않게만 하고 싶다면 스위치를 꺼주세요.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -172,8 +172,8 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                aria-label={`${blockDisplayName[block.block_type] || block.block_type} 섹션 더보기`}
-                className="p-2.5 text-spotify-silver hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
+                aria-label={`${blockDisplayName[block.block_type] || block.block_type} 콘텐츠 더보기`}
+                className="flex min-h-11 min-w-11 items-center justify-center text-spotify-silver hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
               >
                 <MoreHorizontal className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -187,7 +187,7 @@ export const SortableBlockItem = React.memo(function SortableBlockItem<
                 className="cursor-pointer rounded-lg text-spotify-negative focus:bg-spotify-negative/10 focus:text-spotify-negative"
               >
                 <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                섹션 삭제
+                콘텐츠 삭제
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

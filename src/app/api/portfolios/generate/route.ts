@@ -5,6 +5,14 @@ import { RedisUnavailableError, redis, ratelimit, withRedis, JOB_KEY, JOB_TTL, J
 import { generatePortfolio } from "@/lib/generate/generatePortfolio";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
 import { apiError, logRouteError, logRouteWarning, routeError } from "@/lib/api/errors";
+import { z } from "zod";
+
+const generateSchema = z.object({
+  portfolio_id: z.string().uuid(),
+  auto_publish: z.boolean().default(false),
+  project_ids: z.array(z.string().uuid()).max(MAX_FEATURED_PROJECTS).optional(),
+  ai_focus: z.string().trim().max(500).optional(),
+});
 
 export const maxDuration = 60;
 
@@ -22,24 +30,15 @@ export async function POST(req: Request) {
       return apiError("RATE_LIMITED", 429);
     }
 
-    const json: Record<string, unknown> = await req.json().catch((error: unknown) => {
+    const json = await req.json().catch((error: unknown) => {
       logRouteWarning('/api/portfolios/generate', 'POST', error, 'Invalid JSON');
-      return {};
+      return null;
     });
-
-    const portfolio_id = json.portfolio_id as string;
-    const auto_publish = (json.auto_publish as boolean) ?? false;
-    const project_ids = Array.isArray(json.project_ids) &&
-      json.project_ids.every((id: unknown): id is string => typeof id === "string")
-      ? json.project_ids
-      : undefined;
-    const ai_focus = json.ai_focus as string | undefined;
-
-    if (!portfolio_id) {
-      return apiError("PORTFOLIO_ID_REQUIRED", 400);
-    }
-    if (project_ids && project_ids.length > MAX_FEATURED_PROJECTS) {
-      return apiError("PROJECT_LIMIT", 400);
+    const parsed = generateSchema.safeParse(json);
+    if (!parsed.success) return apiError("INVALID_REQUEST", 400);
+    const { portfolio_id, auto_publish, project_ids, ai_focus } = parsed.data;
+    if (project_ids && new Set(project_ids).size !== project_ids.length) {
+      return apiError("INVALID_REQUEST", 400);
     }
 
     const portfolio = await prisma.portfolio.findUnique({
@@ -48,6 +47,13 @@ export async function POST(req: Request) {
 
     if (!portfolio || portfolio.user_id !== user.id) {
       return apiError("NOT_FOUND", 404);
+    }
+
+    if (project_ids?.length) {
+      const ownedProjects = await prisma.rawProject.count({
+        where: { id: { in: project_ids }, user_id: user.id, is_fork: false },
+      });
+      if (ownedProjects !== project_ids.length) return apiError("INVALID_REQUEST", 400);
     }
 
 

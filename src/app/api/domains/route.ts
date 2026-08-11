@@ -4,6 +4,7 @@ import { portfolioService } from '@/services/portfolio';
 import { domainService } from '@/services/domain';
 import { prisma } from '@/lib/prisma';
 import { apiError, logRouteWarning, routeError } from '@/lib/api/errors';
+import { normalizeCustomDomain } from '@/lib/domain';
 
 /**
  * 도메인 등록/삭제 엔드포인트
@@ -15,10 +16,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { portfolioId, domain } = await req.json();
+    const body = await req.json().catch(() => null) as { portfolioId?: unknown; domain?: unknown } | null;
+    const portfolioId = typeof body?.portfolioId === 'string' ? body.portfolioId : '';
+    const domain = typeof body?.domain === 'string' ? normalizeCustomDomain(body.domain) : null;
 
     if (!portfolioId || !domain) {
-      return apiError("DOMAIN_REQUIRED", 400);
+      return apiError("DOMAIN_INVALID", 400);
     }
 
     // 포트폴리오 소유권을 확인한다.
@@ -27,13 +30,21 @@ export async function POST(req: Request) {
       return apiError("FORBIDDEN", 403);
     }
 
-    // Vercel 등록에 실패해도 수동 설정을 위해 DB 저장은 계속한다.
-    let isManualOnly = false;
+    if (portfolio.custom_domain === domain) {
+      return NextResponse.json({ success: true, domain });
+    }
+
+    const conflict = await prisma.portfolio.findFirst({
+      where: { custom_domain: domain, id: { not: portfolioId } },
+      select: { id: true },
+    });
+    if (conflict) return apiError("CONFLICT", 409);
+
     try {
       await domainService.addDomain(domain);
     } catch (vercelError) {
       logRouteWarning('/api/domains', 'POST', vercelError, 'Vercel domain registration failed');
-      isManualOnly = true;
+      return apiError("DOMAIN_SAVE_FAILED", 503);
     }
 
     await prisma.portfolio.update({
@@ -41,7 +52,7 @@ export async function POST(req: Request) {
       data: { custom_domain: domain },
     });
 
-    return NextResponse.json({ success: true, domain, isManualOnly });
+    return NextResponse.json({ success: true, domain });
   } catch (error) {
     return routeError('/api/domains', 'POST', error);
   }
@@ -54,7 +65,8 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const { portfolioId } = await req.json();
+    const body = await req.json().catch(() => null) as { portfolioId?: unknown } | null;
+    const portfolioId = typeof body?.portfolioId === 'string' ? body.portfolioId : '';
 
     if (!portfolioId) {
       return apiError("DOMAIN_REQUIRED", 400);

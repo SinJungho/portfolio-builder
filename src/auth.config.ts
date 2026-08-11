@@ -1,11 +1,19 @@
 import type { NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
 
+function oauthEnv(name: "AUTH_GITHUB_ID" | "AUTH_GITHUB_SECRET") {
+  const value = process.env[name];
+  if (!value || value === "[SENSITIVE]") {
+    throw new Error(`${name} must contain the GitHub OAuth App value`);
+  }
+  return value;
+}
+
 export default {
   providers: [
     GitHub({
-      clientId: process.env.AUTH_GITHUB_ID!,
-      clientSecret: process.env.AUTH_GITHUB_SECRET!,
+      clientId: oauthEnv("AUTH_GITHUB_ID"),
+      clientSecret: oauthEnv("AUTH_GITHUB_SECRET"),
       profile(profile) {
         return {
           id: profile.id.toString(),

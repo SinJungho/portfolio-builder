@@ -8,7 +8,7 @@ jest.mock("@/auth", () => ({ auth: jest.fn() }));
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     user: { findUnique: jest.fn() },
-    portfolio: { findUnique: jest.fn(), create: jest.fn(), findMany: jest.fn() },
+    portfolio: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), findMany: jest.fn() },
     rawProject: { findMany: jest.fn() },
     integration: { findFirst: jest.fn() },
   },
@@ -19,31 +19,25 @@ describe("POST /api/portfolios", () => {
     jest.clearAllMocks();
     (auth as jest.Mock).mockResolvedValue({ user: { id: "user-12345" } });
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({ github_login: "portfolio-user" });
-    (prisma.portfolio.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.portfolio.findFirst as jest.Mock).mockResolvedValue(null);
     (prisma.portfolio.create as jest.Mock).mockImplementation(async ({ data }) => ({
       id: "portfolio-1",
       slug: data.slug,
     }));
   });
 
-  it("keeps malformed JSON requests compatible with the default portfolio flow", async () => {
+  it("rejects malformed JSON instead of silently creating a default portfolio", async () => {
     const logWarning = jest.spyOn(console, "warn").mockImplementation();
     const response = await POST(
       new Request("http://localhost/api/portfolios", { method: "POST", body: "{" }),
     );
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(400);
     expect(logWarning).toHaveBeenCalledWith(
       "[API /api/portfolios] POST received invalid JSON",
       expect.objectContaining({ name: "SyntaxError", message: expect.any(String) }),
     );
-    expect(prisma.portfolio.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        user_id: "user-12345",
-        slug: "portfolio-user",
-        theme: "minimal",
-      }),
-    }));
+    expect(prisma.portfolio.create).not.toHaveBeenCalled();
     logWarning.mockRestore();
   });
 

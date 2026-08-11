@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { analyticsService } from '@/services/analytics';
 import { apiError, routeError } from '@/lib/api/errors';
+import { z } from 'zod';
+
+const paramsSchema = z.object({ portfolioId: z.string().uuid() });
+const periodSchema = z.enum(['7d', '30d', '90d']);
 
 export async function GET(
   req: NextRequest,
@@ -14,9 +18,11 @@ export async function GET(
       return apiError("UNAUTHORIZED", 401);
     }
 
-    const { portfolioId } = await params;
-    const url = new NextRequest(req.url);
-    const period = (url.nextUrl.searchParams.get('period') as '7d' | '30d' | '90d') || '7d';
+    const parsedParams = paramsSchema.safeParse(await params);
+    const parsedPeriod = periodSchema.safeParse(req.nextUrl.searchParams.get('period') || '7d');
+    if (!parsedParams.success || !parsedPeriod.success) return apiError("INVALID_REQUEST", 400);
+    const { portfolioId } = parsedParams.data;
+    const period = parsedPeriod.data;
 
     // 서비스에서 소유권을 확인하고 요약을 조회한다.
     try {

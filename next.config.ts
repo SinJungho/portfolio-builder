@@ -22,6 +22,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // 없앤 라우트들. URL은 살려 두되 실제 내용이 있는 곳으로 보낸다.
+  async redirects() {
+    return [
+      { source: "/template", destination: "/templates", permanent: true },
+      { source: "/blog", destination: "/", permanent: true },
+      // /features는 홈의 두 섹션을 그대로 재렌더하던 중복 페이지였다.
+      { source: "/features", destination: "/", permanent: true },
+      { source: "/pricing", destination: "/", permanent: true },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {
@@ -39,11 +49,8 @@ export default withSentryConfig(nextConfig, {
   // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
   tunnelRoute: "/monitoring",
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  automaticVercelMonitors: true,
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: true,
+  },
 });

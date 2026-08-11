@@ -33,7 +33,7 @@ export function decrypt(text: string): string {
 }
 
 /**
- * 안전한 복호화를 수행합니다. 복호화 실패 또는 평문 형식일 경우 원본 텍스트를 반환합니다.
+ * 평문 토큰은 그대로 쓰되, 암호문 복호화 실패 시에는 빈 값으로 안전하게 실패합니다.
  */
 export function safeDecrypt(text: string | null | undefined): string {
   if (!text) return '';
@@ -41,8 +41,8 @@ export function safeDecrypt(text: string | null | undefined): string {
   try {
     return decrypt(text);
   } catch (err) {
-    console.error('토큰 복호화에 실패하여 원본 텍스트를 반환합니다:', err);
-    return text;
+    console.error('토큰 복호화에 실패했습니다:', err);
+    return '';
   }
 }
 
@@ -58,6 +58,9 @@ export function verifyGitHubWebhook(
 
   const hmac = crypto.createHmac('sha256', secret);
   const digest = 'sha256=' + hmac.update(body).digest('hex');
+  const signatureBuffer = Buffer.from(signature);
+  const digestBuffer = Buffer.from(digest);
 
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+  return signatureBuffer.length === digestBuffer.length &&
+    crypto.timingSafeEqual(signatureBuffer, digestBuffer);
 }

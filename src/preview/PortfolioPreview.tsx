@@ -10,6 +10,7 @@ import ProjectGridBlock from "./blocks/ProjectGridBlock";
 import SkillsBlock from "./blocks/SkillsBlock";
 import { hasContactMethod } from "./contact";
 import { FONT_STACK, HEADING_FONT_OVERRIDE, previewFontClass } from "./fonts";
+import ResumePdfDocument from "./ResumePdfDocument";
 import { sanitizeCss } from "./sanitize-css";
 import {
   accentForSurface,
@@ -25,10 +26,8 @@ import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 import { FileDown, Loader2, Pencil } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-const EXPORT_BUTTON_CONTAINER_CLASS =
-  "hidden md:block fixed bottom-8 right-8 z-50 print:hidden";
 const EXPORT_BUTTON_CLASS =
-  "flex items-center gap-2 px-5 py-3 rounded-full border " +
+  "flex min-h-11 items-center justify-center gap-2 px-5 py-3 rounded-full border " +
   "hover:-translate-y-1 transition-all " +
   "active:scale-95 font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed " +
   "focus-visible:outline-2 focus-visible:outline-offset-2";
@@ -79,6 +78,8 @@ interface PortfolioPreviewProps {
   highlightedBlockId?: string | null;
   previewViewport?: "desktop" | "tablet" | "mobile";
   onSelectBlock?: (block: Block) => void;
+  ownerName?: string | null;
+  portfolioTitle?: string | null;
 }
 
 interface PdfExportButtonProps {
@@ -87,6 +88,8 @@ interface PdfExportButtonProps {
   error: string | null;
   onExport: (slug: string) => void;
   theme: ThemeTokens;
+  containerClassName: string;
+  buttonClassName?: string;
 }
 
 export default function PortfolioPreview({
@@ -98,6 +101,8 @@ export default function PortfolioPreview({
   highlightedBlockId,
   previewViewport = "desktop",
   onSelectBlock,
+  ownerName,
+  portfolioTitle,
 }: PortfolioPreviewProps) {
   const searchParams = useSearchParams();
   const isExporting = searchParams.get("export") === "true";
@@ -141,6 +146,17 @@ export default function PortfolioPreview({
   const visibleBlocks = blocks
     .filter((block: Block) => block.is_visible)
     .sort((a: Block, b: Block) => a.position - b.position);
+
+  if (isExporting) {
+    return (
+      <ResumePdfDocument
+        blocks={visibleBlocks}
+        ownerName={ownerName}
+        portfolioTitle={portfolioTitle}
+      />
+    );
+  }
+
   const canContact = hasContactMethod(visibleBlocks);
   // 히어로가 없어도 문서 제목을 유지한다.
   const hasVisibleHero = visibleBlocks.some((block: Block) => block.block_type === "hero");
@@ -154,8 +170,14 @@ export default function PortfolioPreview({
   });
   // 내용 없는 블록은 렌더링 목록에서 제외한다.
   const renderableBlocks = visibleBlocks.filter((block: Block) => {
-    const config = block.config as { skills?: unknown[]; feed_items?: unknown[] };
+    const config = block.config as {
+      skills?: unknown[];
+      feed_items?: unknown[];
+      projectsData?: unknown[];
+    };
     switch (block.block_type) {
+      case "project_grid":
+        return Boolean(config.projectsData?.length) || Boolean(onSelectBlock);
       case "skills":
         return Boolean(config.skills?.length);
       case "blog_feed":
@@ -186,6 +208,9 @@ export default function PortfolioPreview({
         throw new Error(responseErrorMessage(body, "PDF_FAILED"));
       }
       const blob = await res.blob();
+      if (!blob.size || !blob.type.includes("application/pdf")) {
+        throw new Error(errorMessage("PDF_FAILED"));
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -193,7 +218,7 @@ export default function PortfolioPreview({
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (e) {
       setExportError(
         e instanceof Error
@@ -224,14 +249,6 @@ export default function PortfolioPreview({
         <style
           dangerouslySetInnerHTML={{
             __html: `.pf-root h1,.pf-root h2,.pf-root h3{font-family:${headingFont}}`,
-          }}
-        />
-      )}
-
-      {isExporting && (
-        <style
-          dangerouslySetInnerHTML={{
-            __html: getExportStyles(mt.cardBg),
           }}
         />
       )}
@@ -271,7 +288,7 @@ export default function PortfolioPreview({
                 onClick={() => onSelectBlock(block)}
                 aria-label={`${blockDisplayName[block.block_type] || "섹션"} 편집`}
                 title={`${blockDisplayName[block.block_type] || "섹션"} 편집`}
-                className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white opacity-80 shadow-spotify backdrop-blur-sm transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white opacity-80 shadow-spotify backdrop-blur-sm transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{ outlineColor: mt.accent }}
               >
                 <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -354,34 +371,56 @@ export default function PortfolioPreview({
           borderColor: mt.cardBorder,
         }}
       >
-        <div className="max-w-[1100px] mx-auto px-6 md:px-8 py-10 flex items-center justify-between gap-4 text-sm">
-          <span>포지로 만든 포트폴리오</span>
-          <a
-            href="#top"
-            className="font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 print:hidden"
-            style={{ color: mt.text, outlineColor: mt.accent }}
-          >
-            맨 위로 ↑
-          </a>
+        <div className="mx-auto max-w-[1100px] px-6 py-10 text-sm md:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <span>포지로 만든 포트폴리오</span>
+            <a
+              href="#top"
+              className="font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 print:hidden"
+              style={{ color: mt.text, outlineColor: mt.accent }}
+            >
+              맨 위로 ↑
+            </a>
+          </div>
+          {slug && (
+            <PdfExportButton
+              slug={slug}
+              isPending={isExportPending}
+              error={exportError}
+              onExport={handlePdfExport}
+              theme={mt}
+              containerClassName="mt-6 md:hidden print:hidden"
+              buttonClassName="w-full"
+            />
+          )}
         </div>
       </footer>
 
-      {!isExporting && slug && (
+      {slug && (
         <PdfExportButton
           slug={slug}
           isPending={isExportPending}
           error={exportError}
           onExport={handlePdfExport}
           theme={mt}
+          containerClassName="fixed bottom-8 right-8 z-50 hidden md:block print:hidden"
         />
       )}
     </div>
   );
 }
 
-function PdfExportButton({ slug, isPending, error, onExport, theme }: PdfExportButtonProps) {
+function PdfExportButton({
+  slug,
+  isPending,
+  error,
+  onExport,
+  theme,
+  containerClassName,
+  buttonClassName = "",
+}: PdfExportButtonProps) {
   return (
-    <div className={EXPORT_BUTTON_CONTAINER_CLASS}>
+    <div className={containerClassName}>
       {error && (
         <p
           role="alert"
@@ -394,7 +433,9 @@ function PdfExportButton({ slug, isPending, error, onExport, theme }: PdfExportB
       <button
         onClick={() => onExport(slug)}
         disabled={isPending}
-        className={EXPORT_BUTTON_CLASS}
+        type="button"
+        aria-busy={isPending}
+        className={`${EXPORT_BUTTON_CLASS} ${buttonClassName}`}
         style={{
           backgroundColor: theme.cardBg,
           color: theme.text,
@@ -403,60 +444,12 @@ function PdfExportButton({ slug, isPending, error, onExport, theme }: PdfExportB
         }}
       >
         {isPending ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
         ) : (
-          <FileDown className="w-4 h-4" />
+          <FileDown className="w-4 h-4" aria-hidden="true" />
         )}
         PDF 내보내기
       </button>
     </div>
   );
-}
-
-function getExportStyles(cardBgColor: string): string {
-  return `
-    @media print {
-      * { 
-        -webkit-print-color-adjust: exact !important; 
-        color-adjust: exact !important; 
-      }
-    }
-    
-    .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl {
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-      background-color: ${cardBgColor} !important;
-      opacity: 1 !important;
-    }
-    
-    .animate-pulse {
-      animation: none !important;
-      display: none !important;
-    }
-    
-    .pdf-block {
-      page-break-inside: auto !important;
-      break-inside: auto !important;
-      padding-top: 1.5rem !important;
-      padding-bottom: 1.5rem !important;
-      margin-top: 0 !important;
-      margin-bottom: 0 !important;
-    }
-    
-    .pdf-block > *, 
-    .pdf-block section, 
-    .pdf-block h1, 
-    .pdf-block h2, 
-    .pdf-block h3, 
-    .pdf-block h4,
-    .pdf-block li,
-    .pdf-block tr,
-    .pdf-block p,
-    .pdf-block img,
-    .pdf-block div.grid > div,
-    .pdf-block div.flex-wrap > div {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
-  `;
 }

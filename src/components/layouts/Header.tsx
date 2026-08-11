@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import BrandLogo from "@/components/common/BrandLogo";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +10,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Menu, Sparkles, LogOut, User, LayoutDashboard, Settings } from "lucide-react";
+import { isContactableEmail } from "@/preview/contact";
+import { ChevronRight, Menu, LogOut, User, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -23,18 +25,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// /blog, /template은 아직 스텁이라 내비에서 뺐다. 라우트는 그대로 살아 있다.
 const NAV_LINKS = [
-  { name: "기능", href: "/features" },
   { name: "템플릿", href: "/templates" },
-  { name: "블로그", href: "/blog" },
   { name: "대시보드", href: "/dashboard" },
 ] as const;
-
-const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-spotify-green text-black shadow-[0_4px_12px_rgba(30,215,96,0.3)] shrink-0">
-    <Sparkles className="h-5 w-5 stroke-[2.5px]" />
-  </div>
-);
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -44,27 +39,29 @@ export default function Header() {
   const isLoading = status === "loading";
   const isLoggedIn = status === "authenticated";
   const user = session?.user;
+  const accountDetail = isContactableEmail(user?.email ?? undefined)
+    ? user?.email
+    : "GitHub 계정";
 
-  const mountedRef = useRef(false);
+  // 페이지 최상단에 둔 1px 감시선이 화면 밖으로 나가면 스크롤된 것이다.
+  // 스크롤 이벤트를 매 프레임 듣는 대신 브라우저가 알려주게 한다.
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    mountedRef.current = true;
+    const el = sentinelRef.current;
+    if (!el) return;
 
-    const onScroll = () => {
-      if (mountedRef.current) setScrolled(window.scrollY > 20);
-    };
-
-    const raf = requestAnimationFrame(onScroll);
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      mountedRef.current = false;
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-    };
+    const io = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { rootMargin: "20px 0px 0px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   return (
+    <>
+    <div ref={sentinelRef} aria-hidden="true" className="absolute top-0 h-px w-full" />
     <header
       suppressHydrationWarning
       className={cn(
@@ -80,10 +77,7 @@ export default function Header() {
           href="/"
           className="flex items-center gap-3 rounded-full no-underline group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-4 focus-visible:ring-offset-spotify-near-black"
         >
-          <LogoMark />
-          <span className="text-[20px] font-bold text-white tracking-tight">
-            PortfolioForge
-          </span>
+          <BrandLogo />
         </Link>
 
         {/* 데스크탑 네비게이션 */}
@@ -92,7 +86,7 @@ export default function Header() {
             <Link
               key={item.name}
               href={item.href}
-              className="rounded-full px-4 py-2 text-[14px] font-bold uppercase tracking-spotify text-spotify-silver no-underline transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black"
+              className="rounded-full px-4 py-2 text-[14px] font-bold tracking-[-0.01em] text-spotify-silver no-underline transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black"
             >
               {item.name}
             </Link>
@@ -123,11 +117,11 @@ export default function Header() {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60 mt-2 bg-spotify-mid-dark border-none rounded-2xl p-2 shadow-spotify">
+              <DropdownMenuContent align="end" className="w-60 mt-2 bg-spotify-mid-dark border-none rounded-lg p-2 shadow-spotify">
                 <DropdownMenuLabel className="font-normal px-3 py-3">
                   <div className="flex flex-col space-y-1">
                     <p className="text-[15px] font-bold text-white">{user?.name}</p>
-                    <p className="text-xs text-spotify-silver truncate">{user?.email}</p>
+                    <p className="text-xs text-spotify-silver truncate">{accountDetail}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-white/5 mb-1" />
@@ -185,7 +179,7 @@ export default function Header() {
               side="right"
               className="w-full sm:w-80 p-0 flex flex-col bg-spotify-near-black border-none shadow-spotify"
             >
-              {/* 헤더 — 로고 */}
+              {/* 헤더: 로고 */}
               <SheetHeader className="px-6 h-16 sm:h-20 flex-row items-center justify-between border-b border-white/5 space-y-0">
                 <SheetTitle asChild>
                   <Link
@@ -193,10 +187,7 @@ export default function Header() {
                     className="flex items-center gap-3 no-underline"
                     onClick={() => setOpen(false)}
                   >
-                    <LogoMark />
-                    <span className="text-[18px] font-bold text-white tracking-tight">
-                      PortfolioForge
-                    </span>
+                    <BrandLogo />
                   </Link>
                 </SheetTitle>
               </SheetHeader>
@@ -208,7 +199,7 @@ export default function Header() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="flex items-center justify-between px-8 py-4 text-[16px] font-bold uppercase tracking-spotify text-spotify-silver no-underline transition-all hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-spotify-green"
+                    className="flex items-center justify-between px-8 py-4 text-[16px] font-bold tracking-[-0.01em] text-spotify-silver no-underline transition-all hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-spotify-green"
                   >
                     {item.name}
                     <ChevronRight size={18} className="opacity-20" />
@@ -220,7 +211,7 @@ export default function Header() {
               <div className="px-6 pb-12 pt-6 border-t border-white/5 flex flex-col gap-4">
                 {isLoggedIn ? (
                   <>
-                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 mb-2">
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/5 mb-2">
                        {user?.image ? (
                         <Image
                           src={user.image}
@@ -236,7 +227,7 @@ export default function Header() {
                       )}
                       <div className="flex flex-col">
                         <span className="text-[16px] font-bold text-white">{user?.name}</span>
-                        <span className="text-[13px] text-spotify-silver truncate max-w-[150px]">{user?.email}</span>
+                        <span className="text-[13px] text-spotify-silver truncate max-w-[150px]">{accountDetail}</span>
                       </div>
                     </div>
                     <Button
@@ -264,7 +255,7 @@ export default function Header() {
                   <>
                     <Button
                       asChild
-                      className="btn-pill-primary h-13 w-full rounded-2xl text-[15px] font-extrabold tracking-[-0.01em]"
+                      className="btn-pill-primary h-13 w-full text-[15px] font-extrabold tracking-[-0.01em]"
                     >
                       <Link href="/login" onClick={() => setOpen(false)}>
                         로그인하고 시작하기
@@ -278,5 +269,6 @@ export default function Header() {
         </div>
       </div>
     </header>
+    </>
   );
 }

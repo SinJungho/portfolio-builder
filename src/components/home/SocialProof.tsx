@@ -1,4 +1,4 @@
-import { FileDown, Globe, ShieldCheck, Sparkles } from "lucide-react";
+import { FileDown, Globe, ShieldCheck } from "lucide-react";
 import Reveal from "../common/Reveal";
 
 export default function SocialProof() {
@@ -20,22 +20,17 @@ export default function SocialProof() {
       claim: "PDF로도 내보내기",
       support: "링크 대신 PDF로 저장해 지원서에 바로 첨부해요",
     },
-    {
-      icon: Sparkles,
-      claim: "무료로 시작",
-      support: "신용카드 없이 지금 바로 만들어 볼 수 있어요",
-    },
   ];
 
   return (
     <section className="border-y border-white/5 bg-spotify-near-black px-6 py-16 sm:py-20">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
         {guarantees.map((g, i) => {
           const Icon = g.icon;
           return (
             <Reveal key={g.claim} delay={i * 80}>
               <div className="flex items-start gap-3.5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-spotify-green/10 text-spotify-green">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-spotify-green/10 text-spotify-green">
                   <Icon size={18} strokeWidth={2.2} aria-hidden="true" />
                 </span>
                 <div className="min-w-0">

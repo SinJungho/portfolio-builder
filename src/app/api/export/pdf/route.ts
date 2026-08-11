@@ -1,7 +1,9 @@
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/prisma";
 import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
+import os from "os";
 import path from "path";
 import puppeteer, { Browser } from "puppeteer-core";
 import { apiError, logRouteError } from "@/lib/api/errors";
@@ -9,7 +11,7 @@ import { apiError, logRouteError } from "@/lib/api/errors";
 /**
  * 허용된 디렉토리의 실제 Chromium 실행 파일인지 검증한다.
  */
-function validateChromiumPath(filePath: string): boolean {
+function validateChromiumPath(filePath: string, allowedPrefixes: string[]): boolean {
   try {
     if (!filePath) return false;
 
@@ -34,21 +36,16 @@ function validateChromiumPath(filePath: string): boolean {
       return false;
     }
 
-    const allowedEnv = process.env.ALLOWED_CHROMIUM_PREFIXES;
-    if (!allowedEnv) {
+    if (allowedPrefixes.length === 0) {
       console.error(
-        `[PDF_내보내기_보안] 실행이 차단됨: 인가 정책(ALLOWED_CHROMIUM_PREFIXES) 환경 변수가 구성되지 않았습니다.`,
+        `[PDF_내보내기_보안] 실행이 차단됨: 허용된 Chromium 경로가 구성되지 않았습니다.`,
       );
       return false;
     }
 
-    const allowedPrefixes = allowedEnv.split(",").map((p) => p.trim());
-    const normalizedPath = path.normalize(filePath);
-    const pathForMatching = normalizedPath.replace(/\\/g, "/");
-
     const isAllowed = allowedPrefixes.some((prefix) => {
-      const normalizedPrefix = path.normalize(prefix).replace(/\\/g, "/");
-      return pathForMatching.startsWith(normalizedPrefix);
+      const relative = path.relative(path.resolve(prefix), path.resolve(filePath));
+      return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
     });
 
     if (!isAllowed) {
@@ -96,13 +93,24 @@ export async function GET(req: NextRequest) {
   const slug = searchParams.get("slug");
 
   const slugRegex = /^[a-z0-9-]+$/i;
-  if (!slug || !slugRegex.test(slug)) {
+  if (!slug || slug.length > 50 || !slugRegex.test(slug)) {
     return apiError("PDF_INVALID_SLUG", 400);
   }
 
   let browser: Browser | null = null;
 
   try {
+    const portfolio = await prisma.portfolio.findFirst({
+      where: { slug: { equals: slug, mode: "insensitive" }, is_published: true },
+      select: { id: true },
+    });
+    if (!portfolio) return apiError("NOT_FOUND", 404);
+
+    const portfolioUrl = `${env.NEXT_PUBLIC_APP_URL}/${slug}?export=true`;
+    if (!validateTargetUrl(portfolioUrl)) {
+      return apiError("PDF_SECURITY", 400);
+    }
+
     const isLocal = process.env.NODE_ENV === "development";
     let executablePath = "";
 
@@ -115,7 +123,13 @@ export async function GET(req: NextRequest) {
       executablePath = await chromium.executablePath();
     }
 
-    if (!executablePath || !validateChromiumPath(executablePath)) {
+    const allowedPrefixes = isLocal
+      ? (process.env.ALLOWED_CHROMIUM_PREFIXES || "")
+          .split(",")
+          .map((prefix) => prefix.trim())
+          .filter(Boolean)
+      : [os.tmpdir()];
+    if (!executablePath || !validateChromiumPath(executablePath, allowedPrefixes)) {
       console.warn(
         `[PDF_내보내기_보안] 유효한 크롬 실행 파일 검증을 실패했습니다: ${executablePath}.`,
       );
@@ -134,34 +148,29 @@ export async function GET(req: NextRequest) {
 
     const page = await browser.newPage();
 
-    const baseUrl = env.NEXT_PUBLIC_APP_URL;
-    const portfolioUrl = `${baseUrl}/${slug}?export=true`;
-
-    if (!validateTargetUrl(portfolioUrl)) {
-      return apiError("PDF_SECURITY", 400);
-    }
-
     console.log(
       `[PDF_내보내기] 대상 렌더링 URL이 생성되었습니다: ${portfolioUrl}`,
     );
 
-    await page.goto(portfolioUrl, {
+    const response = await page.goto(portfolioUrl, {
       waitUntil: "networkidle2",
       timeout: 30000,
     });
+    if (!response?.ok()) {
+      throw new Error(
+        `포트폴리오 렌더링 응답이 올바르지 않습니다 (${response?.status() ?? "응답 없음"}).`,
+      );
+    }
 
-    await page.evaluateHandle("document.fonts.ready");
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    await page.emulateMediaType("print");
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: {
-        top: "20px",
-        bottom: "20px",
-        left: "20px",
-        right: "20px",
-      },
+      preferCSSPageSize: true,
     });
 
     const date = new Date().toISOString().split("T")[0];
@@ -172,6 +181,7 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (error: unknown) {
@@ -180,7 +190,11 @@ export async function GET(req: NextRequest) {
   } finally {
     // Chromium을 종료해 프로세스와 리소스를 정리한다.
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (error) {
+        logRouteError("/api/export/pdf", "CLOSE", error);
+      }
     }
   }
 }

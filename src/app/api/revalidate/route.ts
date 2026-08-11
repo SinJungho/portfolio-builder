@@ -3,6 +3,12 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { env } from '@/lib/env'
 import { apiError, routeError } from '@/lib/api/errors'
+import { z } from 'zod'
+
+const revalidateSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/i).max(50).optional(),
+  userId: z.string().uuid().optional(),
+}).refine((value) => Boolean(value.slug || value.userId))
 
 export async function POST(req: Request) {
   try {
@@ -11,11 +17,9 @@ export async function POST(req: Request) {
       return apiError("UNAUTHORIZED", 401);
     }
 
-    const { slug, userId } = await req.json()
-
-    if (!slug && !userId) {
-      return apiError("INVALID_REQUEST", 400)
-    }
+    const parsed = revalidateSchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) return apiError("INVALID_REQUEST", 400)
+    const { slug, userId } = parsed.data
 
     if (slug) {
       revalidatePath(`/${slug}`)

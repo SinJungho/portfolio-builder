@@ -11,12 +11,14 @@ import {
   ChevronUp,
   ChevronDown,
   RefreshCw,
+  Share2,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
+import { normalizeCustomDomain } from "@/lib/domain";
 
 interface DomainSettingsPanelProps {
   initialSlug?: string;
@@ -39,7 +41,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
 
   const handleShareTwitter = (): void => {
     const url = `https://${initialSlug}.portfolioforge.app`;
-    const shareText = `AI와 GitHub 분석으로 저만의 멋진 포트폴리오를 즉시 제작했어요! 포트폴리오 주소를 확인해 보세요 💻✨\n#PortfolioForge #개발자 #포트폴리오`;
+    const shareText = `GitHub 프로젝트를 포트폴리오로 정리했어요. 링크에서 확인해 보세요.\n#PortfolioForge #개발자 #포트폴리오`;
     window.open(
       `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`,
       "_blank",
@@ -56,16 +58,26 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
 
   const handleDomainSubmit = (): void => {
     const input = document.getElementById("custom-domain") as HTMLInputElement;
-    const val = input.value.trim();
-    setCustomDomain(val || null)
+    const value = input.value.trim();
+    const domain = value ? normalizeCustomDomain(value) : null;
+    if (value && !domain) {
+      toast.error(errorMessage("DOMAIN_INVALID"));
+      return;
+    }
+    setCustomDomain(domain)
       .then(() => toast.success("도메인 설정이 업데이트되었습니다."))
       .catch((err: Error) => toast.error(err.message || errorMessage("DOMAIN_SAVE_FAILED")));
   };
 
   const handleDomainKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === "Enter") {
-      const val = e.currentTarget.value.trim();
-      setCustomDomain(val || null)
+      const value = e.currentTarget.value.trim();
+      const domain = value ? normalizeCustomDomain(value) : null;
+      if (value && !domain) {
+        toast.error(errorMessage("DOMAIN_INVALID"));
+        return;
+      }
+      setCustomDomain(domain)
         .then(() => toast.success("도메인이 업데이트되었습니다."))
         .catch((err: Error) => toast.error(err.message || errorMessage("DOMAIN_SAVE_FAILED")));
     }
@@ -79,7 +91,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
       if (!res.ok) throw new Error(responseErrorMessage(data, "DOMAIN_STATUS_FAILED"));
       if (data.configured) {
         toast.success(
-          "도메인 연결이 성공적으로 시뮬레이션 및 연결 완료되었습니다!",
+          "도메인 연결이 확인되었습니다.",
         );
       } else {
         toast.error(errorMessage("DOMAIN_STATUS_FAILED"));
@@ -90,10 +102,10 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
   };
 
   return (
-    <div className="bg-[#121212] border border-white/5 rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.2)] text-white space-y-6">
+    <div className="space-y-6 rounded-lg border border-white/5 bg-spotify-near-black p-6 text-white shadow-[0_8px_30px_rgba(0,0,0,0.2)] sm:p-8">
       <div className="space-y-1">
         <h3 className="text-[18px] sm:text-[20px] font-black text-white flex items-center gap-2">
-          <Globe className="w-5 h-5 text-spotify-green animate-pulse" />
+          <Globe className="h-5 w-5 text-spotify-green" />
           도메인 설정
         </h3>
         <p className="text-[13px] sm:text-[14px] text-spotify-silver font-medium">
@@ -103,10 +115,10 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
 
       <div className="space-y-5">
         <div className="space-y-2">
-          <Label className="text-xs font-black uppercase text-spotify-silver tracking-wider">
-            기본 무료 제공 주소
+          <Label className="text-xs font-black text-spotify-silver">
+            기본 제공 주소
           </Label>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white/5 border border-white/5 rounded-lg">
             <div className="flex items-center gap-3">
               <Globe className="w-5 h-5 text-spotify-green" />
               <span className="text-[15px] font-bold text-white font-mono truncate max-w-[200px] sm:max-w-xs">
@@ -114,8 +126,8 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-spotify-green/10 rounded-full text-spotify-green text-[11px] font-black uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 bg-spotify-green rounded-full animate-pulse shadow-[0_0_8px_#1ed760]" />
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-spotify-green/10 rounded-full text-spotify-green text-[11px] font-black ">
+                <span className="h-1.5 w-1.5 rounded-full bg-spotify-green motion-safe:animate-pulse" />
                 Live
               </span>
               <Button
@@ -144,12 +156,15 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-bold text-spotify-silver">
-            <span>🚀 SNS에 내 포트폴리오 자랑하기:</span>
+          <div className="flex flex-wrap items-center gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-lg text-xs font-bold text-spotify-silver">
+            <span className="inline-flex items-center gap-1.5">
+              <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
+              SNS에 포트폴리오 공유하기
+            </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-spotify-silver hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 px-2.5 rounded-lg flex items-center gap-1 text-[11px]"
+              className="flex h-7 items-center gap-1 rounded-lg px-2.5 text-[11px] text-spotify-silver hover:bg-white/10 hover:text-white"
               onClick={handleShareTwitter}
             >
               <Twitter className="w-3 h-3" />
@@ -158,7 +173,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-spotify-silver hover:text-[#0A66C2] hover:bg-[#0A66C2]/10 px-2.5 rounded-lg flex items-center gap-1 text-[11px]"
+              className="flex h-7 items-center gap-1 rounded-lg px-2.5 text-[11px] text-spotify-silver hover:bg-white/10 hover:text-white"
               onClick={handleShareLinkedin}
             >
               <Linkedin className="w-3 h-3" />
@@ -171,7 +186,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
           <div className="flex items-center justify-between">
             <Label
               htmlFor="custom-domain"
-              className="text-xs font-black uppercase text-spotify-silver tracking-wider"
+              className="text-xs font-black text-spotify-silver"
             >
               나만의 커스텀 도메인 연결{" "}
               <span className="text-[10px] text-spotify-silver/50 lowercase font-medium">
@@ -200,7 +215,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
           </p>
         </div>
 
-        <div className="border border-white/5 rounded-2xl overflow-hidden bg-white/[0.02]">
+        <div className="border border-white/5 rounded-lg overflow-hidden bg-white/[0.02]">
           <button
             onClick={() => setShowDnsManual(!showDnsManual)}
             className="w-full flex items-center justify-between p-4 text-[13px] font-bold text-white hover:bg-white/5 transition-all"
@@ -227,7 +242,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
               <div className="space-y-2 font-mono text-[11px] text-white">
                 <div className="p-3 bg-spotify-near-black border border-white/5 rounded-xl flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-spotify-silver uppercase block font-sans">
+                    <span className="text-[10px] text-spotify-silver block font-sans">
                       Type A (루트 도메인용)
                     </span>
                     <span>
@@ -248,7 +263,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
                 </div>
                 <div className="p-3 bg-spotify-near-black border border-white/5 rounded-xl flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-spotify-silver uppercase block font-sans">
+                    <span className="text-[10px] text-spotify-silver block font-sans">
                       Type CNAME (서브 도메인용)
                     </span>
                     <span>
@@ -303,10 +318,10 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
         </div>
 
         {customDomain && (
-          <div className="p-5 bg-spotify-green/5 border border-spotify-green/20 rounded-2xl space-y-3 animate-in fade-in duration-300">
+          <div className="p-5 bg-spotify-green/5 border border-spotify-green/20 rounded-lg space-y-3 animate-in fade-in duration-300">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-black text-spotify-green flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-spotify-green rounded-full animate-pulse shadow-[0_0_8px_#1ed760]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-spotify-green motion-safe:animate-pulse" />
                 커스텀 도메인 연결 상태
               </span>
               <Button
@@ -320,7 +335,7 @@ export const DomainSettingsPanel = React.memo(function DomainSettingsPanel({
               </Button>
             </div>
             <div className="text-[12px] text-spotify-silver font-medium leading-relaxed">
-              현재 <strong className="text-white font-mono">{customDomain}</strong> 주소가 포트폴리오에 등록되어 있습니다. DNS 전파는 최대 24~48시간이 소요될 수 있으며, 모의 우회 설정에 따라 정상 연결로 확인됩니다.
+              현재 <strong className="text-white font-mono">{customDomain}</strong> 주소가 포트폴리오에 등록되어 있습니다. DNS 전파는 최대 24~48시간이 걸릴 수 있으며, 연결 여부는 실제 DNS 상태로 확인합니다.
             </div>
           </div>
         )}

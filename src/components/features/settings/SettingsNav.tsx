@@ -14,7 +14,7 @@ export function SettingsNav({ activeSection, onSectionChange }: SettingsNavProps
   return (
     <nav
       aria-label="설정 메뉴"
-      className="w-full lg:w-56 bg-spotify-dark-surface rounded-3xl p-4 shadow-spotify-md h-fit border border-white/5"
+      className="w-full lg:w-56 bg-spotify-dark-surface rounded-lg p-4 shadow-spotify-md h-fit border border-white/5"
     >
       <ul className="flex gap-2 lg:flex-col">
         {sections.map((section) => (

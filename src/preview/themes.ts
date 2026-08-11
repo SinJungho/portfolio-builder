@@ -66,18 +66,18 @@ export const THEMES: Record<string, ThemeTokens> = {
     label: "채용 기본형",
     description: "한눈에 읽히는 밝은 화면과 균형 잡힌 정보 구조예요",
     bg: "#F7F8FA", // 카드(#FFFFFF)와 명도 분리 — 플랫 엘리베이션(그림자 없이 면으로 구분)
-    text: "#191F28",
-    textMuted: "#5E6875", // #F7F8FA 대비 ≈ 4.7:1 (AA 통과)
-    accent: "#3182F6",
+    text: "#121212", // Spotify 근-블랙 — 라이트에서도 같은 무채색 축을 쓴다
+    textMuted: "#5C5C5C", // #F7F8FA 대비 ≈ 6.3:1 (AA 통과)
+    accent: "#17A34A", // Spotify 그린을 라이트 면에서 쓸 수 있게 낮춘 값 — bg 대비 3.1:1 (비텍스트 AA)
     surfaceBg: "#EEF0F3",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(0,0,0,0.08)",
-    tagBg: "rgba(0,0,0,0.05)", // 태그 무채색 — 블루는 기능(CTA·프로그레스·활성)에만
-    tagText: "#4B5563",
-    ctaBg: "#3182F6",
-    ctaText: "#121212", // 블루 위 화이트는 3.5:1 미달 → 다크 텍스트로 5.0:1 (AA 통과)
+    tagBg: "rgba(0,0,0,0.05)", // 태그 무채색 — 그린은 기능(CTA·프로그레스·활성)에만
+    tagText: "#4B4B4B",
+    ctaBg: "#17A34A",
+    ctaText: "#121212", // 그린 위 다크 텍스트 5.7:1 (AA 통과)
     footerBg: "#F9FAFB",
-    footerText: "#5E6875", // #F9FAFB 대비 ≈ 5.0:1 (AA 통과)
+    footerText: "#5C5C5C", // #F9FAFB 대비 ≈ 6.4:1 (AA 통과)
     cardRadius: "20px",
   },
   midnight: {
@@ -89,7 +89,7 @@ export const THEMES: Record<string, ThemeTokens> = {
     textMuted: "#808088", // #09090B 대비 ≈ 5.1:1 (AA 통과)
     accent: "#A78BFA",
     surfaceBg: "#111113",
-    cardBg: "rgba(255,255,255,0.04)",
+    cardBg: "#131315",
     cardBorder: "rgba(255,255,255,0.09)",
     tagBg: "rgba(255,255,255,0.08)", // 태그 무채색 — 퍼플은 기능에만
     tagText: "#E5E5E5",
@@ -106,7 +106,7 @@ export const THEMES: Record<string, ThemeTokens> = {
     bg: "#F8FDFF",
     text: "#0C4A6E",
     textMuted: "#3D7A93", // #F8FDFF 대비 ≈ 4.7:1 (AA 통과)
-    accent: "#0EA5E9",
+    accent: "#027AAE", // 밝은 배경·카드 모두에서 기능 요소 3:1 이상
     surfaceBg: "#EFF9FF",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(14,165,233,0.16)",
@@ -125,7 +125,7 @@ export const THEMES: Record<string, ThemeTokens> = {
     bg: "#F8FDF9",
     text: "#14532D",
     textMuted: "#47755A", // #F8FDF9 대비 ≈ 5.2:1 (AA 통과)
-    accent: "#10B981",
+    accent: "#07824F", // 밝은 배경·카드 모두에서 기능 요소 3:1 이상
     surfaceBg: "#EFFDF3",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(16,185,129,0.16)",
@@ -144,7 +144,7 @@ export const THEMES: Record<string, ThemeTokens> = {
     bg: "#FFF8F0", // 카드(#FFFFFF)와 명도 분리 — 플랫 엘리베이션
     text: "#431407",
     textMuted: "#8A6A5A", // #FFF8F0 대비 ≈ 4.6:1 (AA 통과)
-    accent: "#F97316",
+    accent: "#C2410C", // 밝은 배경·카드 모두에서 기능 요소 3:1 이상
     surfaceBg: "#FDEFE0",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(249,115,22,0.16)",
@@ -253,5 +253,9 @@ export function accentForSurface(
   bg: string,
   fallback: string,
 ): string {
-  return contrastRatio(accent, bg) >= 3 ? accent : fallback;
+  if (contrastRatio(accent, bg) >= 3) return accent;
+  if (contrastRatio(fallback, bg) >= 3) return fallback;
+  return contrastRatio("#121212", bg) >= contrastRatio("#FFFFFF", bg)
+    ? "#121212"
+    : "#FFFFFF";
 }

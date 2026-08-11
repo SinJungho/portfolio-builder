@@ -25,11 +25,16 @@ const completeBlocks = [
 
 describe("PATCH /api/portfolios/[id] publication readiness", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     (auth as jest.Mock).mockResolvedValue({ user: { id: "user-1" } });
     (validatePortfolioOwnership as jest.Mock).mockResolvedValue({
       portfolio: { id: "portfolio-1", user_id: "user-1", is_published: false },
     });
-    (prisma.rawProject.findMany as jest.Mock).mockResolvedValue([{ id: "project-1" }]);
+    (prisma.rawProject.findMany as jest.Mock).mockResolvedValue([{
+      id: "project-1",
+      description: "결제 실패를 줄인 API",
+      ai_summary: null,
+    }]);
   });
 
   it("blocks publication and returns missing editor destinations", async () => {
@@ -71,6 +76,26 @@ describe("PATCH /api/portfolios/[id] publication readiness", () => {
     expect(prisma.portfolio.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ is_published: true }),
     }));
+  });
+
+  it("does not claim recruiter readiness for a project with no useful description", async () => {
+    (prisma.portfolioBlock.findMany as jest.Mock).mockResolvedValue(completeBlocks);
+    (prisma.rawProject.findMany as jest.Mock).mockResolvedValue([{
+      id: "project-1",
+      description: null,
+      ai_summary: null,
+    }]);
+
+    const response = await PATCH(
+      new Request("http://localhost/api/portfolios/portfolio-1", {
+        method: "PATCH",
+        body: JSON.stringify({ is_published: true }),
+      }),
+      { params: Promise.resolve({ id: "portfolio-1" }) },
+    );
+
+    expect(response.status).toBe(400);
+    expect(prisma.portfolio.update).not.toHaveBeenCalled();
   });
 
   it("accepts the spotify theme", async () => {

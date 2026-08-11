@@ -41,7 +41,7 @@ export function DiscardChangesDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent
-        className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify text-white"
+        className="bg-spotify-dark-surface border-none rounded-lg shadow-spotify text-white"
         onCloseAutoFocus={(event) => {
           // 닫기(폐기)로 닫히면 모달이 언마운트되므로 되돌리지 않는다.
           if (confirmedRef.current) {
@@ -59,7 +59,7 @@ export function DiscardChangesDialog({
             저장하지 않고 닫을까요?
           </AlertDialogTitle>
           <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
-            방금 입력한 변경 내용이 사라져요. 저장하려면 &lsquo;계속 편집&rsquo;을 누른 뒤 적용하기를 눌러주세요.
+            방금 입력한 변경 내용이 사라져요. 저장하려면 &lsquo;계속 편집&rsquo;을 누른 뒤 저장하고 닫기를 눌러주세요.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="pt-4">

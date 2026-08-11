@@ -66,6 +66,7 @@ export const ERROR_MESSAGES = {
   RSS_DISCONNECT_FAILED: "RSS 피드 연동을 해제하지 못했어요.",
   IMAGE_ONLY: "마크다운(.md) 파일만 가져올 수 있어요.",
   IMAGE_TOO_LARGE: "이미지 크기는 최대 5MB까지만 가능해요.",
+  IMAGE_TYPE_INVALID: "PNG, JPG, GIF 또는 WebP 이미지만 업로드할 수 있어요.",
   IMAGE_UPLOAD_FAILED: "이미지 업로드 중 오류가 발생했어요.",
   DOMAIN_INVALID: "올바른 도메인 형식이 아니에요. 예: www.yourdomain.com",
   DOMAIN_COPY_FAILED: "복사하지 못했어요. 값을 직접 선택해 복사해 주세요.",

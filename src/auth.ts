@@ -4,6 +4,10 @@ import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 import { encrypt } from "@/lib/utils/security";
 
+const authSecret = process.env.AUTH_SECRET;
+if (!authSecret || authSecret === "[SENSITIVE]") {
+  throw new Error("AUTH_SECRET must contain a stable secret");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -101,5 +105,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
   },
-  secret: process.env.AUTH_SECRET,
+  secret: authSecret,
 });

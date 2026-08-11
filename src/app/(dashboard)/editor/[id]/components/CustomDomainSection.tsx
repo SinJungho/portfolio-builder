@@ -28,6 +28,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
+import { normalizeCustomDomain } from "@/lib/domain";
 
 /**
  * DNS 레코드 정보를 표시한다.
@@ -103,22 +104,14 @@ export default function CustomDomainSection() {
     "unchecked" | "connected" | "pending" | "error"
   >("unchecked");
 
-  // 입력에서 호스트명만 추출하고 형식을 검증한다.
-  const normalizeDomain = (raw: string): string | null => {
-    let d = raw.trim().toLowerCase();
-    if (!d) return "";
-    d = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\.$/, "");
-    return /^(?=.{1,253}$)([a-z0-9](-?[a-z0-9])*\.)+[a-z]{2,}$/.test(d) ? d : null;
-  };
-
   // 도메인 형식을 검증한 뒤 저장한다.
   const handleConnectDomain = (raw: string) => {
-    const domain = normalizeDomain(raw);
-    if (domain === null) {
+    const domain = raw.trim() ? normalizeCustomDomain(raw) : null;
+    if (raw.trim() && !domain) {
       toast.error(errorMessage("DOMAIN_INVALID"));
       return;
     }
-    setCustomDomain(domain || null)
+    setCustomDomain(domain)
       .then(() => toast.success(domain ? "도메인이 저장됐어요." : "도메인 연결을 해제했어요."))
       .catch((err: Error) => toast.error(err.message || errorMessage("DOMAIN_SAVE_FAILED")));
   };
@@ -144,7 +137,6 @@ export default function CustomDomainSection() {
     if (!customDomain) return;
     let cancelled = false;
     fetch(`/api/domains/${customDomain}`)
-      .then((res) => res.json())
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(responseErrorMessage(data, "DOMAIN_STATUS_FAILED"));
@@ -245,7 +237,7 @@ export default function CustomDomainSection() {
                       연결 해제
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
+                  <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-lg shadow-spotify">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-[20px] font-bold text-white">
                         연결을 해제할까요?

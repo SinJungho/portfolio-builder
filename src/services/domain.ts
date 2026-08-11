@@ -1,5 +1,3 @@
-import { env } from '@/lib/env';
-
 /**
  * Vercel Domains API 서비스
  * 커스텀 도메인 추가, 삭제 및 설정 확인을 담당합니다.
@@ -8,12 +6,15 @@ export class DomainService {
   private readonly baseUrl = 'https://api.vercel.com/v9/projects';
   private readonly token = process.env.VERCEL_ACCESS_TOKEN || "";
   private readonly projectId = process.env.VERCEL_PROJECT_ID || "";
-  private readonly teamId = env.VERCEL_TEAM_ID;
+  private readonly teamId = process.env.VERCEL_TEAM_ID || "";
 
   /**
    * Vercel API 호출 공통 유틸리티
    */
   private async fetchVercel(path: string, options: RequestInit = {}) {
+    if (!this.token || !this.projectId) {
+      throw new Error('Vercel domain integration is not configured');
+    }
     const url = new URL(`${this.baseUrl}/${this.projectId}${path}`);
     if (this.teamId) {
       url.searchParams.set('teamId', this.teamId);
@@ -50,7 +51,7 @@ export class DomainService {
    * Vercel 프로젝트에서 도메인 삭제
    */
   async removeDomain(domain: string) {
-    return this.fetchVercel(`/domains/${domain}`, {
+    return this.fetchVercel(`/domains/${encodeURIComponent(domain)}`, {
       method: 'DELETE',
     });
   }
@@ -59,7 +60,7 @@ export class DomainService {
    * 도메인의 DNS 설정 및 상태 조회
    */
   async getDomainConfig(domain: string) {
-    return this.fetchVercel(`/domains/${domain}/config`, {
+    return this.fetchVercel(`/domains/${encodeURIComponent(domain)}/config`, {
       method: 'GET',
     });
   }
@@ -68,7 +69,7 @@ export class DomainService {
    * 도메인 소유권 재검증 요청
    */
   async verifyDomain(domain: string) {
-    return this.fetchVercel(`/domains/${domain}/verify`, {
+    return this.fetchVercel(`/domains/${encodeURIComponent(domain)}/verify`, {
       method: 'POST',
     });
   }

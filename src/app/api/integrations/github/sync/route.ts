@@ -3,6 +3,9 @@ import { auth } from '@/auth'
 import { RedisUnavailableError, redis, ratelimit, withRedis, JOB_KEY, JOB_TTL, type JobStatus } from '@/lib/redis'
 import { syncGithubData } from '@/lib/sync/syncGithub'
 import { apiError, logRouteError, logRouteWarning, routeError } from '@/lib/api/errors'
+import { z } from 'zod'
+
+const syncSchema = z.object({ force: z.boolean().default(false) })
 
 export const maxDuration = 60;
 
@@ -20,10 +23,13 @@ export async function POST(req: Request) {
       return apiError("RATE_LIMITED", 429)
     }
 
-    const { force = false } = await req.json().catch((error: unknown) => {
+    const body = await req.json().catch((error: unknown) => {
       logRouteWarning('/api/integrations/github/sync', 'POST', error, 'Invalid JSON');
-      return {};
+      return null;
     })
+    const parsed = syncSchema.safeParse(body)
+    if (!parsed.success) return apiError("INVALID_REQUEST", 400)
+    const { force } = parsed.data
     const jobId = `sync_${crypto.randomUUID()}`
 
     const initialStatus: JobStatus = {

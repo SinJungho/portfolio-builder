@@ -1,12 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
-import { X } from "lucide-react";
+import EditorSurface from "./EditorSurface";
 import React, { useRef, useState } from "react";
 
 interface HeroEditorModalProps {
@@ -34,6 +33,7 @@ export default function HeroEditorModal({
   const [showStats, setShowStats] = useState<boolean>(
     (initialConfig.show_github_stats as boolean) ?? true,
   );
+  const [validationError, setValidationError] = useState<string | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const isDirty =
     headline !== ((initialConfig.headline as string) || "") ||
@@ -47,9 +47,16 @@ export default function HeroEditorModal({
     titleRef,
   );
 
-  if (!isOpen) return null;
-
   const handleSave = () => {
+    const missing = [
+      !headline.trim() && "한 줄 제목",
+      !subheadline.trim() && "짧은 소개",
+    ].filter(Boolean);
+    if (missing.length > 0) {
+      setValidationError(`${missing.join(", ")}을(를) 먼저 작성해 주세요.`);
+      return;
+    }
+    setValidationError(null);
     onSave({
       ...initialConfig,
       headline,
@@ -60,34 +67,29 @@ export default function HeroEditorModal({
   };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="hero-editor-title" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={requestClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
-            type="button"
-            aria-label="소개 화면 편집 닫기"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <h3 ref={titleRef} id="hero-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            소개 화면 편집
-          </h3>
-        </div>
-        <Button
-          className="btn-pill-primary h-11 px-8 font-bold cursor-pointer"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          적용하기
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
-        <p className="rounded-2xl border border-spotify-green/20 bg-spotify-green/[0.06] px-4 py-3 text-[13px] leading-relaxed text-spotify-silver">
+    <EditorSurface
+      isOpen={isOpen}
+      onClose={requestClose}
+      onSave={handleSave}
+      isSaving={isSaving}
+      isDirty={isDirty}
+      title="소개 화면 편집"
+      closeLabel="소개 화면 편집 닫기"
+      titleId="hero-editor-title"
+      descriptionId="hero-editor-description"
+      titleRef={titleRef}
+      dialogRef={dialogRef}
+      onKeyDown={handleDialogKeyDown}
+      contentClassName="mx-auto w-full max-w-3xl space-y-8"
+    >
+        <p id="hero-editor-description" className="rounded-lg border border-spotify-green/20 bg-spotify-green/[0.06] px-4 py-3 text-[13px] leading-relaxed text-spotify-silver">
           GitHub 프로필 정보가 있으면 초안으로 채워져요. 비어 있는 내용은 아래 예시를 참고해 짧게 작성하면 돼요.
         </p>
+        {validationError && (
+          <p role="alert" className="rounded-xl border border-spotify-negative/30 bg-spotify-negative/10 px-4 py-3 text-[13px] font-bold text-spotify-negative">
+            {validationError}
+          </p>
+        )}
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="hero-headline" className="text-xs font-bold text-spotify-silver">
@@ -96,6 +98,8 @@ export default function HeroEditorModal({
             <Input
               id="hero-headline"
               value={headline}
+              aria-invalid={Boolean(validationError && !headline.trim())}
+              required
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="예: 이름 또는 직무"
               className="bg-spotify-dark-surface border-white/5 text-white h-12 rounded-xl focus:border-spotify-green"
@@ -109,6 +113,8 @@ export default function HeroEditorModal({
             <Input
               id="hero-subheadline"
               value={subheadline}
+              aria-invalid={Boolean(validationError && !subheadline.trim())}
+              required
               onChange={(e) => setSubheadline(e.target.value)}
               placeholder="직군 + 핵심 기술 + 강점 형태의 짧은 소개글"
               className="bg-spotify-dark-surface border-white/5 text-white h-12 rounded-xl focus:border-spotify-green"
@@ -130,7 +136,7 @@ export default function HeroEditorModal({
 
           <div className="flex items-center justify-between p-4 bg-spotify-dark-surface border border-white/5 rounded-xl mt-4">
             <div className="space-y-0.5">
-              <Label className="text-[14px] font-bold text-white">
+              <Label htmlFor="hero-show-stats" className="text-[14px] font-bold text-white">
                 GitHub 통계를 보여줄까요?
               </Label>
               <p className="text-[12px] text-spotify-silver">
@@ -138,14 +144,15 @@ export default function HeroEditorModal({
               </p>
             </div>
             <Switch
+              id="hero-show-stats"
+              aria-label="GitHub 통계 표시"
               checked={showStats}
               onCheckedChange={setShowStats}
               className="data-[state=checked]:bg-spotify-green cursor-pointer"
             />
           </div>
         </div>
-      </div>
       <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
-    </div>
+    </EditorSurface>
   );
 }

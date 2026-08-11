@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+export const PortfolioThemeSchema = z.enum([
+  "spotify",
+  "minimal",
+  "midnight",
+  "ocean",
+  "forest",
+  "sunset",
+  "minimalist",
+  "creative",
+  "corporate",
+  "dark",
+  "pastel",
+  "tech",
+]);
+
 /**
  * 포트폴리오 디자인 토큰 스키마
  * 테마 프리셋을 오버라이드하는 세부 디자인 시스템 값
@@ -7,7 +22,7 @@ import { z } from "zod";
 export const DesignTokenSchema = z.object({
   primaryColor: z
     .string()
-    .regex(/^#[0-9A-F]{6}$/i, "유효한 HEX 색상 코드여야 합니다 (예: #3182F6)")
+    .regex(/^#[0-9A-F]{6}$/i, "유효한 HEX 색상 코드여야 합니다 (예: #1ED760)")
     .optional(),
   fontFamily: z
     .enum(["inter", "pretendard", "fira-code", "playfair"])
@@ -18,7 +33,7 @@ export const DesignTokenSchema = z.object({
   spacing: z
     .enum(["compact", "normal", "relaxed"])
     .optional(),
-  customCss: z.string().optional(),
+  customCss: z.string().max(20_000).optional(),
 });
 
 /**
@@ -40,10 +55,13 @@ export const BlockConfigSchema = z.discriminatedUnion("block_type", [
     config: z.object({
       layout: z.enum(["grid", "list", "masonry"]).default("grid"),
       columns: z.number().min(1).max(3).default(2),
-      project_ids: z.array(z.string().uuid()).max(12),
+      project_ids: z.array(z.string().uuid()).max(3),
       show_tech_stack: z.boolean().default(true),
       /** Step 3.1: 프로젝트별 수동 입력 설명 저장 */
-      custom_descriptions: z.record(z.string(), z.string()).optional(),
+      custom_descriptions: z
+        .record(z.string().uuid(), z.string().max(5_000))
+        .refine((descriptions) => Object.keys(descriptions).length <= 3)
+        .optional(),
     }),
   }),
   z.object({
@@ -53,7 +71,7 @@ export const BlockConfigSchema = z.discriminatedUnion("block_type", [
       skills: z
         .array(
           z.object({
-            name: z.string(),
+            name: z.string().trim().min(1).max(50),
             level: z.number().min(0).max(100),
           })
         )
@@ -69,7 +87,7 @@ export const BlockConfigSchema = z.discriminatedUnion("block_type", [
         "medium",
         "custom_rss",
       ]),
-      max_items: z.number().min(1).max(6).default(3),
+      max_items: z.number().int().min(1).max(6).default(3),
       show_thumbnail: z.boolean().default(true),
     }),
   }),

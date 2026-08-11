@@ -6,6 +6,7 @@ import { resolveTheme } from "@/preview/themes";
 import { portfolioService } from "@/services/portfolio";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { serializeJsonLd } from "@/lib/json-ld";
 
 export const revalidate = 60;
 
@@ -17,7 +18,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const portfolio = await prisma.portfolio.findFirst({
-    where: { slug },
+    where: { slug: { equals: slug, mode: "insensitive" } },
     select: {
       title: true,
       slug: true,
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${portfolio.user?.name || slug} 포트폴리오`,
     description:
       portfolio.seo_description ||
-      `${portfolio.user?.name || slug}님의 개발 포트폴리오 — 프로젝트와 기술 스택을 한눈에 소개합니다.`,
+      `${portfolio.user?.name || slug}님의 개발 포트폴리오. 프로젝트와 기술 스택을 한눈에 소개합니다.`,
     openGraph: {
       images: portfolio.og_image_url ? [portfolio.og_image_url] : [],
     },
@@ -50,8 +51,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PortfolioPage({ params }: Props) {
-  const { slug } = await params;
+export default async function PortfolioPage({ params, searchParams }: Props) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const isExporting = query.export === "true";
 
   // 포트폴리오 데이터와 모든 블록 구성 요소를 한 번에 가공하여 조회합니다. (N+1 쿼리 최적화 내장)
   const data = await portfolioService.getPopulatedPortfolioBySlug(slug);
@@ -65,19 +67,20 @@ export default async function PortfolioPage({ params }: Props) {
 
   return (
     <div
-      className="flex flex-col min-h-screen"
+      className="flex min-h-[100dvh] flex-col"
       style={{
-        backgroundColor: t.bg,
-        color: t.text,
+        backgroundColor: isExporting ? "#ffffff" : t.bg,
+        color: isExporting ? "#1f2937" : t.text,
       }}
     >
-      <AnalyticsTracker portfolioId={portfolio.id} />
+      {isExporting && <title>{`${portfolio.user?.name || slug} 개발자 이력서`}</title>}
+      {!isExporting && <AnalyticsTracker portfolioId={portfolio.id} />}
 
       {/* 포트폴리오 검색 엔진 및 크롤러용 JSON-LD 구조화 데이터 */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             "@context": "https://schema.org",
             "@type": "Person",
             name: portfolio.user?.name || slug,
@@ -97,9 +100,10 @@ export default async function PortfolioPage({ params }: Props) {
           designTokens={portfolio.design_tokens as Record<string, unknown>}
           slug={portfolio.slug}
           portfolioId={portfolio.id}
+          ownerName={portfolio.user?.name}
+          portfolioTitle={portfolio.title}
         />
       </main>
     </div>
   );
 }
-

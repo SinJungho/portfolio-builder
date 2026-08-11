@@ -164,16 +164,16 @@ export default function AnalyticsPage() {
             <Skeleton className="h-9 w-56 max-w-full bg-white/10" />
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Skeleton className="h-12 w-[220px] rounded-2xl bg-white/5" />
+            <Skeleton className="h-12 w-[220px] rounded-lg bg-white/5" />
             <Skeleton className="h-12 w-40 rounded-xl bg-white/5" />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Skeleton className="h-32 rounded-2xl bg-white/5" />
-          <Skeleton className="h-32 rounded-2xl bg-white/5" />
-          <Skeleton className="h-32 rounded-2xl bg-white/5" />
+          <Skeleton className="h-32 rounded-lg bg-white/5" />
+          <Skeleton className="h-32 rounded-lg bg-white/5" />
+          <Skeleton className="h-32 rounded-lg bg-white/5" />
         </div>
-        <Skeleton className="h-[400px] w-full rounded-2xl bg-white/5" />
+        <Skeleton className="h-[400px] w-full rounded-lg bg-white/5" />
       </div>
     );
   }
@@ -181,8 +181,8 @@ export default function AnalyticsPage() {
   if (!portfolios || portfolios.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center">
-        <div className="p-8 bg-spotify-dark-surface border border-white/5 rounded-3xl max-w-md shadow-spotify flex flex-col items-center space-y-6 animate-in fade-in duration-500">
-          <div className="p-5 bg-spotify-mid-dark rounded-3xl border border-white/5">
+        <div className="p-8 bg-spotify-dark-surface border border-white/5 rounded-lg max-w-md shadow-spotify flex flex-col items-center space-y-6 animate-in fade-in duration-500">
+          <div className="p-5 bg-spotify-mid-dark rounded-lg border border-white/5">
             <Layout className="w-12 h-12 text-spotify-green" />
           </div>
           <div className="space-y-2">
@@ -214,10 +214,13 @@ export default function AnalyticsPage() {
             value={selectedPortfolioId}
             onValueChange={setSelectedPortfolioId}
           >
-            <SelectTrigger className="w-[220px] h-12 rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md font-bold text-white hover:bg-spotify-mid-dark focus:ring-1 focus:ring-spotify-green focus:border-spotify-green">
+            <SelectTrigger
+              aria-label="분석할 포트폴리오 선택"
+              className="w-[220px] h-12 rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md font-bold text-white hover:bg-spotify-mid-dark focus:ring-1 focus:ring-spotify-green focus:border-spotify-green"
+            >
               <SelectValue placeholder="포트폴리오 선택" />
             </SelectTrigger>
-            <SelectContent className="rounded-2xl border-white/5 bg-spotify-dark-surface text-white shadow-spotify">
+            <SelectContent className="rounded-lg border-white/5 bg-spotify-dark-surface text-white shadow-spotify">
               {portfolios.map((p) => (
                 <SelectItem
                   key={p.id}
@@ -269,16 +272,16 @@ export default function AnalyticsPage() {
 
       {isSummaryLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-32 rounded-2xl bg-white/5" />
-          <Skeleton className="h-32 rounded-2xl bg-white/5" />
-          <Skeleton className="h-32 rounded-2xl bg-white/5" />
-          <Skeleton className="h-[400px] md:col-span-3 rounded-2xl bg-white/5" />
+          <Skeleton className="h-32 rounded-lg bg-white/5" />
+          <Skeleton className="h-32 rounded-lg bg-white/5" />
+          <Skeleton className="h-32 rounded-lg bg-white/5" />
+          <Skeleton className="h-[400px] md:col-span-3 rounded-lg bg-white/5" />
         </div>
       ) : summary ? (
         hasAnalyticsData ? (
           <div className="space-y-10" aria-busy={isSummaryFetching}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md">
+              <Card className="rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md">
                 <CardContent className="p-8 space-y-2">
                   <p className="text-[13px] font-bold text-spotify-silver">
                     전체 조회
@@ -289,7 +292,7 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md">
+              <Card className="rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md">
                 <CardContent className="p-8 space-y-2">
                   <p className="text-[13px] font-bold text-spotify-silver">
                     순 방문자
@@ -300,7 +303,7 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md">
+              <Card className="rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md">
                 <CardContent className="p-8 space-y-2">
                   <p className="text-[13px] font-bold text-spotify-silver">
                     링크 클릭
@@ -312,7 +315,7 @@ export default function AnalyticsPage() {
               </Card>
             </div>
 
-            <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
+            <Card className="rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
               <CardHeader className="p-8 pb-0">
                 <div>
                   <CardTitle
@@ -351,12 +354,12 @@ export default function AnalyticsPage() {
                           >
                             <stop
                               offset="5%"
-                              stopColor="#ffffff"
+                              stopColor="var(--color-spotify-near-white)"
                               stopOpacity={0.12}
                             />
                             <stop
                               offset="95%"
-                              stopColor="#ffffff"
+                              stopColor="var(--color-spotify-near-white)"
                               stopOpacity={0}
                             />
                           </linearGradient>
@@ -364,7 +367,7 @@ export default function AnalyticsPage() {
                         <CartesianGrid
                           strokeDasharray="3 3"
                           vertical={false}
-                          stroke="rgba(255,255,255,0.05)"
+                          stroke="var(--border)"
                         />
                         <XAxis
                           dataKey="date"
@@ -373,7 +376,7 @@ export default function AnalyticsPage() {
                           tick={{
                             fontSize: 11,
                             fontWeight: 700,
-                            fill: "#b3b3b3",
+                            fill: "var(--color-spotify-silver)",
                           }}
                           dy={10}
                           tickFormatter={(val: string) =>
@@ -386,29 +389,28 @@ export default function AnalyticsPage() {
                           tick={{
                             fontSize: 11,
                             fontWeight: 700,
-                            fill: "#b3b3b3",
+                            fill: "var(--color-spotify-silver)",
                           }}
                           dx={-10}
                         />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "#181818",
-                            borderRadius: "20px",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                            backgroundColor: "var(--color-spotify-dark-surface)",
+                            borderRadius: "var(--radius)",
+                            border: "1px solid var(--border)",
                             padding: "12px 16px",
                           }}
                           labelStyle={{
                             marginBottom: "4px",
                             fontWeight: 800,
-                            color: "#ffffff",
+                            color: "var(--color-spotify-near-white)",
                           }}
-                          itemStyle={{ fontWeight: 700, color: "#ffffff" }}
+                          itemStyle={{ fontWeight: 700, color: "var(--color-spotify-near-white)" }}
                         />
                         <Area
                           type="monotone"
                           dataKey="views"
-                          stroke="#ffffff"
+                          stroke="var(--color-spotify-near-white)"
                           strokeWidth={2}
                           fillOpacity={1}
                           fill="url(#colorViews)"
@@ -448,7 +450,7 @@ export default function AnalyticsPage() {
 
             {(summary.topBlocks[0] || summary.topReferrers[0]) && (
               <section
-                className="flex flex-col gap-4 rounded-2xl border border-spotify-green/20 bg-spotify-green/5 p-6 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-4 rounded-lg border border-spotify-green/20 bg-spotify-green/5 p-6 sm:flex-row sm:items-center sm:justify-between"
                 aria-label="다음 추천 작업"
               >
                 <div>
@@ -475,7 +477,7 @@ export default function AnalyticsPage() {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
+              <Card className="rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
                 <CardHeader className="p-8">
                   <CardTitle className="text-xl font-bold text-white">
                     인기 섹션 (클릭 수)
@@ -540,7 +542,7 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
+              <Card className="rounded-lg bg-spotify-dark-surface border-white/5 shadow-spotify-md overflow-hidden">
                 <CardHeader className="p-8">
                   <CardTitle className="text-xl font-bold text-white">
                     주요 유입 경로
@@ -556,7 +558,7 @@ export default function AnalyticsPage() {
                         (ref: { referrer: string; count: number }) => (
                           <div
                             key={ref.referrer}
-                            className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors group"
+                            className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
                           >
                             <div className="flex items-center gap-3">
                               <div className="bg-spotify-near-black p-2 rounded-lg shadow-sm">
@@ -639,11 +641,9 @@ export default function AnalyticsPage() {
               )}
             </div>
             <ul className="mt-8 space-y-3 border-t border-white/5 pt-6 text-[14px] font-medium leading-relaxed text-spotify-silver">
-              <li>
-                {portfolioState === "published"
-                  ? "이력서나 지원서에 공개 링크를 넣어 첫 방문을 만들어 보세요."
-                  : "에디터에서 공개 준비를 마치면 지원서에 넣을 링크를 만들 수 있어요."}
-              </li>
+              {portfolioState === "published" && (
+                <li>이력서나 지원서에 공개 링크를 넣어 첫 방문을 만들어 보세요.</li>
+              )}
               <li>
                 방문이 쌓이면 조회 수, 유입 경로, 관심을 받은 섹션을 여기서
                 확인할 수 있어요.

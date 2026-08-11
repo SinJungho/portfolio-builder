@@ -56,7 +56,7 @@ export const ProjectSelectionItem = React.memo(function ProjectSelectionItem({
     <Card
       onClick={() => onToggle(project.id)}
       className={`
-        relative p-6 cursor-pointer rounded-[28px] border transition-all duration-300 select-none
+        relative p-6 cursor-pointer rounded-lg border transition-all duration-300 select-none
         ${
           isSelected
             ? "border-spotify-green bg-spotify-green/5 ring-1 ring-spotify-green"
@@ -87,7 +87,7 @@ export const ProjectSelectionItem = React.memo(function ProjectSelectionItem({
 
         <div className="flex flex-wrap gap-2 pt-2">
           {project.language && (
-            <span className="px-2.5 py-1 rounded-lg bg-spotify-mid-dark border border-white/5 text-[11px] font-bold text-spotify-silver uppercase tracking-wider">
+            <span className="px-2.5 py-1 rounded-lg bg-spotify-mid-dark border border-white/5 text-[11px] font-bold text-spotify-silver ">
               {project.language}
             </span>
           )}
@@ -108,7 +108,7 @@ export const ProjectSelectionItem = React.memo(function ProjectSelectionItem({
             className="pt-4 border-t border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
-            <Label className="text-[11px] font-bold text-spotify-green uppercase tracking-wider flex items-center gap-2">
+            <Label className="text-[11px] font-bold text-spotify-green  flex items-center gap-2">
               나만의 프로젝트 설명 쓰기
               <span className="px-1.5 py-0.5 rounded-md bg-spotify-green/10 text-spotify-green text-[10px]">
                 마크다운 지원

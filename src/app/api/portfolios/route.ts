@@ -3,10 +3,12 @@ import { auth } from "@/auth";
 import { apiError, logRouteWarning, routeError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { PortfolioThemeSchema } from "@/schemas/portfolio";
+import { normalizePortfolioSlug } from "@/lib/portfolio-url";
 
 const createPortfolioSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/).min(3).max(50).optional(),
-  theme: z.string().optional(),
+  theme: PortfolioThemeSchema.optional(),
 });
 
 async function getUserId() {
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
 
     const json = await req.json().catch((error: unknown) => {
       logRouteWarning('/api/portfolios', 'POST', error, 'Invalid JSON');
-      return {};
+      return null;
     });
     const parseResult = createPortfolioSchema.safeParse(json);
     if (!parseResult.success) {
@@ -40,13 +42,16 @@ export async function POST(req: Request) {
       return apiError("USER_NOT_FOUND", 404);
     }
 
-    const baseSlug = requestedSlug || dbUser.github_login || `user-${userId.substring(0, 5)}`;
+    const preferredSlug = normalizePortfolioSlug(requestedSlug || dbUser.github_login || "");
+    const baseSlug = preferredSlug.length >= 3
+      ? preferredSlug
+      : `user-${userId.substring(0, 5).toLowerCase()}`;
     let finalSlug: string | null = null;
 
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
-      const existing = await prisma.portfolio.findUnique({
-        where: { slug: candidate },
+      const existing = await prisma.portfolio.findFirst({
+        where: { slug: { equals: candidate, mode: "insensitive" } },
       });
 
       if (!existing) {
@@ -98,7 +103,7 @@ export async function GET() {
     });
     const availableProjects = await prisma.rawProject.findMany({
       where: { user_id: userId, is_fork: false },
-      select: { id: true },
+      select: { id: true, description: true, ai_summary: true },
     });
 
     const dbUser = await prisma.user.findUnique({
@@ -106,16 +111,25 @@ export async function GET() {
       select: { github_bio_verified: true }
     });
     
-    const integration = await prisma.integration.findFirst({
-      where: { user_id: userId, provider: "github" },
-      orderBy: { synced_at: "desc" }
-    });
+    const [integration, account] = await Promise.all([
+      prisma.integration.findFirst({
+        where: { user_id: userId, provider: "github", is_active: true },
+        orderBy: { synced_at: "desc" },
+      }),
+      prisma.account.findFirst({
+        where: { userId, provider: "github" },
+        select: { access_token: true },
+      }),
+    ]);
 
     return NextResponse.json({
       portfolios,
       available_project_ids: availableProjects.map((project) => project.id),
+      described_project_ids: availableProjects
+        .filter((project) => Boolean(project.description?.trim() || project.ai_summary?.trim()))
+        .map((project) => project.id),
       user: dbUser,
-      github_connected: Boolean(integration),
+      github_connected: Boolean(integration?.access_token || account?.access_token),
       github_synced_at: integration?.synced_at || null,
     });
   } catch (error: unknown) {

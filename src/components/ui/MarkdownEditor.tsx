@@ -117,16 +117,16 @@ export default function MarkdownEditor({
 
   return (
     <div
-      className={`flex flex-col border border-black/5 rounded-[24px] overflow-hidden bg-white shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-100 ${className}`}
+      className={`flex flex-col border border-border rounded-xl overflow-hidden bg-card transition-all duration-300 focus-within:ring-2 focus-within:ring-ring/40 ${className}`}
     >
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-black/5 bg-gray-50/50">
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border bg-muted/40">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveTab("write")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
               activeTab === "write"
-                ? "bg-white text-[#3182F6] shadow-sm"
-                : "text-gray-400 hover:text-gray-600"
+                ? "bg-secondary text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -136,8 +136,8 @@ export default function MarkdownEditor({
             onClick={() => setActiveTab("preview")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
               activeTab === "preview"
-                ? "bg-white text-[#3182F6] shadow-sm"
-                : "text-gray-400 hover:text-gray-600"
+                ? "bg-secondary text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Eye className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function MarkdownEditor({
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center gap-1.5 rounded-xl text-gray-500 hover:text-[#3182F6] hover:bg-blue-50 text-[12px] font-bold"
+            className="flex items-center gap-1.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-secondary text-[12px] font-bold"
             onClick={() => mdInputRef.current?.click()}
           >
             <Upload className="w-3.5 h-3.5" />
@@ -167,7 +167,7 @@ export default function MarkdownEditor({
             variant="ghost"
             size="sm"
             disabled={isUploading}
-            className="flex items-center gap-1.5 rounded-xl text-gray-500 hover:text-[#3182F6] hover:bg-blue-50 text-[12px] font-bold"
+            className="flex items-center gap-1.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-secondary text-[12px] font-bold"
             onClick={() => fileInputRef.current?.click()}
           >
             {isUploading ? (
@@ -195,25 +195,25 @@ export default function MarkdownEditor({
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
             placeholder={placeholder}
-            className="w-full flex-1 p-5 text-[15px] bg-white outline-none resize-none leading-relaxed placeholder:text-gray-300"
+            className="w-full flex-1 p-5 text-[15px] bg-card text-foreground outline-none resize-none leading-relaxed placeholder:text-muted-foreground"
           />
         ) : (
-          <div className="w-full flex-1 p-5 prose prose-sm max-w-none prose-blue overflow-y-auto">
+          <div className="w-full flex-1 p-5 prose prose-sm prose-invert max-w-none overflow-y-auto">
             {value ? (
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
             ) : (
-              <p className="text-gray-300 italic">미리볼 내용이 없습니다.</p>
+              <p className="text-muted-foreground italic">미리볼 내용이 없습니다.</p>
             )}
           </div>
         )}
       </div>
 
-      <div className="px-5 py-3 border-t border-black/5 bg-gray-50/30 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
-          <Info className="w-3.5 h-3.5 text-gray-300" />
+      <div className="px-5 py-3 border-t border-border bg-muted/30 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
+          <Info className="w-3.5 h-3.5 text-muted-foreground" />
           마크다운(MD) 및 이미지 드래그&드롭 지원
         </div>
-        <div className="text-[11px] text-gray-400 font-bold uppercase tracking-tight">
+        <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-spotify">
           최대 용량 5MB
         </div>
       </div>

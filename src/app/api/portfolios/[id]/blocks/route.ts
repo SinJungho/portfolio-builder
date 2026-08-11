@@ -5,12 +5,17 @@ import { prisma } from "@/lib/prisma";
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { BlockConfigSchema } from "@/schemas/portfolio";
 
 const reorderBlocksSchema = z.object({
   blocks: z.array(z.object({
-    id: z.string(),
-    position: z.number(),
-  })),
+    id: z.string().uuid(),
+    position: z.number().int().nonnegative(),
+  })).max(20),
+});
+
+const createBlockSchema = z.object({
+  block_type: z.enum(["hero", "project_grid", "skills", "blog_feed", "contact"]),
 });
 
 export async function PUT(
@@ -38,6 +43,17 @@ export async function PUT(
     });
 
     const validBlockIds = new Set(existingBlocks.map((block) => block.id));
+    const requestedBlockIds = new Set(data.blocks.map((block) => block.id));
+    const positions = new Set(data.blocks.map((block) => block.position));
+    const hasCompleteBlockSet =
+      requestedBlockIds.size === validBlockIds.size &&
+      [...validBlockIds].every((blockId) => requestedBlockIds.has(blockId));
+    const hasContiguousPositions =
+      positions.size === data.blocks.length &&
+      data.blocks.every((_, index) => positions.has(index));
+    if (!hasCompleteBlockSet || !hasContiguousPositions) {
+      return apiError("INVALID_REQUEST", 400);
+    }
     for (const block of data.blocks) {
       if (!validBlockIds.has(block.id)) {
         return apiError("BLOCK_NOT_FOUND", 400);
@@ -72,18 +88,19 @@ export async function POST(
     const { error, portfolio } = await validatePortfolioOwnership(id);
     if (error) return error;
 
-    const body = await req.json();
-    const { block_type } = body;
+    const parsed = createBlockSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return apiError("INVALID_BLOCK_TYPE", 400);
+    const { block_type } = parsed.data;
 
-    if (!["hero", "project_grid", "skills", "blog_feed", "contact"].includes(block_type)) {
-      return apiError("INVALID_BLOCK_TYPE", 400);
-    }
-
-    const maxPositionBlock = await prisma.portfolioBlock.findFirst({
-      where: { portfolio_id: id },
-      orderBy: { position: 'desc' },
-      select: { position: true }
-    });
+    const [maxPositionBlock, blockCount] = await Promise.all([
+      prisma.portfolioBlock.findFirst({
+        where: { portfolio_id: id },
+        orderBy: { position: 'desc' },
+        select: { position: true }
+      }),
+      prisma.portfolioBlock.count({ where: { portfolio_id: id } }),
+    ]);
+    if (blockCount >= 20) return apiError("INVALID_REQUEST", 400);
     
     const nextPosition = maxPositionBlock ? maxPositionBlock.position + 1 : 0;
 
@@ -106,12 +123,15 @@ export async function POST(
     if (block_type === 'blog_feed') defaultConfig = { integration_provider: "velog", max_items: 4, show_thumbnail: true };
     if (block_type === 'contact') defaultConfig = { github_url: "", email: "", linkedin_url: "", website_url: "" };
 
+    const validatedConfig = BlockConfigSchema.safeParse({ block_type, config: defaultConfig });
+    if (!validatedConfig.success) return apiError("INVALID_REQUEST", 400);
+
     const newBlock = await prisma.portfolioBlock.create({
       data: {
         portfolio_id: id,
         block_type,
         position: nextPosition,
-        config: defaultConfig,
+        config: validatedConfig.data.config,
         is_visible: true,
         is_ai_generated: false,
       }

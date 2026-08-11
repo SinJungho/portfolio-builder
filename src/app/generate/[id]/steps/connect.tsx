@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Github, LogIn } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
@@ -70,10 +71,10 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
     return (
       <section
         aria-labelledby="connect-error-title"
-        className="flex flex-col items-center gap-8 text-center max-w-md w-full bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
+        className="flex flex-col items-center gap-8 text-center max-w-md w-full bg-spotify-dark-surface p-8 md:p-10 rounded-lg border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
       >
         <div className="relative">
-          <div className="w-20 h-20 bg-spotify-negative/10 rounded-[28px] flex items-center justify-center">
+          <div className="w-20 h-20 bg-spotify-negative/10 rounded-lg flex items-center justify-center">
             {isAuthError ? (
               <LogIn className="w-10 h-10 text-spotify-negative" />
             ) : (
@@ -106,15 +107,15 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
         >
           {isAuthError ? (
             <button
-              onClick={() => (window.location.href = "/api/auth/signin/github")}
-              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+              onClick={() => signIn("github", { callbackUrl: `/generate/${portfolioId}?step=connect` })}
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
             >
               GitHub 다시 연동하기
             </button>
           ) : (
             <button
               onClick={() => window.location.reload()}
-              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
             >
               다시 시도하기
             </button>
@@ -122,7 +123,7 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
 
           <button
             onClick={() => router.push("/")}
-            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold uppercase tracking-spotify transition-all cursor-pointer"
+            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold transition-all cursor-pointer"
           >
             대시보드로 돌아가기
           </button>
@@ -134,12 +135,12 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
   return (
     <section
       aria-labelledby="connect-title"
-      className="flex flex-col items-center gap-7 w-full max-w-md bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
+      className="flex flex-col items-center gap-7 w-full max-w-md bg-spotify-dark-surface p-8 md:p-10 rounded-lg border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
     >
       <style dangerouslySetInnerHTML={{ __html: CONNECT_MOTION_CSS }} />
 
       <div className="relative">
-        <div className="w-20 h-20 bg-spotify-green/10 rounded-[28px] flex items-center justify-center">
+        <div className="w-20 h-20 bg-spotify-green/10 rounded-lg flex items-center justify-center">
           <Github className="w-10 h-10 text-spotify-green" />
         </div>
         <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-spotify-dark-surface rounded-full flex items-center justify-center border border-white/5 shadow-md">

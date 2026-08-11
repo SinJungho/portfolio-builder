@@ -3,6 +3,10 @@ import { auth } from '@/auth';
 import { rssService } from '@/services/rss';
 import { prisma } from '@/lib/prisma';
 import { apiError, logRouteWarning, routeError } from '@/lib/api/errors';
+import { z } from 'zod';
+
+const connectSchema = z.object({ url: z.string().url().max(2048) });
+const disconnectSchema = z.object({ integrationId: z.string().uuid() });
 
 export async function POST(req: Request) {
   try {
@@ -11,12 +15,11 @@ export async function POST(req: Request) {
       return apiError("UNAUTHORIZED", 401);
     }
 
-    const body = await req.json();
-    const { url } = body;
-
-    if (!url || typeof url !== 'string') {
+    const parsed = connectSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
       return apiError("RSS_INVALID_URL", 400);
     }
+    const { url } = parsed.data;
 
     try {
       await rssService.parseFeed(url);
@@ -68,42 +71,19 @@ export async function DELETE(req: Request) {
       return apiError("UNAUTHORIZED", 401);
     }
 
-    let integrationId: string | undefined;
-    try {
-      const body = await req.json();
-      integrationId = body.integrationId;
-    } catch (error) {
-      logRouteWarning('/api/integrations/rss', 'DELETE', error, 'Invalid JSON');
+    const parsed = disconnectSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return apiError("INVALID_REQUEST", 400);
+
+    const integration = await prisma.integration.findUnique({
+      where: { id: parsed.data.integrationId },
+    });
+
+    if (!integration || integration.user_id !== session.user.id) {
+      return apiError("INTEGRATION_NOT_FOUND", 404);
     }
 
-    if (integrationId) {
-      // 지정한 연동을 삭제한다.
-      const integration = await prisma.integration.findUnique({
-        where: { id: integrationId },
-      });
-
-      if (!integration || integration.user_id !== session.user.id) {
-        return apiError("INTEGRATION_NOT_FOUND", 403);
-      }
-
-      await prisma.integration.delete({
-        where: { id: integrationId },
-      });
-
-      return NextResponse.json({ success: true, message: 'Integration disconnected successfully' });
-    } else {
-      // 사용자의 모든 RSS 연동을 삭제한다.
-      const providers = ['tistory', 'velog', 'medium', 'custom_rss'];
-      
-      await prisma.integration.deleteMany({
-        where: {
-          user_id: session.user.id,
-          provider: { in: providers },
-        },
-      });
-
-      return NextResponse.json({ success: true, message: 'All RSS integrations disconnected successfully' });
-    }
+    await prisma.integration.delete({ where: { id: integration.id } });
+    return NextResponse.json({ success: true, message: 'Integration disconnected successfully' });
   } catch (error: unknown) {
     return routeError('/api/integrations/rss', 'DELETE', error);
   }

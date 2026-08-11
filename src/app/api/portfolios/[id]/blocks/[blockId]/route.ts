@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
 import { apiError, logRouteError, logRouteWarning, routeError } from "@/lib/api/errors";
 import { z } from "zod";
+import { BlockConfigSchema } from "@/schemas/portfolio";
 
 const updateBlockSchema = z.object({
   is_visible: z.boolean().optional(),
   config: z.record(z.string(), z.unknown()).optional(),
-});
+}).refine((value) => value.is_visible !== undefined || value.config !== undefined);
 
 export async function PATCH(
   req: Request,
@@ -41,7 +42,18 @@ export async function PATCH(
 
     const updateData: Record<string, unknown> = {};
     if (data.is_visible !== undefined) updateData.is_visible = data.is_visible;
-    if (data.config !== undefined) updateData.config = data.config;
+    if (data.config !== undefined) {
+      const currentConfig = block.config && typeof block.config === "object" && !Array.isArray(block.config)
+        ? block.config as Record<string, unknown>
+        : {};
+      const mergedConfig = { ...currentConfig, ...data.config };
+      const parsedConfig = BlockConfigSchema.safeParse({
+        block_type: block.block_type,
+        config: mergedConfig,
+      });
+      if (!parsedConfig.success) return apiError("INVALID_REQUEST", 400);
+      updateData.config = parsedConfig.data.config;
+    }
 
     const updatedBlock = await prisma.portfolioBlock.update({
       where: { id: blockId },
@@ -89,22 +101,19 @@ export async function DELETE(
       return apiError("BLOCK_NOT_FOUND", 404);
     }
 
-    await prisma.portfolioBlock.delete({
-      where: { id: blockId },
-    });
-
-    // 남은 블록의 순서를 다시 계산한다.
     const remainingBlocks = await prisma.portfolioBlock.findMany({
-      where: { portfolio_id: id },
+      where: { portfolio_id: id, id: { not: blockId } },
       orderBy: { position: "asc" },
     });
-
-    for (let i = 0; i < remainingBlocks.length; i++) {
-      await prisma.portfolioBlock.update({
-        where: { id: remainingBlocks[i].id },
-        data: { position: i },
-      });
-    }
+    await prisma.$transaction([
+      prisma.portfolioBlock.delete({ where: { id: blockId } }),
+      ...remainingBlocks.map((remainingBlock, position) =>
+        prisma.portfolioBlock.update({
+          where: { id: remainingBlock.id },
+          data: { position },
+        }),
+      ),
+    ]);
 
     if (portfolio?.slug) {
       try {

@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-spotify-near-black">
+    <div className="flex min-h-[100dvh] flex-col bg-spotify-near-black">
       <Sidebar user={session.user} />
       <div className="flex flex-col flex-1 md:pl-64">
         <DashboardHeader user={session.user} />
