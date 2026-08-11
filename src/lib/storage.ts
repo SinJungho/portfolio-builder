@@ -14,6 +14,17 @@ import { getEnv } from "./env";
 
 let s3Client: S3Client | null = null;
 
+export function publicStorageUrl(endpoint: string, bucket: string, key: string): string {
+  const url = new URL(endpoint);
+  if (url.hostname.endsWith(".storage.supabase.co")) {
+    url.hostname = url.hostname.replace(".storage.supabase.co", ".supabase.co");
+  }
+  const objectPath = [bucket, ...key.split("/")].map(encodeURIComponent).join("/");
+  url.pathname = `/storage/v1/object/public/${objectPath}`;
+  url.search = "";
+  return url.toString();
+}
+
 export function getStorageClient() {
   const env = getEnv();
   
@@ -49,7 +60,7 @@ export async function uploadFile(
   const client = getStorageClient();
   const env = getEnv();
   
-  if (!client || !env.SUPABASE_STORAGE_BUCKET) {
+  if (!client || !env.SUPABASE_STORAGE_ENDPOINT || !env.SUPABASE_STORAGE_BUCKET) {
     throw new Error("STORAGE_NOT_CONFIGURED");
   }
 
@@ -64,8 +75,9 @@ export async function uploadFile(
     })
   );
 
-  // Supabase S3 URL format: 
-  // [endpoint]/[bucket]/[key]
-  const publicUrl = `${env.SUPABASE_STORAGE_ENDPOINT}/${env.SUPABASE_STORAGE_BUCKET}/${key}`;
-  return publicUrl;
+  return publicStorageUrl(
+    env.SUPABASE_STORAGE_ENDPOINT,
+    env.SUPABASE_STORAGE_BUCKET,
+    key,
+  );
 }

@@ -19,12 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
 import { usePortfolioStore } from "@/stores/portfolioStore";
-
-const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white shrink-0">
-    <span className="text-[15px] font-bold leading-none">P</span>
-  </div>
-);
+import BrandLogo from "@/components/common/BrandLogo";
 
 export function DashboardHeader({ user }: { user?: { name?: string | null; email?: string | null; image?: string | null } }) {
   const pathname = usePathname();
@@ -71,9 +66,8 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
             </div>
           )}
 
-          <Link href="/" className={cn("flex items-center gap-3 hover:opacity-80 transition-all", isGenerateFlow ? "hidden sm:flex" : "md:hidden")}>
-            <LogoMark />
-            <span className="text-[20px] font-bold tracking-tight text-white">PortfolioForge</span>
+          <Link href="/" className={cn("flex items-center gap-3 rounded-full no-underline transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-4 focus-visible:ring-offset-spotify-near-black", isGenerateFlow ? "hidden sm:flex" : "md:hidden")}>
+            <BrandLogo />
           </Link>
 
           {!isGenerateFlow && <div className="h-4 w-px bg-white/10 mx-4 hidden lg:block" />}
@@ -139,7 +133,7 @@ export function DashboardHeader({ user }: { user?: { name?: string | null; email
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60 mt-2 bg-spotify-mid-dark border-none rounded-2xl p-2 shadow-spotify">
+              <DropdownMenuContent align="end" className="w-60 mt-2 bg-spotify-mid-dark border-none rounded-lg p-2 shadow-spotify">
                 <DropdownMenuLabel className="font-normal px-3 py-3">
                   <div className="flex flex-col space-y-1">
                     <p className="text-[15px] font-bold text-white">{user?.name || "사용자"}</p>

@@ -1,45 +1,19 @@
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
-import { LinkedInIcon, XIcon } from "@/components/icons";
 
-function GitHubIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.51 11.51 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-    </svg>
-  );
-}
-
+// 목적지가 없는 항목은 싣지 않는다. 라벨만 있고 `#`를 가리키는 링크는
+// 정보가 아니라 소음이고, 누르면 사용자가 자기 위치를 잃는다.
+// 열이 하나뿐이면 제목이 하는 일이 없다. /features를 지우면서 "제품" 열이 한 항목만
+// 남아 "시작하기"와 합쳤다.
 const sitemap = [
   {
-    title: "제품",
+    title: "바로가기",
     links: [
-      { label: "기능", href: "#" },
-      { label: "템플릿", href: "#" },
-      { label: "변경 로그", href: "#" },
+      { label: "템플릿", href: "/templates" },
+      { label: "포트폴리오 만들기", href: "/dashboard" },
+      { label: "대시보드", href: "/dashboard" },
     ],
   },
-  {
-    title: "자료",
-    links: [
-      { label: "문서", href: "#" },
-      { label: "블로그", href: "#" },
-      { label: "지원", href: "#" },
-    ],
-  },
-  {
-    title: "회사",
-    links: [
-      { label: "소개", href: "#" },
-      { label: "문의", href: "#" },
-    ],
-  },
-] as const;
-
-const socials = [
-  { label: "GitHub", href: "#", Icon: GitHubIcon },
-  { label: "X", href: "#", Icon: XIcon },
-  { label: "LinkedIn", href: "#", Icon: LinkedInIcon },
 ] as const;
 
 export default function Footer() {
@@ -47,7 +21,7 @@ export default function Footer() {
     <footer className="relative overflow-hidden bg-spotify-near-black border-t border-white/5">
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-10">
         {/* Editorial top: brand takes the lead, sitemap tucks to the side */}
-        <div className="grid grid-cols-1 gap-x-10 gap-y-14 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+        <div className="grid grid-cols-1 gap-x-10 gap-y-14 md:grid-cols-[1.8fr_1fr]">
           {/* Brand */}
           <div className="max-w-sm">
             <Link
@@ -67,27 +41,14 @@ export default function Footer() {
               한 번 연결하면 커밋할 때마다 알아서 최신으로 유지돼요.
             </p>
 
-            {/* Real brand marks, not uppercase text chips */}
-            <div className="mt-7 flex items-center gap-2.5">
-              {socials.map(({ label, href, Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/4 text-spotify-silver transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-2 focus-visible:ring-offset-spotify-near-black no-underline"
-                >
-                  <Icon className="h-4.5 w-4.5" />
-                </a>
-              ))}
-            </div>
           </div>
 
-          {/* Sitemap — sentence-case, quiet headings (no uppercase eyebrow) */}
+          {/* Sitemap: sentence-case, quiet headings (no uppercase eyebrow) */}
           {sitemap.map((col) => (
             <nav key={col.title} aria-label={col.title}>
-              <h4 className="text-[13px] font-semibold text-white mb-5">
+              <h2 className="text-[13px] font-semibold text-white mb-5">
                 {col.title}
-              </h4>
+              </h2>
               <ul className="flex flex-col gap-3.5">
                 {col.links.map((item) => (
                   <li key={item.label}>
@@ -106,21 +67,21 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom bar: copyright left, legal where people expect it — right */}
+        {/* Bottom bar: copyright left, legal where people expect it on the right */}
         <div className="mt-16 flex flex-col gap-5 border-t border-white/5 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-[13px] text-spotify-silver font-medium">
-            © 2026 PortfolioForge — 취업 준비하는 개발자를 위해 만들었어요.
+            © 2026 PortfolioForge · 취업 준비하는 개발자를 위해 만들었어요.
           </span>
 
           <div className="flex items-center gap-6">
             <Link
-              href="#"
+              href="/privacy"
               className="text-[13px] font-medium text-spotify-silver no-underline transition-colors duration-200 hover:text-white"
             >
               개인정보처리방침
             </Link>
             <Link
-              href="#"
+              href="/terms"
               className="text-[13px] font-medium text-spotify-silver no-underline transition-colors duration-200 hover:text-white"
             >
               이용약관
@@ -129,7 +90,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Oversized wordmark sign-off — a quiet watermark that bleeds off the base */}
+      {/* Oversized wordmark sign-off: a quiet watermark that bleeds off the base */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-6 left-1/2 z-0 block -translate-x-1/2 select-none whitespace-nowrap text-[22vw] font-black leading-none tracking-tighter text-white/[0.035] sm:-bottom-10"

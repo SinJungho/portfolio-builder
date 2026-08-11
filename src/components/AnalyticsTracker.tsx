@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 interface AnalyticsTrackerProps {
   portfolioId: string;
@@ -12,7 +11,7 @@ export default function AnalyticsTracker({ portfolioId }: AnalyticsTrackerProps)
     // 1. Get or create session id
     let sessionId = sessionStorage.getItem("pf_session_id");
     if (!sessionId) {
-      sessionId = uuidv4();
+      sessionId = crypto.randomUUID();
       sessionStorage.setItem("pf_session_id", sessionId);
     }
 

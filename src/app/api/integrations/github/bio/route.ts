@@ -2,77 +2,119 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { safeDecrypt } from '@/lib/utils/security'
+import { apiError, logRouteError, routeError } from '@/lib/api/errors'
 
 
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return apiError("UNAUTHORIZED", 401)
   }
 
-  // 1. 현재 DB 정보 확인
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { github_id: true, github_bio: true },
-  })
-
-  // 2. 만약 DB에 bio가 없다면 또는 비어있다면 GitHub API에서 실시간 조회
-  const currentBio = user?.github_bio
-  if (!currentBio) {
-    const integration = await prisma.integration.findUnique({
-      where: {
-        user_id_provider: {
-          user_id: session.user.id,
-          provider: 'github',
-        },
-      },
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { github_id: true, github_bio: true },
     })
 
-    if (integration?.access_token) {
-      try {
-        const decryptedToken = safeDecrypt(integration.access_token)
-        const response = await fetch('https://api.github.com/user', {
-          headers: {
-            Authorization: `Bearer ${decryptedToken}`,
-            'User-Agent': 'PortfolioForge',
+    const currentBio = user?.github_bio
+    if (!currentBio) {
+      const [integration, account] = await Promise.all([
+        prisma.integration.findUnique({
+          where: {
+            user_id_provider: {
+              user_id: session.user.id,
+              provider: 'github',
+            },
           },
-        })
+          select: { access_token: true },
+        }),
+        prisma.account.findFirst({
+          where: { userId: session.user.id, provider: 'github' },
+          select: { access_token: true },
+        }),
+      ])
+      const accessTokens = Array.from(new Set([
+        safeDecrypt(integration?.access_token),
+        safeDecrypt(account?.access_token),
+      ].filter(Boolean)))
 
-        if (response.ok) {
-          const profile = await response.json()
-          const latestBio = profile.bio
+      if (accessTokens.length === 0) {
+        return apiError('GITHUB_AUTH_EXPIRED', 401)
+      }
 
-          if (latestBio && latestBio.trim().length > 0) {
-            // DB 업데이트 (캐싱 + 검증 완료 표시)
-            await prisma.user.update({
-              where: { id: session.user.id },
-              data: { 
-                github_bio: latestBio,
-                github_bio_verified: true 
-              },
-            })
-            return NextResponse.json({ bio: latestBio, exists: true })
-          }
+      try {
+        let response: Response | undefined
+        for (const accessToken of accessTokens) {
+          response = await fetch('https://api.github.com/user', {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'User-Agent': 'PortfolioForge',
+            },
+          })
+          if (response.status !== 401) break
+        }
+
+        if (response?.status === 401) {
+          return apiError('GITHUB_AUTH_EXPIRED', 401)
+        }
+
+        if (!response?.ok) {
+          return apiError('GITHUB_BIO_FAILED', 503)
+        }
+
+        const profile = await response.json()
+        const latestBio = profile.bio
+
+        if (latestBio && latestBio.trim().length > 0) {
+          // 최신 bio를 저장하고 검증 완료로 표시한다.
+          await prisma.user.update({
+            where: { id: session.user.id },
+            data: {
+              github_bio: latestBio,
+              github_bio_verified: true,
+            },
+          })
+          return NextResponse.json({ bio: latestBio, exists: true })
         }
       } catch (error) {
-        console.error('GitHub에서 최신 bio 정보를 조회하는 데 실패했습니다:', error)
+        logRouteError('/api/integrations/github/bio', 'GET', error)
+        return apiError('GITHUB_BIO_FAILED', 503)
       }
     }
+
+    if (user?.github_bio && user.github_bio.trim().length > 0) {
+      // 저장된 bio가 있으면 검증 완료로 표시한다.
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { github_bio_verified: true },
+      })
+      return NextResponse.json({ bio: user.github_bio, exists: true })
+    }
+
+    return NextResponse.json({
+      bio: null,
+      exists: false,
+      github_settings_url: 'https://github.com/settings/profile',
+    })
+  } catch (error) {
+    return routeError('/api/integrations/github/bio', 'GET', error)
+  }
+}
+
+export async function POST() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return apiError("UNAUTHORIZED", 401)
   }
 
-  // 3. 최종 결과 반환
-  if (user?.github_bio && user.github_bio.trim().length > 0) {
-    // 기존에 bio가 있었는데 verified가 false였다면 true로 업데이트
+  try {
     await prisma.user.update({
       where: { id: session.user.id },
       data: { github_bio_verified: true },
     })
-    return NextResponse.json({ bio: user.github_bio, exists: true })
+    return NextResponse.json({ skipped: true })
+  } catch (error) {
+    return routeError('/api/integrations/github/bio', 'POST', error)
   }
-
-  return NextResponse.json({
-    bio: null,
-    exists: false,
-    github_settings_url: 'https://github.com/settings/profile',
-  })
 }

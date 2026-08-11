@@ -28,7 +28,10 @@ export async function fetchUserRepos(accessToken: string): Promise<GithubRepo[]>
 
     if (!res.ok) {
       const error = await res.json()
-      throw new Error(`GitHub API Error: ${error.message || res.statusText}`)
+      throw Object.assign(
+        new Error(`GitHub API Error: ${error.message || res.statusText}`),
+        { status: res.status },
+      )
     }
 
     const repos: GithubRepo[] = await res.json()

@@ -1,22 +1,32 @@
-# Design System Inspired by Spotify
+# PortfolioForge Design System
 
 ## 1. Visual Theme & Atmosphere
 
-Spotify's web interface is a dark, immersive music player that wraps listeners in a near-black cocoon (`#121212`, `#181818`, `#1f1f1f`) where album art and content become the primary source of color. The design philosophy is "content-first darkness" — the UI recedes into shadow so that music, podcasts, and playlists can glow. Every surface is a shade of charcoal, creating a theater-like environment where the only true color comes from the iconic Spotify Green (`#1ed760`) and the album artwork itself.
+PortfolioForge uses near-black surfaces (`#121212`, `#181818`, `#1f1f1f`) so developer work, portfolio previews, and status actions carry the visual focus. Its "content-first darkness" is derived from Spotify, but the product-specific expression is the journey from raw GitHub activity to recruiter-readable evidence: source activity → AI draft → user confirmation → public portfolio.
 
-The typography uses SpotifyMixUI and SpotifyMixUITitle — proprietary fonts from the CircularSp family (Circular by Lineto, customized for Spotify) with an extensive fallback stack that includes Arabic, Hebrew, Cyrillic, Greek, Devanagari, and CJK fonts, reflecting Spotify's global reach. The type system is compact and functional: 700 (bold) for emphasis and navigation, 600 (semibold) for secondary emphasis, and 400 (regular) for body. Buttons use uppercase with positive letter-spacing (1.4px–2px) for a systematic, label-like quality.
+The product typography uses Pretendard Variable with system fallbacks for natural Korean first, while published portfolios may choose their own supported font. Operate surfaces stay compact and functional; Persuade surfaces use larger display type to make the outcome legible immediately. Korean controls use sentence-style action labels without forced uppercase or wide tracking.
 
-What distinguishes Spotify is its pill-and-circle geometry. Primary buttons use 500px–9999px radius (full pill), circular play buttons use 50% radius, and search inputs are 500px pills. Combined with heavy shadows (`rgba(0,0,0,0.5) 0px 8px 24px`) on elevated elements and a unique inset border-shadow combo (`rgb(18,18,18) 0px 1px 0px, rgb(124,124,124) 0px 0px 0px 1px inset`), the result is an interface that feels like a premium audio device — tactile, rounded, and built for touch.
+Primary actions use pill geometry, icon-only actions use circles, and content/dialog surfaces use restrained 8–16px radii. Heavy offset shadows (`rgba(0,0,0,0.5) 0px 8px 24px`) establish elevation on dark surfaces; 1px hairlines may organize dense content when a shadow would imply false elevation.
 
 **Key Characteristics:**
 - Near-black immersive dark theme (`#121212`–`#1f1f1f`) — UI disappears behind content
 - Spotify Green (`#1ed760`) as singular brand accent — never decorative, always functional
-- SpotifyMixUI/CircularSp font family with global script support
-- Pill buttons (500px–9999px) and circular controls (50%) — rounded, touch-optimized
-- Uppercase button labels with wide letter-spacing (1.4px–2px)
+- Pretendard Variable with system fallbacks for Korean-first readability
+- Pill primary actions and circular icon controls — rounded and touch-optimized
+- Korean sentence-style action labels with clear verbs
 - Heavy shadows on elevated elements (`rgba(0,0,0,0.5) 0px 8px 24px`)
 - Semantic colors: negative red (`#f3727f`), warning orange (`#ffa42b`), announcement blue (`#539df5`)
-- Album art as the primary color source — the UI is achromatic by design
+- Portfolio previews, project imagery, and user content as the primary color source
+
+### Surface Modes
+
+| Mode | Surfaces | Typography | Density | Product-specific pattern |
+|---|---|---|---|---|
+| **Persuade** | Home, templates, login | 36–76px display headings; 16–19px body | Spacious | Show the recruiter-ready artifact early, then explain AI draft → confirm → publish |
+| **Operate** | Dashboard, generation, editor, settings, analytics | 12–32px hierarchy; compact controls | Dense but grouped | Present one next action, visible system status, safe defaults, and recovery beside the failure |
+| **Experience** | Published portfolio | Theme-owned headings and content measure | Content-led | Forge UI recedes; projects, role, recent activity, and contact dominate the scan |
+
+The modes share tokens, focus treatment, and functional green. They do not share a single type scale or content density.
 
 ## 2. Color Palette & Roles
 
@@ -54,33 +64,29 @@ What distinguishes Spotify is its pill-and-circle geometry. Primary buttons use 
 ## 3. Typography Rules
 
 ### Font Families
-- **Title**: `SpotifyMixUITitle`, fallbacks: `CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek, CircularSp-Deva, Helvetica Neue, helvetica, arial, Hiragino Sans, Hiragino Kaku Gothic ProN, Meiryo, MS Gothic`
-- **UI / Body**: `SpotifyMixUI`, same fallback stack
+- **Product UI / marketing**: `Pretendard Variable`, `system-ui`, `sans-serif`
+- **Published portfolio**: the selected supported stack; Pretendard is the Korean-first default
+- **Code / measurements only**: Geist Mono fallback stack
 
 ### Hierarchy
 
 | Role | Font | Size | Weight | Line Height | Letter Spacing | Notes |
 |------|------|------|--------|-------------|----------------|-------|
-| Section Title | SpotifyMixUITitle | 24px (1.50rem) | 700 | normal | normal | Bold title weight |
-| Feature Heading | SpotifyMixUI | 18px (1.13rem) | 600 | 1.30 (tight) | normal | Semibold section heads |
-| Body Bold | SpotifyMixUI | 16px (1.00rem) | 700 | normal | normal | Emphasized text |
-| Body | SpotifyMixUI | 16px (1.00rem) | 400 | normal | normal | Standard body |
-| Button Uppercase | SpotifyMixUI | 14px (0.88rem) | 600–700 | 1.00 (tight) | 1.4px–2px | `text-transform: uppercase` |
-| Button | SpotifyMixUI | 14px (0.88rem) | 700 | normal | 0.14px | Standard button |
-| Nav Link Bold | SpotifyMixUI | 14px (0.88rem) | 700 | normal | normal | Navigation |
-| Nav Link | SpotifyMixUI | 14px (0.88rem) | 400 | normal | normal | Inactive nav |
-| Caption Bold | SpotifyMixUI | 14px (0.88rem) | 700 | 1.50–1.54 | normal | Bold metadata |
-| Caption | SpotifyMixUI | 14px (0.88rem) | 400 | normal | normal | Metadata |
-| Small Bold | SpotifyMixUI | 12px (0.75rem) | 700 | 1.50 | normal | Tags, counts |
-| Small | SpotifyMixUI | 12px (0.75rem) | 400 | normal | normal | Fine print |
-| Badge | SpotifyMixUI | 10.5px (0.66rem) | 600 | 1.33 | normal | `text-transform: capitalize` |
-| Micro | SpotifyMixUI | 10px (0.63rem) | 400 | normal | normal | Smallest text |
+| Persuade Display | Pretendard | 36–76px | 900 | 1.02–1.10 | -0.04em to -0.02em | Outcome-led marketing headings |
+| Operate Page Title | Pretendard | 28–36px | 700 | 1.15 | -0.02em | Dashboard and task titles |
+| Section Title | Pretendard | 20–28px | 700 | 1.20 | -0.02em | Clear section hierarchy |
+| Feature Heading | Pretendard | 18–21px | 700 | 1.30 | -0.01em | Feature and list headings |
+| Body Bold | Pretendard | 16px | 700 | 1.50 | normal | Emphasized text |
+| Body | Pretendard | 15–18px | 400–500 | 1.50–1.70 | normal | Standard Korean body |
+| Button | Pretendard | 13–16px | 700 | 1.20 | -0.01em to normal | Sentence-style action label |
+| Caption | Pretendard | 13–14px | 400–700 | 1.45 | normal | Metadata and supporting state |
+| Small | Pretendard | 11–12px | 400–700 | 1.40 | normal | Tags and counts; never core instructions |
 
 ### Principles
 - **Bold/regular binary**: Most text is either 700 (bold) or 400 (regular), with 600 used sparingly. This creates a clear visual hierarchy through weight contrast rather than size variation.
-- **Uppercase buttons as system**: Button labels use uppercase + wide letter-spacing (1.4px–2px), creating a systematic "label" voice distinct from content text.
-- **Compact sizing**: The range is 10px–24px — narrower than most systems. Spotify's type is compact and functional, designed for scanning playlists, not reading articles.
-- **Global script support**: The extensive fallback stack (Arabic, Hebrew, Cyrillic, Greek, Devanagari, CJK) reflects Spotify's 180+ market reach.
+- **Korean action labels**: Use a concrete verb and sentence-style casing; never force uppercase or wide tracking on Korean.
+- **Mode-specific sizing**: Operate surfaces stay compact, while Persuade display text may reach 76px and Experience follows the selected portfolio theme.
+- **Readable Korean**: Keep body line-height at 1.5–1.7 and use `word-break: keep-all` where wrapping would split phrases awkwardly.
 
 ## 4. Component Stylings
 
@@ -135,10 +141,10 @@ What distinguishes Spotify is its pill-and-circle geometry. Primary buttons use 
 - Focus: border becomes `#000000`, outline `1px solid`
 
 ### Navigation
-- Dark sidebar with SpotifyMixUI 14px weight 700 for active, 400 for inactive
+- Dark sidebar with Pretendard 14px weight 700 for active, 400–600 for inactive
 - `#b3b3b3` muted color for inactive items, `#ffffff` for active
 - Circular icon buttons (50% radius)
-- Spotify logo top-left in green
+- PortfolioForge brand mark top-left; green denotes its functional active state
 
 ## 5. Layout Principles
 
@@ -147,14 +153,15 @@ What distinguishes Spotify is its pill-and-circle geometry. Primary buttons use 
 - Scale: 1px, 2px, 3px, 4px, 5px, 6px, 8px, 10px, 12px, 14px, 15px, 16px, 20px
 
 ### Grid & Container
-- Sidebar (fixed) + main content area
-- Grid-based album/playlist cards
-- Full-width now-playing bar at bottom
-- Responsive content area fills remaining space
+- Operate: fixed/collapsible sidebar + task-focused main content
+- Persuade: outcome preview near the first viewport, then evidence and process
+- Experience: one recruiter scan path from identity to projects, skills, recent work, and contact
+- Responsive content fills the remaining space without hiding core actions
 
 ### Whitespace Philosophy
-- **Dark compression**: Spotify packs content densely — playlist grids, track lists, and navigation are all tightly spaced. The dark background provides visual rest between elements without needing large gaps.
-- **Content density over breathing room**: This is an app, not a marketing site. Every pixel serves the listening experience.
+- **Operate compression**: Dashboards and editors group related controls tightly and separate tasks generously.
+- **Persuade rhythm**: Marketing uses larger intervals and varied compositions; repeated dark sections must have distinct narrative jobs.
+- **Experience restraint**: The public portfolio spends space on user work, not Forge chrome.
 
 ### Border Radius Scale
 - Minimal (2px): Badges, explicit tags
@@ -184,20 +191,20 @@ What distinguishes Spotify is its pill-and-circle geometry. Primary buttons use 
 ### Do
 - Use near-black backgrounds (`#121212`–`#1f1f1f`) — depth through shade variation
 - Apply Spotify Green (`#1ed760`) only for play controls, active states, and primary CTAs
-- Use pill shape (500px–9999px) for all buttons — circular (50%) for play controls
-- Apply uppercase + wide letter-spacing (1.4px–2px) on button labels
-- Keep typography compact (10px–24px range) — this is an app, not a magazine
+- Use pill shape for primary/secondary text actions and circles for icon-only controls
+- Use Korean sentence-style labels with a clear action verb
+- Match type scale and density to Persuade, Operate, or Experience mode
 - Use heavy shadows (`0.3–0.5 opacity`) for elevated elements on dark backgrounds
-- Let album art provide color — the UI itself is achromatic
+- Let portfolio previews, project imagery, and user content provide most non-semantic color
 
 ### Don't
 - Don't use Spotify Green decoratively or on backgrounds — it's functional only
 - Don't use light backgrounds for primary surfaces — the dark immersion is core
-- Don't skip the pill/circle geometry on buttons — square buttons break the identity
+- Don't use pill geometry for large content containers or every surface
 - Don't use thin/subtle shadows — on dark backgrounds, shadows need to be heavy to be visible
 - Don't add additional brand colors — green + achromatic grays is the complete palette
-- Don't use relaxed line-heights — Spotify's typography is compact and dense
-- Don't expose raw gray borders — use shadow-based or inset borders instead
+- Don't compress Korean body copy below a comfortable 1.5 line-height
+- Don't combine a visible border and heavy shadow on the same surface; use hairlines only for grouping
 
 ## 8. Responsive Behavior
 
@@ -231,16 +238,16 @@ What distinguishes Spotify is its pill-and-circle geometry. Primary buttons use 
 - Error: Negative Red (`#f3727f`)
 
 ### Example Component Prompts
-- "Create a dark card: #181818 background, 8px radius. Title at 16px SpotifyMixUI weight 700, white text. Subtitle at 14px weight 400, #b3b3b3. Shadow rgba(0,0,0,0.3) 0px 8px 8px on hover."
-- "Design a pill button: #1f1f1f background, white text, 9999px radius, 8px 16px padding. 14px SpotifyMixUI weight 700, uppercase, letter-spacing 1.4px."
-- "Build a circular play button: Spotify Green (#1ed760) background, #000000 icon, 50% radius, 12px padding."
+- "Create a dark card: #181818 background, 8px radius. Title at 16px Pretendard weight 700, white text. Subtitle at 14px weight 400, #b3b3b3. Use either a hairline or an offset shadow, not both."
+- "Design a pill button: #1f1f1f background, white text, 9999px radius, 8px 16px padding. 14px Pretendard weight 700, Korean sentence-style action label."
+- "Build a circular icon button: #1f1f1f background, white icon, 50% radius, minimum 44px target, visible focus ring."
 - "Create search input: #1f1f1f background, white text, 500px radius, 12px 48px padding. Inset border: rgb(124,124,124) 0px 0px 0px 1px inset."
 - "Design navigation sidebar: #121212 background. Active items: 14px weight 700, white. Inactive: 14px weight 400, #b3b3b3."
 
 ### Iteration Guide
-1. Start with #121212 — everything lives in near-black darkness
-2. Spotify Green for functional highlights only (play, active, CTA)
-3. Pill everything — 500px for large, 9999px for small, 50% for circular
-4. Uppercase + wide tracking on buttons — the systematic label voice
-5. Heavy shadows (0.3–0.5 opacity) for elevation — light shadows are invisible on dark
-6. Album art provides all the color — the UI stays achromatic
+1. Choose Persuade, Operate, or Experience before choosing scale and density
+2. Start product chrome with #121212 and let user work carry the visual focus
+3. Use Spotify Green for functional highlights only (active, progress, primary CTA)
+4. Use pills for text actions and circles for icon-only controls; keep content surfaces restrained
+5. Use concrete Korean verbs and sentence-style labels
+6. Use offset shadows for real elevation and hairlines for grouping

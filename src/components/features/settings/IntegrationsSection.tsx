@@ -4,7 +4,7 @@ import { useIntegrations } from "@/hooks/useIntegrations";
 import { BlogIntegrationCard } from "./integrations/BlogIntegrationCard";
 import { GitHubIntegrationCard } from "./integrations/GitHubIntegrationCard";
 
-export function IntegrationsSection() {
+export function IntegrationsSection({ githubConnected }: { githubConnected: boolean }) {
   const { blogIntegration, isLoading, connectMutation, disconnectMutation } =
     useIntegrations();
   const handleConnect = (url: string) => {
@@ -36,7 +36,7 @@ export function IntegrationsSection() {
 
         <ul role="list" className="list-none p-0 m-0 grid grid-cols-1 gap-6">
           <li>
-            <GitHubIntegrationCard />
+            <GitHubIntegrationCard connected={githubConnected} />
           </li>
 
           <li>

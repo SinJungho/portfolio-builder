@@ -3,6 +3,7 @@
 import React from "react";
 import { Github, Mail, Linkedin, Globe, ArrowUpRight } from "lucide-react";
 import type { ThemeTokens } from "../themes";
+import { isContactableEmail } from "../contact";
 
 interface ContactBlockProps {
   config: {
@@ -18,6 +19,7 @@ interface ContactBlockProps {
 
 export default function ContactBlock({ config, theme: t, portfolioId, blockId }: ContactBlockProps) {
   const { github_url, email, linkedin_url, website_url } = config;
+  const contactEmail = isContactableEmail(email) ? email : undefined;
 
   const handleContactClick = async (type: string) => {
     try {
@@ -38,10 +40,10 @@ export default function ContactBlock({ config, theme: t, portfolioId, blockId }:
   const socialLinks = [
     github_url && { href: github_url, icon: Github, label: "GitHub", type: "github" },
     linkedin_url && { href: linkedin_url, icon: Linkedin, label: "LinkedIn", type: "linkedin" },
-    website_url && { href: website_url, icon: Globe, label: "Website", type: "website" },
+    website_url && { href: website_url, icon: Globe, label: "웹사이트", type: "website" },
   ].filter(Boolean) as Array<{ href: string; icon: React.ElementType; label: string; type: string }>;
 
-  if (!email && socialLinks.length === 0) return null;
+  if (!contactEmail && socialLinks.length === 0) return null;
 
   return (
     <section
@@ -77,10 +79,10 @@ export default function ContactBlock({ config, theme: t, portfolioId, blockId }:
           </div>
 
           {/* 이메일 문의 링크를 표시한다. */}
-          {email && (
+          {contactEmail && (
             <div>
               <a
-                href={`mailto:${email}`}
+                href={`mailto:${contactEmail}`}
                 onClick={() => handleContactClick("email")}
                 className="group inline-flex items-center gap-3 px-8 py-4.5 text-[16px] font-bold rounded-full transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4"
                 style={{
@@ -98,7 +100,7 @@ export default function ContactBlock({ config, theme: t, portfolioId, blockId }:
                 className="mt-4 text-[14px] font-medium break-all"
                 style={{ color: t.textMuted }}
               >
-                {email}
+                {contactEmail}
               </p>
             </div>
           )}

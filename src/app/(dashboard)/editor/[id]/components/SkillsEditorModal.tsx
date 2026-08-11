@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/select";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
-import { X, Plus, Trash2 } from "lucide-react";
+import EditorSurface from "./EditorSurface";
+import { Plus, Trash2 } from "lucide-react";
 import React, { useRef, useState } from "react";
 
 interface SkillItem {
@@ -49,6 +50,7 @@ export default function SkillsEditorModal({
   const [skills, setSkills] = useState<SkillItem[]>(
     (initialConfig.skills as SkillItem[]) || [],
   );
+  const [validationError, setValidationError] = useState<string | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const isDirty =
     JSON.stringify(skills) !== JSON.stringify((initialConfig.skills as SkillItem[]) || []);
@@ -59,12 +61,16 @@ export default function SkillsEditorModal({
     titleRef,
   );
 
-  if (!isOpen) return null;
-
   const handleSave = () => {
+    // 이름이 빈 항목은 저장이 거부되므로 원인을 알려주고 막는다.
+    if (skills.some((skill) => !skill.name.trim())) {
+      setValidationError("이름이 비어 있는 기술이 있어요. 채우거나 삭제해 주세요.");
+      return;
+    }
+    setValidationError(null);
     onSave({
       ...initialConfig,
-      skills,
+      skills: skills.map((skill) => ({ ...skill, name: skill.name.trim() })),
     });
   };
 
@@ -87,31 +93,29 @@ export default function SkillsEditorModal({
   };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="skills-editor-title" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={requestClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
-            type="button"
-            aria-label="기술 스택 편집 닫기"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <h3 ref={titleRef} id="skills-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            기술 스택 편집
-          </h3>
-        </div>
-        <Button
-          className="btn-pill-primary h-11 px-8 font-bold cursor-pointer"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          적용하기
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
+    <EditorSurface
+      isOpen={isOpen}
+      onClose={requestClose}
+      onSave={handleSave}
+      isSaving={isSaving}
+      isDirty={isDirty}
+      title="기술 스택 편집"
+      closeLabel="기술 스택 편집 닫기"
+      titleId="skills-editor-title"
+      descriptionId="skills-editor-description"
+      titleRef={titleRef}
+      dialogRef={dialogRef}
+      onKeyDown={handleDialogKeyDown}
+      contentClassName="mx-auto w-full max-w-3xl space-y-8"
+    >
+        <p id="skills-editor-description" className="text-[13px] leading-relaxed text-spotify-silver">
+          채용 담당자가 빠르게 파악할 수 있도록 자주 사용하는 기술과 숙련도를 정리해요.
+        </p>
+        {validationError && (
+          <p role="alert" className="rounded-xl border border-spotify-negative/30 bg-spotify-negative/10 px-4 py-3 text-[13px] font-bold text-spotify-negative">
+            {validationError}
+          </p>
+        )}
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -122,6 +126,7 @@ export default function SkillsEditorModal({
                 variant="ghost"
                 size="sm"
                 onClick={addSkill}
+                disabled={skills.length >= 20}
                 className="text-spotify-green hover:text-spotify-green hover:bg-spotify-green/10 text-xs font-bold cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> 항목 추가
@@ -139,6 +144,8 @@ export default function SkillsEditorModal({
                       value={skill.name}
                       onChange={(e) => updateSkill(index, "name", e.target.value)}
                       placeholder="기술명 (예: React)"
+                      maxLength={50}
+                      aria-invalid={Boolean(validationError && !skill.name.trim())}
                       aria-label={`기술 ${index + 1} 이름`}
                       className="bg-transparent border-white/10 text-white h-9 text-sm"
                     />
@@ -168,7 +175,7 @@ export default function SkillsEditorModal({
                   <button
                     type="button"
                     onClick={() => removeSkill(index)}
-                    className="p-2 text-spotify-silver hover:text-spotify-negative hover:bg-spotify-negative/10 rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
+                    className="flex min-h-11 min-w-11 items-center justify-center text-spotify-silver hover:text-spotify-negative hover:bg-spotify-negative/10 rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
                     title="항목 삭제"
                     aria-label={`기술 ${index + 1} 항목 삭제`}
                   >
@@ -184,8 +191,7 @@ export default function SkillsEditorModal({
             </div>
           </div>
         </div>
-      </div>
       <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
-    </div>
+    </EditorSurface>
   );
 }

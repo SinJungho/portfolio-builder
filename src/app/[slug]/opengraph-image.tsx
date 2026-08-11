@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
+import { normalizePortfolioSlug } from '@/lib/portfolio-url';
 export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
@@ -7,7 +8,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   // Fetch portfolio and user data
   const portfolio = await prisma.portfolio.findUnique({
-    where: { slug },
+    where: { slug: normalizePortfolioSlug(slug) },
     include: {
       user: {
         select: {
@@ -37,22 +38,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#000',
+          backgroundColor: '#121212',
           position: 'relative',
         }}
       >
-        {/* Background Gradient */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(135deg, #1c1c1c 0%, #000 100%)',
-            zIndex: -1,
-          }}
-        />
 
         {/* Card Structure */}
         <div
@@ -61,10 +50,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             flexDirection: 'column',
             width: '85%',
             height: '75%',
-            backgroundColor: '#ffffff',
-            borderRadius: '40px',
+            backgroundColor: '#181818',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '16px',
             padding: '80px',
-            boxShadow: '0 50px 100px rgba(0,0,0,0.5)',
             position: 'relative',
             overflow: 'hidden',
           }}
@@ -82,8 +71,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               style={{
                 width: '40px',
                 height: '40px',
-                backgroundColor: '#3182F6',
-                borderRadius: '12px',
+                backgroundColor: '#1ED760',
+                borderRadius: '9999px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -93,7 +82,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                 style={{
                   width: '20px',
                   height: '20px',
-                  backgroundColor: 'white',
+                  backgroundColor: '#121212',
                   clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
                 }}
               />
@@ -102,7 +91,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               style={{
                 fontSize: '28px',
                 fontWeight: 'bold',
-                color: '#191F28',
+                color: '#FFFFFF',
                 letterSpacing: '-0.5px',
               }}
             >
@@ -116,7 +105,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               style={{
                 fontSize: '72px',
                 fontWeight: '900',
-                color: '#111827',
+                color: '#FFFFFF',
                 margin: '0 0 24px 0',
                 letterSpacing: '-2px',
                 lineHeight: 1.1,
@@ -127,7 +116,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             <p
               style={{
                 fontSize: '32px',
-                color: '#4B5563',
+                color: '#B3B3B3',
                 margin: 0,
                 lineHeight: 1.4,
                 maxWidth: '90%',
@@ -154,15 +143,15 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                   width: '80px',
                   height: '80px',
                   borderRadius: '100%',
-                  border: '4px solid #E5E7EB',
+                  border: '4px solid rgba(255,255,255,0.08)',
                 }}
               />
             )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#111827' }}>
+              <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFFFFF' }}>
                 {userName}
               </span>
-              <span style={{ fontSize: '20px', color: '#6B7280' }}>
+              <span style={{ fontSize: '20px', color: '#B3B3B3' }}>
                 {slug}.portfolioforge.app
               </span>
             </div>

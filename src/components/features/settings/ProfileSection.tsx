@@ -27,7 +27,7 @@ export function ProfileSection({ user }: ProfileSectionProps) {
         </p>
       </div>
 
-      <div className="bg-spotify-dark-surface p-7 rounded-2xl border border-white/5 shadow-spotify-md">
+      <div className="bg-spotify-dark-surface p-7 rounded-lg border border-white/5 shadow-spotify-md">
         <div className="flex flex-col sm:flex-row items-center gap-7">
           <div className="w-24 h-24 rounded-full bg-spotify-mid-dark border-4 border-white/5 shadow-spotify-md overflow-hidden flex items-center justify-center shrink-0">
             {user.image ? (
@@ -57,7 +57,7 @@ export function ProfileSection({ user }: ProfileSectionProps) {
       </div>
 
       {/* 계정 삭제 — 백엔드 미구현. 동작하지 않는 버튼 대신 정직한 안내. */}
-      <div className="rounded-2xl border border-white/5 bg-spotify-dark-surface p-6">
+      <div className="rounded-lg border border-white/5 bg-spotify-dark-surface p-6">
         <h3 className="text-[15px] font-bold text-white">계정 삭제</h3>
         <p className="mt-1.5 text-[13px] text-spotify-silver leading-relaxed">
           계정 삭제 기능은 아직 준비 중이에요. 지금 삭제가 필요하면 지원팀에 문의해

@@ -2,25 +2,30 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { rssService } from '@/services/rss';
 import { prisma } from '@/lib/prisma';
+import { apiError, logRouteWarning, routeError } from '@/lib/api/errors';
+import { z } from 'zod';
+
+const connectSchema = z.object({ url: z.string().url().max(2048) });
+const disconnectSchema = z.object({ integrationId: z.string().uuid() });
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
-    const body = await req.json();
-    const { url } = body;
-
-    if (!url || typeof url !== 'string') {
-      return NextResponse.json({ error: 'Invalid URL provided' }, { status: 400 });
+    const parsed = connectSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return apiError("RSS_INVALID_URL", 400);
     }
+    const { url } = parsed.data;
 
     try {
       await rssService.parseFeed(url);
-    } catch (e: unknown) {
-      return NextResponse.json({ error: (e as Error).message || 'Failed to parse RSS feed' }, { status: 400 });
+    } catch (error: unknown) {
+      logRouteWarning('/api/integrations/rss', 'POST', error, 'RSS parsing failed');
+      return apiError("RSS_PARSE_FAILED", 400);
     }
 
     const integration = await rssService.upsertIntegration(session.user.id, url);
@@ -34,8 +39,7 @@ export async function POST(req: Request) {
     }, { status: 201 });
 
   } catch (error: unknown) {
-    console.error('POST /api/integrations/rss error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return routeError('/api/integrations/rss', 'POST', error);
   }
 }
 
@@ -43,7 +47,7 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
     const integrations = await prisma.integration.findMany({
@@ -56,8 +60,7 @@ export async function GET() {
 
     return NextResponse.json(integrations);
   } catch (error: unknown) {
-    console.error('GET /api/integrations/rss error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return routeError('/api/integrations/rss', 'GET', error);
   }
 }
 
@@ -65,48 +68,23 @@ export async function DELETE(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
-    let integrationId: string | undefined;
-    try {
-      const body = await req.json();
-      integrationId = body.integrationId;
-    } catch (error) {
-      console.warn('DELETE /api/integrations/rss: Request body is empty or invalid JSON', error);
+    const parsed = disconnectSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return apiError("INVALID_REQUEST", 400);
+
+    const integration = await prisma.integration.findUnique({
+      where: { id: parsed.data.integrationId },
+    });
+
+    if (!integration || integration.user_id !== session.user.id) {
+      return apiError("INTEGRATION_NOT_FOUND", 404);
     }
 
-    if (integrationId) {
-      // 특정 연동 아이디를 기준으로 삭제
-      const integration = await prisma.integration.findUnique({
-        where: { id: integrationId },
-      });
-
-      if (!integration || integration.user_id !== session.user.id) {
-        return NextResponse.json({ error: 'unauthorized or not found' }, { status: 403 });
-      }
-
-      await prisma.integration.delete({
-        where: { id: integrationId },
-      });
-
-      return NextResponse.json({ success: true, message: 'Integration disconnected successfully' });
-    } else {
-      // 모든 블로그 RSS 연동을 일괄 삭제 (모든 RSS 프로바이더)
-      const providers = ['tistory', 'velog', 'medium', 'custom_rss'];
-      
-      await prisma.integration.deleteMany({
-        where: {
-          user_id: session.user.id,
-          provider: { in: providers },
-        },
-      });
-
-      return NextResponse.json({ success: true, message: 'All RSS integrations disconnected successfully' });
-    }
+    await prisma.integration.delete({ where: { id: integration.id } });
+    return NextResponse.json({ success: true, message: 'Integration disconnected successfully' });
   } catch (error: unknown) {
-    console.error('DELETE /api/integrations/rss error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return routeError('/api/integrations/rss', 'DELETE', error);
   }
 }
-

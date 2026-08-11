@@ -57,10 +57,10 @@ export const BlocksPanel = React.memo(function BlocksPanel({
 }: BlocksPanelProps): React.ReactElement {
   return (
     <div className="space-y-6">
-      <div className="bg-spotify-dark-surface border border-white/5 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-spotify space-y-6 text-white">
+      <div className="bg-spotify-dark-surface border border-white/5 rounded-lg p-5 sm:p-6 md:p-8 shadow-spotify space-y-6 text-white">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            섹션 구성
+            콘텐츠 구성
             {isSaving && (
               <Loader2 className="inline w-5 h-5 animate-spin text-spotify-green" />
             )}
@@ -96,7 +96,7 @@ export const BlocksPanel = React.memo(function BlocksPanel({
         </DndContext>
 
         {blocks.length === 0 && (
-          <div className="flex flex-col items-center justify-center p-12 border border-white/5 bg-spotify-mid-dark/50 rounded-[32px] gap-4">
+          <div className="flex flex-col items-center justify-center p-12 border border-white/5 bg-spotify-mid-dark/50 rounded-lg gap-4">
             <div className="p-4 bg-spotify-mid-dark rounded-full text-spotify-silver">
               <Grid className="w-8 h-8" />
             </div>
@@ -128,7 +128,7 @@ export const BlocksPanel = React.memo(function BlocksPanel({
                   onClick={() => addBlock(type)}
                   disabled={isSaving || alreadyExists}
                   className={`
-                    flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all border cursor-pointer
+                    flex items-center gap-2 px-4 py-3 rounded-lg text-[13px] font-bold transition-all border cursor-pointer
                     ${
                       alreadyExists
                         ? "bg-spotify-mid-dark border-white/5 text-spotify-silver/30 cursor-not-allowed"

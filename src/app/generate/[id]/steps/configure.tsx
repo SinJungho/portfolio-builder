@@ -23,6 +23,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { type RawProject } from "@/types/project";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 export default function ConfigureStep({
   portfolioId,
@@ -34,14 +35,14 @@ export default function ConfigureStep({
   const [aiFocus, setAiFocus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: projects, isLoading } = useQuery<RawProject[]>({
+  const { data: projects, isLoading, isError, refetch } = useQuery<RawProject[]>({
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
+      if (!res.ok) throw new Error(responseErrorMessage(data, "PROJECT_LIST_FAILED"));
       
-      // 지정된 대표 프로젝트가 없으면 featured 프로젝트 또는 상위 프로젝트를 선택한다.
+      // 대표 프로젝트가 없으면 featured 또는 첫 프로젝트를 사용한다.
       if (selectedIds.length === 0) {
         const featured = (data as RawProject[])
           .filter((p: RawProject) => p.is_featured)
@@ -74,8 +75,8 @@ export default function ConfigureStep({
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "생성에 실패했습니다.");
+        const data = await res.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "PORTFOLIO_CREATE_FAILED"));
       }
       return res.json();
     },
@@ -91,7 +92,7 @@ export default function ConfigureStep({
 
   const toggleProject = (id: string) => {
     if (!selectedIds.includes(id) && selectedIds.length >= MAX_FEATURED_PROJECTS) {
-      toast.info(`대표 프로젝트는 최대 ${MAX_FEATURED_PROJECTS}개까지 선택할 수 있어요.`);
+      toast.info(errorMessage("PROJECT_LIMIT"));
       return;
     }
     setSelectedIds((prev) =>
@@ -109,13 +110,12 @@ export default function ConfigureStep({
     <div className="flex flex-col gap-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 text-white">
       <div className="space-y-3">
         <h2 className="text-[28px] font-extrabold tracking-tight text-white leading-[1.2]">
-          더 완벽한 포트폴리오를 위해
+          내 포트폴리오에 보여줄
           <br />
-          세부 사항을 확인해주세요.
+          프로젝트를 골라주세요.
         </h2>
         <p className="text-[16px] text-spotify-silver font-medium leading-[1.6]">
-          AI가 선택한 기본 프로젝트를 변경하거나, 강조하고 싶은 역량을 입력할 수
-          있습니다.
+          기본으로 고른 프로젝트를 바꾸거나, 강조하고 싶은 역량을 입력할 수 있습니다.
         </p>
       </div>
 
@@ -128,6 +128,7 @@ export default function ConfigureStep({
             <div className="relative w-48 md:w-64">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-spotify-silver" />
               <Input
+                aria-label="프로젝트 검색"
                 placeholder="검색..."
                 className="pl-10 h-10 bg-spotify-mid-dark border-white/5 rounded-full text-white text-sm placeholder:text-spotify-silver focus:ring-1 focus:ring-spotify-green focus:border-spotify-green"
                 value={searchQuery}
@@ -141,15 +142,33 @@ export default function ConfigureStep({
               ? Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-40 rounded-2xl bg-spotify-dark-surface/50 border border-white/5 animate-pulse"
+                    className="h-40 rounded-lg bg-spotify-dark-surface/50 border border-white/5 animate-pulse"
                   />
                 ))
-              : filteredProjects?.map((project) => (
+              : isError ? (
+                  <div role="alert" className="col-span-full rounded-lg border border-spotify-negative/30 bg-spotify-negative/10 p-6 text-center">
+                    <p className="text-[14px] font-bold text-white">프로젝트를 불러오지 못했어요.</p>
+                    <Button type="button" variant="outline" className="mt-4 h-11 rounded-full border-spotify-negative/40 bg-transparent px-5 text-spotify-negative hover:bg-spotify-negative/10" onClick={() => void refetch()}>
+                      다시 불러오기
+                    </Button>
+                  </div>
+                )
+              : filteredProjects?.length ? filteredProjects.map((project) => (
                   <Card
                     key={project.id}
                     onClick={() => toggleProject(project.id)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      toggleProject(project.id);
+                    }}
+                    role="checkbox"
+                    aria-checked={selectedIds.includes(project.id)}
+                    aria-label={`${project.name} 대표 프로젝트`}
+                    aria-disabled={!selectedIds.includes(project.id) && selectedIds.length >= MAX_FEATURED_PROJECTS}
+                    tabIndex={0}
                     className={`
-                    relative p-5 cursor-pointer rounded-2xl border transition-all duration-300 select-none
+                    relative p-5 cursor-pointer rounded-lg border transition-all duration-300 select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green
                     ${
                       selectedIds.includes(project.id)
                         ? "border-spotify-green bg-spotify-green/5 ring-1 ring-spotify-green"
@@ -203,15 +222,19 @@ export default function ConfigureStep({
                       </div>
                     </div>
                   </Card>
-                ))}
+                )) : (
+                  <p role="status" className="col-span-full rounded-lg border border-white/5 bg-spotify-dark-surface p-8 text-center text-[14px] font-medium text-spotify-silver">
+                    검색 결과가 없어요. 다른 프로젝트 이름을 입력해 보세요.
+                  </p>
+                )}
           </div>
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-24">
-          <div className="space-y-4 rounded-3xl border border-white/5 bg-spotify-dark-surface p-6 shadow-spotify">
+          <div className="space-y-4 rounded-lg border border-white/5 bg-spotify-dark-surface p-6 shadow-spotify">
             <div className="flex items-center gap-2 text-spotify-green mb-1">
               <Sparkles className="w-5 h-5 fill-current" />
-              <h3 className="font-bold text-[17px]">AI에게 강조하고 싶은 점</h3>
+              <h3 className="font-bold text-[17px]">첫 소개에 강조하고 싶은 점</h3>
             </div>
 
             <div className="space-y-2">
@@ -223,15 +246,14 @@ export default function ConfigureStep({
               </Label>
               <textarea
                 id="ai-focus"
-                placeholder="예: 클라우드 네이티브 아키텍처 전문가, 7년차 풀스택 개발자의 기술적 깊이 강조"
-                className="w-full min-h-[120px] p-4 rounded-2xl border border-white/5 bg-spotify-mid-dark text-white text-[14px] leading-relaxed focus:ring-1 focus:ring-spotify-green focus:border-spotify-green transition-all outline-none"
+                placeholder="예: 프론트엔드 성능 최적화 경험과 협업 역량 강조"
+                className="w-full min-h-[120px] p-4 rounded-lg border border-white/5 bg-spotify-mid-dark text-white text-[14px] leading-relaxed focus:ring-1 focus:ring-spotify-green focus:border-spotify-green transition-all outline-none"
                 value={aiFocus}
                 onChange={(e) => setAiFocus(e.target.value)}
               />
               <p className="text-[12px] text-spotify-silver leading-relaxed flex items-start gap-1.5 px-1 font-normal">
                 <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                입력하신 내용을 바탕으로 AI가 소개글(Hero Block)을 더 정교하게
-                다듬습니다.
+                입력한 내용을 바탕으로 첫 소개를 더 정확하게 다듬어요.
               </p>
             </div>
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import BrandLogo from "@/components/common/BrandLogo";
 import { cn } from "@/lib/utils";
+import { isContactableEmail } from "@/preview/contact";
 import {
   BarChart3,
   ChevronRight,
@@ -24,28 +26,22 @@ const navItems = [
   { icon: Settings, label: "설정", href: "/settings" },
 ];
 
-const LogoMark = () => (
-  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white shrink-0">
-    <span className="text-[15px] font-bold leading-none">P</span>
-  </div>
-);
-
 export function Sidebar({ user }: { user?: { name?: string | null; email?: string | null; image?: string | null } }) {
   const pathname = usePathname();
   const isEditor = pathname.startsWith("/editor/");
   const [isOpen, setIsOpen] = useState(false);
+  const accountDetail = isContactableEmail(user?.email ?? undefined)
+    ? user?.email
+    : "GitHub 계정";
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={cn("fixed left-0 top-0 h-screen w-64 bg-spotify-near-black flex-col z-50", isEditor ? "hidden" : "hidden md:flex")}>
+      <aside className={cn("fixed left-0 top-0 h-[100dvh] w-64 bg-spotify-near-black flex-col z-50", isEditor ? "hidden" : "hidden md:flex")}>
         {/* Logo */}
         <div className="h-20 flex items-center px-8">
-          <Link href="/" className="flex items-center gap-3 group no-underline">
-            <LogoMark />
-            <span className="text-white font-bold text-[20px] tracking-tight">
-              PortfolioForge
-            </span>
+          <Link href="/" className="flex items-center gap-3 rounded-full no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spotify-green focus-visible:ring-offset-4 focus-visible:ring-offset-spotify-near-black">
+            <BrandLogo />
           </Link>
         </div>
 
@@ -106,7 +102,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
                 {user?.name || "사용자"}
               </div>
               <div className="text-[11px] font-medium text-spotify-silver truncate">
-                {user?.email}
+                {accountDetail}
               </div>
             </div>
             <button 
@@ -184,7 +180,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
                   {user?.name || "사용자"}
                 </p>
                 <p className="text-[14px] text-spotify-silver truncate">
-                  {user?.email}
+                  {accountDetail}
                 </p>
               </div>
             </div>

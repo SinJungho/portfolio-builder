@@ -61,6 +61,13 @@ describe('THEMES', () => {
   it('6개의 테마 프리셋이 등록되어 있다', () => {
     expect(Object.keys(THEMES)).toHaveLength(6)
   })
+
+  it('모든 테마의 기능 액센트가 배경과 카드에서 3:1 이상이다', () => {
+    for (const theme of Object.values(THEMES)) {
+      expect(contrastRatio(theme.accent, theme.bg)).toBeGreaterThanOrEqual(3)
+      expect(contrastRatio(theme.accent, theme.cardBg)).toBeGreaterThanOrEqual(3)
+    }
+  })
 })
 
 describe('readableTextOn', () => {
@@ -98,6 +105,10 @@ describe('accentForSurface', () => {
 
   it('잘못된 hex는 보수적으로 fallback한다', () => {
     expect(accentForSurface('nope', '#FFFFFF', '#3182F6')).toBe('#3182F6')
+  })
+
+  it('fallback도 기준 미달이면 배경 대비가 높은 중립색을 쓴다', () => {
+    expect(accentForSurface('#FEF08A', '#FFFFFF', '#E5E7EB')).toBe('#121212')
   })
 
   it('contrastRatio는 흑백에서 21에 근접한다', () => {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { apiError, routeError } from "@/lib/api/errors";
 import {
   getMissingPortfolioReadiness,
   getSelectedProjectIds,
@@ -14,7 +15,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
     const { id } = await props.params;
@@ -30,7 +31,7 @@ export async function GET(
     });
 
     if (!portfolio || portfolio.user_id !== session.user.id) {
-      return new NextResponse(null, { status: 404 });
+      return apiError("NOT_FOUND", 404);
     }
 
     const blocks = await prisma.portfolioBlock.findMany({
@@ -42,28 +43,32 @@ export async function GET(
       config: block.config as Record<string, unknown>,
     }));
     const projectIds = getSelectedProjectIds(readinessBlocks);
-    const availableProjectIds = projectIds.length
+    const availableProjects = projectIds.length
       ? (await prisma.rawProject.findMany({
           where: {
             id: { in: projectIds },
             user_id: portfolio.user_id,
             is_fork: false,
           },
-          select: { id: true },
-        })).map((project) => project.id)
+          select: { id: true, description: true, ai_summary: true },
+        }))
       : [];
+    const availableProjectIds = availableProjects.map((project) => project.id);
+    const describedProjectIds = availableProjects
+      .filter((project) => Boolean(project.description?.trim() || project.ai_summary?.trim()))
+      .map((project) => project.id);
 
     return NextResponse.json({
       is_published: portfolio.is_published,
       published_url: portfolio.slug ? `/${portfolio.slug}` : null,
-      is_ready: isPortfolioReady(readinessBlocks, availableProjectIds),
+      is_ready: isPortfolioReady(readinessBlocks, availableProjectIds, describedProjectIds),
       missing_items: getMissingPortfolioReadiness(
         readinessBlocks,
         availableProjectIds,
+        describedProjectIds,
       ),
     });
   } catch (error: unknown) {
-    console.error("GET /api/portfolios/[id]/status error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return routeError('/api/portfolios/[id]/status', 'GET', error);
   }
 }

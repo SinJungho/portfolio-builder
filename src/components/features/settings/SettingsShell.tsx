@@ -8,6 +8,7 @@ import { IntegrationsSection } from "./IntegrationsSection";
 
 interface SettingsShellProps {
   initialSection: SettingsSection;
+  githubConnected: boolean;
   user: {
     name: string | null;
     email: string | null;
@@ -16,7 +17,7 @@ interface SettingsShellProps {
   };
 }
 
-export function SettingsShell({ initialSection, user }: SettingsShellProps) {
+export function SettingsShell({ initialSection, githubConnected, user }: SettingsShellProps) {
   const router = useRouter();
   const [active, setActive] = useState<SettingsSection>(initialSection);
 
@@ -41,7 +42,7 @@ export function SettingsShell({ initialSection, user }: SettingsShellProps) {
           {active === "profile" ? (
             <ProfileSection user={user} />
           ) : (
-            <IntegrationsSection />
+            <IntegrationsSection githubConnected={githubConnected} />
           )}
         </div>
       </div>

@@ -2,19 +2,24 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { env } from '@/lib/env'
+import { apiError, routeError } from '@/lib/api/errors'
+import { z } from 'zod'
+
+const revalidateSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/i).max(50).optional(),
+  userId: z.string().uuid().optional(),
+}).refine((value) => Boolean(value.slug || value.userId))
 
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get("x-internal-secret");
     if (authHeader !== env.INTERNAL_API_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
-    const { slug, userId } = await req.json()
-
-    if (!slug && !userId) {
-      return NextResponse.json({ error: 'Missing slug or userId' }, { status: 400 })
-    }
+    const parsed = revalidateSchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) return apiError("INVALID_REQUEST", 400)
+    const { slug, userId } = parsed.data
 
     if (slug) {
       revalidatePath(`/${slug}`)
@@ -31,7 +36,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, revalidated: true })
   } catch (error) {
-    console.error('Revalidation error:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return routeError('/api/revalidate', 'POST', error)
   }
 }

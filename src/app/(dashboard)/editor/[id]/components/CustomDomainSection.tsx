@@ -27,9 +27,11 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
+import { normalizeCustomDomain } from "@/lib/domain";
 
 /**
- * DNS 레코드 안내용 개별 정보 아이템 컴포넌트
+ * DNS 레코드 정보를 표시한다.
  */
 interface DNSRecordItemProps {
   optionTitle: string;
@@ -90,46 +92,39 @@ function DNSRecordItem({
 }
 
 /**
- * 커스텀 도메인 설정 및 연결 상태 확인 컴포넌트
- * (부모 에디터 컴포넌트의 부담을 줄이기 위해 분리된 하위 컴포넌트)
+ * 커스텀 도메인을 설정하고 연결 상태를 확인한다.
  */
 export default function CustomDomainSection() {
-  const { customDomain, setCustomDomain } = usePortfolioStore();
+  const { customDomain, setCustomDomain, isSaving } = usePortfolioStore();
   const inputRef = useRef<HTMLInputElement>(null);
+  const checkedDomainRef = useRef<string | null>(null);
   const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  // 실제 DNS 검증 결과. 화면의 "연결 완료" 표시는 오직 이 값에서만 나온다.
+  // 연결 완료 여부는 실제 DNS 검증 결과로만 결정한다.
   const [dnsStatus, setDnsStatus] = useState<
     "unchecked" | "connected" | "pending" | "error"
   >("unchecked");
 
-  // 스킴·경로를 벗겨 순수 호스트명만 남기고 형식 검증. 빈 값은 "" (연결 해제), 형식 오류는 null.
-  const normalizeDomain = (raw: string): string | null => {
-    let d = raw.trim().toLowerCase();
-    if (!d) return "";
-    d = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\.$/, "");
-    return /^(?=.{1,253}$)([a-z0-9](-?[a-z0-9])*\.)+[a-z]{2,}$/.test(d) ? d : null;
-  };
-
-  // 1. 도메인 연결 설정 핸들러 — 형식이 맞지 않으면 "저장됨" 타임라인에 진입시키지 않는다.
+  // 도메인 형식을 검증한 뒤 저장한다.
   const handleConnectDomain = (raw: string) => {
-    const domain = normalizeDomain(raw);
-    if (domain === null) {
-      toast.error("올바른 도메인 형식이 아니에요. 예: www.yourdomain.com");
+    const domain = raw.trim() ? normalizeCustomDomain(raw) : null;
+    if (raw.trim() && !domain) {
+      toast.error(errorMessage("DOMAIN_INVALID"));
       return;
     }
-    setCustomDomain(domain || null)
+    setCustomDomain(domain)
       .then(() => toast.success(domain ? "도메인이 저장됐어요." : "도메인 연결을 해제했어요."))
-      .catch((err: Error) => toast.error(err.message));
+      .catch((err: Error) => toast.error(err.message || errorMessage("DOMAIN_SAVE_FAILED")));
   };
 
-  // 2. 도메인 연결 실시간 상태 조회 핸들러(수동 갱신) — 실제 검증 결과만 상태에 반영한다
+  // DNS 검증 결과를 상태에 반영한다.
   const handleCheckDomainStatus = async () => {
     if (!customDomain) return;
     setIsChecking(true);
     try {
       const res = await fetch(`/api/domains/${customDomain}`);
       const data = await res.json();
+      if (!res.ok) throw new Error(responseErrorMessage(data, "DOMAIN_STATUS_FAILED"));
       setDnsStatus(data.configured ? "connected" : "pending");
     } catch {
       setDnsStatus("error");
@@ -138,13 +133,20 @@ export default function CustomDomainSection() {
     }
   };
 
-  // 도메인이 저장돼 있으면 열릴 때 실제 연결 상태를 한 번 확인한다.
-  // (상태는 네트워크 응답 콜백에서만 갱신 — 동기 setState로 인한 연쇄 렌더 방지)
+  // 저장된 도메인의 상태를 확인한다.
+  // 저장 중에는 낙관적 업데이트만 반영된 상태라 조회가 404가 난다. 저장이 끝난 뒤에 확인한다.
+  // isSaving은 에디터 전역 상태라 도메인이 실제로 바뀔 때만 조회하도록 한 번 더 거른다.
   useEffect(() => {
-    if (!customDomain) return;
+    if (!customDomain || isSaving) return;
+    if (checkedDomainRef.current === customDomain) return;
+    checkedDomainRef.current = customDomain;
     let cancelled = false;
     fetch(`/api/domains/${customDomain}`)
-      .then((res) => res.json())
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(responseErrorMessage(data, "DOMAIN_STATUS_FAILED"));
+        return data;
+      })
       .then((data) => {
         if (!cancelled) setDnsStatus(data.configured ? "connected" : "pending");
       })
@@ -154,12 +156,15 @@ export default function CustomDomainSection() {
     return () => {
       cancelled = true;
     };
-  }, [customDomain]);
+  }, [customDomain, isSaving]);
 
-  // 3. 클립보드 값 복사 핸들러
-  const handleCopyToClipboard = (value: string, successMessage: string) => {
-    navigator.clipboard.writeText(value);
-    toast.success(successMessage);
+  const handleCopyToClipboard = async (value: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
+    } catch {
+      toast.error(errorMessage("DOMAIN_COPY_FAILED"));
+    }
   };
 
   return (
@@ -202,7 +207,6 @@ export default function CustomDomainSection() {
 
       {customDomain && (
         <div className="bg-spotify-dark-surface border border-white/5 rounded-xl overflow-hidden mt-4">
-          {/* 타임라인 헤더 영역 */}
           <div className="p-4 space-y-5">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-bold text-white flex items-center gap-2 tracking-wide">
@@ -238,7 +242,7 @@ export default function CustomDomainSection() {
                       연결 해제
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
+                  <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-lg shadow-spotify">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-[20px] font-bold text-white">
                         연결을 해제할까요?
@@ -263,9 +267,7 @@ export default function CustomDomainSection() {
               </div>
             </div>
 
-            {/* 연결 타임라인 시각화 */}
             <div className="relative pl-3.5 space-y-5 before:absolute before:inset-y-2.5 before:left-[17px] before:w-[2px] before:bg-white/10">
-              {/* 1단계: 도메인 저장 — 문자열이 저장되면 실제로 완료된 사실 */}
               <div className="relative flex items-start gap-4">
                 <div className="bg-spotify-green w-2.5 h-2.5 rounded-full mt-1 ring-4 ring-spotify-dark-surface z-10" />
                 <div>
@@ -279,7 +281,6 @@ export default function CustomDomainSection() {
                 </div>
               </div>
 
-              {/* 2단계: 실제 DNS 연결 — 검증 결과(dnsStatus)에 따라서만 표시 */}
               <div className="relative flex items-start gap-4">
                 {isChecking ? (
                   <>
@@ -339,7 +340,6 @@ export default function CustomDomainSection() {
             </div>
           </div>
 
-          {/* 네임서버 대행업체 맞춤형 레코드 등록 가이드 */}
           <div className="border-t border-white/5 bg-spotify-near-black/40 transition-all duration-300">
             <button
               className="w-full p-3.5 flex items-center justify-between text-[11px] font-bold text-white hover:bg-white/5 transition-colors"
@@ -368,7 +368,6 @@ export default function CustomDomainSection() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* A Record */}
                   <DNSRecordItem
                     optionTitle="Option 1: A 레코드 (권장)"
                     type="A"
@@ -379,7 +378,6 @@ export default function CustomDomainSection() {
                     }
                   />
 
-                  {/* CNAME Record */}
                   <DNSRecordItem
                     optionTitle="Option 2: CNAME (www 등 서브도메인용)"
                     type="CNAME"

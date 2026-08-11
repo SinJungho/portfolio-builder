@@ -1,6 +1,7 @@
 import {
   getMissingPortfolioReadiness,
   getPortfolioReadiness,
+  getPortfolioReadinessGroups,
   isPortfolioReady,
 } from "../portfolio-readiness";
 
@@ -11,7 +12,7 @@ describe("portfolio readiness", () => {
     { block_type: "contact", is_visible: true, config: { email: "dev@example.com" } },
   ];
 
-  it("requires every schema-backed introduction field", () => {
+  it("requires a publishable introduction while keeping detailed bio optional", () => {
     const readiness = getPortfolioReadiness([
       { block_type: "hero", is_visible: true, config: { headline: "개발자", subheadline: "", bio: "  " } },
       ...completeBlocks.slice(1),
@@ -20,7 +21,6 @@ describe("portfolio readiness", () => {
     expect(getMissingPortfolioReadiness([...completeBlocks.slice(0, 1), ...completeBlocks.slice(1)])).toEqual([]);
     expect(readiness.filter((item) => !item.complete)).toEqual([
       expect.objectContaining({ id: "hero-subheadline", destination: "hero" }),
-      expect.objectContaining({ id: "hero-bio", destination: "hero" }),
     ]);
     expect(isPortfolioReady(completeBlocks)).toBe(true);
     expect(isPortfolioReady([{ block_type: "hero", is_visible: false, config: completeBlocks[0].config }, ...completeBlocks.slice(1)])).toBe(false);
@@ -35,5 +35,36 @@ describe("portfolio readiness", () => {
 
     expect(getPortfolioReadiness(blocks, ["project-1"]).find((item) => item.id === "projects")?.complete).toBe(false);
     expect(isPortfolioReady(blocks, ["project-1"])).toBe(false);
+  });
+
+  it("requires at least one recruiter-readable project description when project detail data is available", () => {
+    expect(isPortfolioReady(completeBlocks, ["project-1"], [])).toBe(false);
+
+    const withCustomDescription = completeBlocks.map((block) =>
+      block.block_type === "project_grid"
+        ? { ...block, config: { ...block.config, custom_descriptions: { "project-1": "결제 오류를 줄인 구현" } } }
+        : block,
+    );
+    expect(isPortfolioReady(withCustomDescription, ["project-1"], [])).toBe(true);
+  });
+
+  it("groups field-level checks into the three user-facing preparation steps", () => {
+    const groups = getPortfolioReadinessGroups(getPortfolioReadiness(completeBlocks));
+
+    expect(groups.map((group) => [group.id, group.complete])).toEqual([
+      ["intro", true],
+      ["projects", true],
+      ["contact", true],
+    ]);
+
+    const incomplete = getPortfolioReadinessGroups(getPortfolioReadiness([
+      { block_type: "hero", is_visible: true, config: { headline: "개발자", subheadline: "", bio: "" } },
+      ...completeBlocks.slice(1),
+    ]));
+
+    expect(incomplete[0]?.missingItems.map((item) => item.id)).toEqual([
+      "hero-subheadline",
+    ]);
+    expect(incomplete[0]?.action).toBe("소개 작성하기");
   });
 });

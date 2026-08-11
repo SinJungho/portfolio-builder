@@ -5,6 +5,7 @@ import { encrypt, safeDecrypt } from "@/lib/utils/security";
 
 export interface SyncJobStatus extends JobStatus {
   synced_count: number;
+  failed_count: number;
 }
 
 export async function syncGithubData({
@@ -34,6 +35,7 @@ export async function syncGithubData({
             user_id: userId,
             auto_publish: false,
             synced_count: 0,
+            failed_count: 0,
           };
 
       current = { ...current, ...updates, progress };
@@ -43,40 +45,65 @@ export async function syncGithubData({
     }
   };
 
+  let synced = 0;
+  let failed = 0;
+
   try {
     await updateProgress(0, { status: "processing" });
 
-    const integration = await prisma.integration.findUnique({
-      where: { user_id_provider: { user_id: userId, provider: "github" } },
-    });
-
-    let accessToken = integration?.access_token
-      ? safeDecrypt(integration.access_token)
-      : undefined;
-
-    // 폴백: Integration 테이블에 없으면 Account 테이블(NextAuth)에서 조회
-    if (!accessToken) {
-      const account = await prisma.account.findFirst({
+    const [integration, account] = await Promise.all([
+      prisma.integration.findUnique({
+        where: { user_id_provider: { user_id: userId, provider: "github" } },
+      }),
+      prisma.account.findFirst({
         where: { userId, provider: "github" },
-      });
-      accessToken = account?.access_token
-        ? safeDecrypt(account.access_token)
-        : undefined;
-    }
+      }),
+    ]);
+    const integrationToken = safeDecrypt(integration?.access_token);
+    const accountToken = safeDecrypt(account?.access_token);
+    let accessToken = integrationToken || accountToken;
 
     if (!accessToken) {
-      throw new Error(
-        "GitHub 액세스 토큰을 찾을 수 없습니다. 로그아웃 후 다시 로그인해 주세요.",
-      );
+      throw new Error("GitHub 인증 세션이 만료되었습니다. 다시 로그인해 주세요.");
     }
 
     // 1. 리포지토리 목록 조회
     await updateProgress(10);
-    const repos = await fetchUserRepos(accessToken);
-    await updateProgress(30, { synced_count: 0 });
+    let repos;
+    try {
+      repos = await fetchUserRepos(accessToken);
+    } catch (error) {
+      if (
+        (error as { status?: number }).status !== 401 ||
+        !integrationToken ||
+        !accountToken ||
+        integrationToken === accountToken
+      ) {
+        throw error;
+      }
+      accessToken = accountToken;
+      repos = await fetchUserRepos(accessToken);
+    }
+    await updateProgress(30, { synced_count: 0, failed_count: 0 });
 
     const total = repos.length;
-    let synced = 0;
+
+    // 가져온 목록이 있을 때만 정리한다. 토큰 스코프를 잃으면 GitHub가 401이 아니라
+    // 200 + 빈 배열을 주므로, 빈 목록에서 지우면 멀쩡한 프로젝트를 전부 날린다.
+    // ponytail: repo가 실제로 0개가 된 경우 이전 프로젝트가 남는다. 잘못된 전량 삭제보다 낫다.
+    const externalIds = repos.map((repo) => String(repo.id));
+    if (externalIds.length) {
+      await prisma.rawProject.deleteMany({
+        where: {
+          user_id: userId,
+          source: "github",
+          OR: [
+            { external_id: null },
+            { external_id: { notIn: externalIds } },
+          ],
+        },
+      });
+    }
 
     // 2. 개별 리포지토리 처리
     for (const repo of repos) {
@@ -166,16 +193,25 @@ export async function syncGithubData({
         });
 
         synced++;
-        const progress = 30 + Math.floor((synced / total) * 60); // 30% -> 90%
-        await updateProgress(progress, { synced_count: synced });
       } catch (repoErr) {
+        failed++;
         console.error(`리포지토리 동기화 실패 (${repo.full_name}):`, repoErr);
       }
+
+      const progress = 30 + Math.floor(((synced + failed) / total) * 60); // 30% -> 90%
+      await updateProgress(progress, {
+        synced_count: synced,
+        failed_count: failed,
+      });
+    }
+
+    if (total > 0 && synced === 0) {
+      throw new Error("GitHub 저장소를 동기화하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     await prisma.integration.upsert({
       where: { user_id_provider: { user_id: userId, provider: "github" } },
-      update: { synced_at: new Date() },
+      update: { access_token: encrypt(accessToken), synced_at: new Date() },
       create: {
         user_id: userId,
         provider: "github",
@@ -184,7 +220,11 @@ export async function syncGithubData({
       },
     });
 
-    await updateProgress(100, { status: "completed" });
+    await updateProgress(100, {
+      status: "completed",
+      synced_count: synced,
+      failed_count: failed,
+    });
   } catch (error: unknown) {
     console.error("GitHub 데이터 동기화 전체 프로세스 실패:", error);
 
@@ -197,6 +237,8 @@ export async function syncGithubData({
     await updateProgress(0, {
       status: "failed",
       error: friendlyMessage,
+      synced_count: synced,
+      failed_count: failed,
     });
   }
 }

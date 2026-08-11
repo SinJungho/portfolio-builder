@@ -1,11 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDialogAccessibility } from "@/components/common/useDialogAccessibility";
 import { useCloseGuard, DiscardChangesDialog } from "./useCloseGuard";
-import { X } from "lucide-react";
+import EditorSurface from "./EditorSurface";
 import { useRef, useState } from "react";
 
 interface ContactEditorModalProps {
@@ -38,8 +37,6 @@ export default function ContactEditorModal({
     titleRef,
   );
 
-  if (!isOpen) return null;
-
   // 스킴 없는 URL(linkedin.com/in/x)은 포트폴리오에서 깨진 상대 링크가 되므로 저장 시 https:// 보정
   const normalizeUrl = (v: string) => {
     const t = v.trim();
@@ -57,32 +54,22 @@ export default function ContactEditorModal({
   };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="contact-editor-title" onKeyDown={handleDialogKeyDown} className="fixed inset-0 z-50 bg-spotify-near-black text-white animate-in slide-in-from-bottom duration-300 flex flex-col">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-white/5 sticky top-0 bg-spotify-near-black/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={requestClose}
-            className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green"
-            type="button"
-            aria-label="연락처 편집 닫기"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <h3 ref={titleRef} id="contact-editor-title" tabIndex={-1} className="text-[18px] font-bold text-white">
-            연락처 편집
-          </h3>
-        </div>
-        <Button
-          className="btn-pill-primary h-11 px-8 font-bold cursor-pointer"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          적용하기
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 max-w-3xl mx-auto w-full space-y-8">
-        <p className="text-[13px] font-medium leading-relaxed text-spotify-silver">
+    <EditorSurface
+      isOpen={isOpen}
+      onClose={requestClose}
+      onSave={handleSave}
+      isSaving={isSaving}
+      isDirty={isDirty}
+      title="연락처 편집"
+      closeLabel="연락처 편집 닫기"
+      titleId="contact-editor-title"
+      descriptionId="contact-editor-description"
+      titleRef={titleRef}
+      dialogRef={dialogRef}
+      onKeyDown={handleDialogKeyDown}
+      contentClassName="mx-auto w-full max-w-3xl space-y-8"
+    >
+        <p id="contact-editor-description" className="text-[13px] font-medium leading-relaxed text-spotify-silver">
           채용 담당자가 연락할 수 있도록 아래 정보를 채워보세요. 모두 선택 사항이지만, 하나 이상 있으면 신뢰를 줄 수 있어요.
         </p>
         <div className="space-y-6">
@@ -139,8 +126,7 @@ export default function ContactEditorModal({
             />
           </div>
         </div>
-      </div>
       <DiscardChangesDialog open={confirmOpen} onOpenChange={setConfirmOpen} onConfirm={onClose} restoreFocusRef={titleRef} />
-    </div>
+    </EditorSurface>
   );
 }

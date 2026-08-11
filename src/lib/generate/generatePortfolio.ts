@@ -5,6 +5,7 @@ import { type AISummary } from "@/types/project";
 import OpenAI from "openai";
 import { revalidatePath } from "next/cache";
 import { MAX_FEATURED_PROJECTS } from "@/lib/project-selection";
+import { isContactableEmail } from "@/preview/contact";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -119,17 +120,21 @@ export async function generatePortfolio(params: {
              readme = (rawData?.readme as string) || "";
           }
 
-          // README 파일이 부실하거나 없는 경우에 대한 기본 플레이스홀더 텍스트 고도화
+          // README가 없을 때는 확인 가능한 저장소 메타데이터만 사용한다.
           if (!readme || readme.length <= 50) {
             const placeholderSummary = {
-              headline: p.description || `${p.name} - 개발자의 신뢰도 높은 프로젝트입니다.`,
+              headline: p.description || `${p.name} 저장소의 구현 내용과 구조를 확인할 수 있습니다.`,
               highlights: [
-                `${p.language || "주요 개발"} 언어를 활용하여 구현된 레포지토리입니다.`,
-                p.pushed_at ? `${new Date(p.pushed_at).toLocaleDateString("ko-KR")}에 마지막으로 업데이트되었습니다.` : "신뢰할 수 있는 개발 히스토리가 기록되어 있습니다.",
-                "상세 기능과 스펙은 프로젝트 저장소 코드를 통해 확인하실 수 있습니다."
+                p.language
+                  ? `${p.language}을(를) 주요 언어로 사용하는 저장소입니다.`
+                  : "프로젝트 구현 코드는 GitHub 저장소에서 확인할 수 있습니다.",
+                p.pushed_at
+                  ? `${new Date(p.pushed_at).toLocaleDateString("ko-KR")}에 마지막으로 업데이트되었습니다.`
+                  : "GitHub 저장소의 코드와 커밋 기록을 확인할 수 있습니다.",
+                "상세 구현은 프로젝트 저장소에서 확인할 수 있습니다."
               ],
               demo_url: (rawData?.homepage as string) || null,
-              role: "주요 개발자"
+              role: null
             };
             const placeholderStr = JSON.stringify(placeholderSummary);
             p.ai_summary = placeholderStr;
@@ -166,7 +171,7 @@ export async function generatePortfolio(params: {
             parsedSummary = {};
           }
 
-          const defaultHeadline = p.description || `${p.name} - 개발자의 신뢰도 높은 프로젝트입니다.`;
+          const defaultHeadline = p.description || `${p.name} 저장소의 구현 내용과 구조를 확인할 수 있습니다.`;
           const defaultHighlights = p.description 
             ? [p.description.substring(0, 100)] 
             : ["상세 기능과 스펙은 프로젝트 저장소 코드를 통해 확인하실 수 있습니다."];
@@ -243,9 +248,10 @@ export async function generatePortfolio(params: {
       block_type: "hero",
       position: 0,
       config: {
-        headline: user.name || user.github_login || "Developer",
-        subheadline,
-        bio: heroBio,
+        // BlockConfigSchema의 hero 길이 한도. 넘겨서 시드되면 이후 hero 저장이 전부 막힌다.
+        headline: (user.name || user.github_login || "Developer").slice(0, 100),
+        subheadline: subheadline.slice(0, 200),
+        bio: heroBio.slice(0, 500),
         show_github_stats: true,
       },
       is_visible: true,
@@ -284,25 +290,6 @@ export async function generatePortfolio(params: {
 
     await updateJobProgress(jobId, { progress: 70 });
 
-    // Contact Block
-    const contactConfig: Record<string, unknown> = {
-      github_url: `https://github.com/${user.github_login}`,
-    };
-    if (user.email) {
-      contactConfig.email = user.email;
-    }
-
-    // 연락(채용 문의) 블록은 페이지 마지막에 — peak-end. 블로그 피드가 뒤에 오면
-    // 마무리 CTA가 글 목록에 묻히므로, 블로그(position 3)보다 뒤(position 4)에 배치.
-    portfolioBlocksData.push({
-      portfolio_id: portfolioId,
-      block_type: "contact",
-      position: 4,
-      config: contactConfig as Prisma.InputJsonValue,
-      is_visible: true,
-      is_ai_generated: true,
-    });
-
     // Blog Feed Block
     const blogIntegrations = await prisma.integration.findMany({
       where: {
@@ -316,7 +303,7 @@ export async function generatePortfolio(params: {
       portfolioBlocksData.push({
         portfolio_id: portfolioId,
         block_type: "blog_feed",
-        position: 3, // 연락 블록(4)보다 앞 — 연락 CTA가 항상 페이지 마지막
+        position: portfolioBlocksData.length,
         config: {
           integration_provider: blogIntegrations[0].provider,
           max_items: 3,
@@ -327,32 +314,52 @@ export async function generatePortfolio(params: {
       });
     }
 
+    // Contact Block — optional blog 뒤에서 페이지를 마무리한다.
+    const contactConfig: Record<string, unknown> = {};
+    if (user.github_login) {
+      contactConfig.github_url = `https://github.com/${user.github_login}`;
+    }
+    if (isContactableEmail(user.email ?? undefined)) {
+      contactConfig.email = user.email;
+    }
+    portfolioBlocksData.push({
+      portfolio_id: portfolioId,
+      block_type: "contact",
+      position: portfolioBlocksData.length,
+      config: contactConfig as Prisma.InputJsonValue,
+      is_visible: true,
+      is_ai_generated: true,
+    });
+
     await updateJobProgress(jobId, { progress: 85 });
 
-    await prisma.portfolioBlock.createMany({
-      data: portfolioBlocksData,
+    const portfolio = await prisma.portfolio.findFirst({
+      where: { id: portfolioId, user_id: userId },
+      select: { slug: true },
+    });
+    if (!portfolio) throw new Error("Portfolio not found");
+
+    await prisma.$transaction(async (tx) => {
+      await tx.portfolioBlock.deleteMany({ where: { portfolio_id: portfolioId } });
+      await tx.portfolioBlock.createMany({ data: portfolioBlocksData });
+
+      if (autoPublish) {
+        await tx.portfolio.update({
+          where: { id: portfolioId },
+          data: {
+            is_published: true,
+            auto_published: true,
+            published_at: new Date(),
+          },
+        });
+      }
     });
 
     await updateJobProgress(jobId, { progress: 95 });
 
-    let finalSlug = "";
-    const pUpdate = await prisma.portfolio.findUnique({
-      where: { id: portfolioId }
-    });
-    if (pUpdate) {
-      finalSlug = pUpdate.slug;
-    }
+    const finalSlug = portfolio.slug;
 
-    if (autoPublish && finalSlug) {
-      await prisma.portfolio.update({
-        where: { id: portfolioId },
-        data: {
-          is_published: true,
-          auto_published: true,
-          published_at: new Date(),
-        },
-      });
-
+    if (autoPublish) {
       revalidatePath(`/${finalSlug}`);
       revalidatePath("/dashboard");
     }
@@ -363,7 +370,7 @@ export async function generatePortfolio(params: {
       : null;
 
     const missing_optional_fields = [];
-    if (!user.email) missing_optional_fields.push("email");
+    if (!isContactableEmail(user.email ?? undefined)) missing_optional_fields.push("email");
     missing_optional_fields.push("linkedin_url", "website_url");
 
     await updateJobProgress(jobId, {

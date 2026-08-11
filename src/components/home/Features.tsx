@@ -7,7 +7,6 @@ import Reveal from "../common/Reveal";
 const features = [
   {
     icon: RefreshCw,
-    color: "#1ed760",
     tag: "연결만 하면 끝",
     title: "커밋하면 자동으로 업데이트",
     summary: "한 번 연결하면 손댈 일이 없어요",
@@ -15,15 +14,13 @@ const features = [
   },
   {
     icon: Sparkles,
-    color: "#539df5",
-    tag: "고르기만 하면 돼요",
-    title: "보여줄 프로젝트만 골라서",
-    summary: "전부 보여줄 필요는 없으니까",
-    desc: "저장소를 전부 나열하지 않아요. 눈에 띄는 프로젝트를 앞에 두고, 설명까지 읽기 좋게 정리해줘요.",
+    tag: "AI가 먼저 골라요",
+    title: "보여줄 작업과 설명을 초안으로",
+    summary: "빈 화면에서 시작하지 않도록",
+    desc: "AI가 저장소를 전부 나열하는 대신 대표 프로젝트를 추천하고 순서를 잡아, 설명까지 읽기 좋은 초안으로 준비해요. 마지막 선택만 직접 하면 돼요.",
   },
   {
     icon: Pencil,
-    color: "#ffa42b",
     tag: "드래그로 뚝딱",
     title: "화면 보면서 바로 편집",
     summary: "코드는 몰라도 괜찮아요",
@@ -68,18 +65,15 @@ export default function Features() {
   const CurrentIcon = current.icon;
 
   return (
-    <section className="bg-spotify-near-black px-6 py-28 sm:py-32">
+    <section className="bg-spotify-near-black px-6 py-20 sm:py-32">
       <div className="mx-auto max-w-7xl">
         <Reveal>
           <div className="mb-14 max-w-2xl sm:mb-16">
-            <p className="mb-4 text-[14px] font-bold tracking-[0.02em] text-spotify-green">
-              이런 게 좋아요
-            </p>
             <h2 className="m-0 text-[clamp(36px,5vw,56px)] font-black leading-tight tracking-tight text-white">
-              그냥 만들어주고 끝이 아니에요
+              처음부터, 공개한 뒤까지 덜 손가게
             </h2>
             <p className="mt-5 text-[16px] font-medium leading-relaxed text-spotify-silver sm:text-[18px]">
-              연결만 해두면, 고르고 다듬고 최신으로 맞추는 일까지 알아서 이어져요.
+              AI 초안으로 시작하고 필요한 만큼만 고친 뒤, GitHub의 새 활동도 계속 반영해요.
             </p>
           </div>
         </Reveal>
@@ -110,47 +104,31 @@ export default function Features() {
                   onClick={() => setActive(i)}
                   className="group relative flex w-full items-center gap-4 py-5 pl-6 pr-2 text-left transition-colors duration-300 hover:bg-white/3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-spotify-green"
                 >
-                  {/* Traveling accent rail — the signature marker */}
+                  {/* Traveling accent rail: the signature marker */}
                   <span
                     aria-hidden="true"
-                    className="absolute left-0 top-1/2 h-9 w-0.75 -translate-y-1/2 rounded-full transition-all duration-300 ease-out motion-reduce:transition-none"
-                    style={{
-                      background: f.color,
-                      opacity: selected ? 1 : 0,
-                      transform: `translateY(-50%) scaleY(${selected ? 1 : 0.25})`,
-                    }}
+                    className={`absolute left-0 top-1/2 h-9 w-0.75 -translate-y-1/2 rounded-full bg-spotify-green transition-all duration-300 ease-out motion-reduce:transition-none ${selected ? "scale-y-100 opacity-100" : "scale-y-25 opacity-0"}`}
                   />
                   <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors duration-300"
-                    style={{
-                      color: selected ? f.color : "#b3b3b3",
-                      borderColor: selected ? `${f.color}80` : "rgba(255,255,255,0.12)",
-                      background: selected ? `${f.color}18` : "transparent",
-                    }}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${selected ? "border-spotify-green/50 bg-spotify-green/10 text-spotify-green" : "border-white/10 text-spotify-silver"}`}
                   >
                     <Icon size={18} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className="mb-2 inline-flex rounded-md px-2 py-1 text-[12px] font-semibold tracking-[-0.01em] transition-colors duration-300"
-                      style={{
-                        color: selected ? "#ffffff" : "#b3b3b3",
-                        background: selected ? `${f.color}26` : "rgba(255,255,255,0.05)",
-                      }}
+                      className={`mb-2 inline-flex rounded-md px-2 py-1 text-[12px] font-semibold tracking-[-0.01em] transition-colors duration-300 ${selected ? "bg-spotify-green/15 text-white" : "bg-white/5 text-spotify-silver"}`}
                     >
                       {f.tag}
                     </span>
                     <span
-                      className="block truncate text-[19px] font-bold tracking-tight transition-colors duration-300 sm:text-[21px]"
-                      style={{ color: selected ? "#ffffff" : "#cbcbcb" }}
+                      className={`block text-[19px] font-bold leading-snug tracking-tight transition-colors duration-300 sm:text-[21px] ${selected ? "text-white" : "text-spotify-near-white"}`}
                     >
                       {f.title}
                     </span>
                   </span>
                   <ArrowUpRight
                     size={18}
-                    className="shrink-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none"
-                    style={{ color: selected ? f.color : "#5c5c5c", opacity: selected ? 1 : 0.6 }}
+                    className={`shrink-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none ${selected ? "text-spotify-green" : "text-spotify-silver/40"}`}
                     aria-hidden="true"
                   />
                 </button>
@@ -163,29 +141,18 @@ export default function Features() {
             id="feature-panel"
             role="tabpanel"
             aria-labelledby={`feature-tab-${active}`}
-            className="relative flex min-h-75 flex-col justify-between overflow-hidden rounded-[28px] border border-white/10 bg-spotify-dark-surface p-8 sm:p-10 lg:col-start-2 lg:row-start-1"
+            className="relative flex min-h-75 flex-col justify-between overflow-hidden rounded-lg border border-white/10 bg-spotify-dark-surface p-8 sm:p-10 lg:col-start-2 lg:row-start-1"
           >
-            {/* Keyed content — crossfades on tab change */}
+            {/* Keyed content: crossfades on tab change */}
             <div
               key={active}
               className="relative animate-in fade-in-0 slide-in-from-bottom-3 duration-500 ease-out motion-reduce:animate-none"
             >
-              <div className="mb-8 flex items-center justify-between">
+              <div className="mb-8 flex items-center">
                 <span
-                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border"
-                  style={{
-                    color: current.color,
-                    background: `${current.color}18`,
-                    borderColor: `${current.color}45`,
-                  }}
+                  className="inline-flex h-14 w-14 items-center justify-center rounded-md border border-spotify-green/30 bg-spotify-green/10 text-spotify-green"
                 >
                   <CurrentIcon size={26} aria-hidden="true" />
-                </span>
-                <span
-                  className="inline-flex rounded-md px-3 py-1.5 text-[14px] font-bold tracking-[-0.01em] text-white"
-                  style={{ background: `${current.color}26` }}
-                >
-                  {current.tag}
                 </span>
               </div>
 
@@ -198,39 +165,13 @@ export default function Features() {
               {/* Signature underline, grows in with the content */}
               <span
                 aria-hidden="true"
-                className="mb-6 block h-0.75 w-16 rounded-full"
-                style={{ background: current.color }}
+                className="mb-6 block h-0.75 w-16 rounded-full bg-spotify-green"
               />
               <p className="max-w-xl text-[17px] font-medium leading-relaxed text-spotify-silver">
                 {current.desc}
               </p>
             </div>
 
-            {/* Footer: position + quick navigation */}
-            <div className="relative mt-10 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2" aria-hidden="true">
-                {features.map((f, i) => {
-                  const selected = active === i;
-                  return (
-                    <button
-                      key={f.tag}
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setActive(i)}
-                      aria-label={`${f.title} 보기`}
-                      className="h-1.5 rounded-full transition-all duration-300 ease-out motion-reduce:transition-none"
-                      style={{
-                        width: selected ? 28 : 14,
-                        background: selected ? f.color : "rgba(255,255,255,0.16)",
-                      }}
-                    />
-                  );
-                })}
-              </div>
-              <span className="shrink-0 text-[12px] font-bold tabular-nums tracking-[0.08em] text-spotify-silver/80">
-                {String(active + 1).padStart(2, "0")} / {String(features.length).padStart(2, "0")}
-              </span>
-            </div>
           </div>
         </div>
       </div>

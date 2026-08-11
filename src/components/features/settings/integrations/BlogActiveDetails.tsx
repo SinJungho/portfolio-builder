@@ -10,7 +10,7 @@ export function BlogActiveDetails({ blogIntegration }: BlogActiveDetailsProps) {
   const theme = getProviderStyles(blogIntegration.provider);
 
   return (
-    <dl className="p-5 bg-white/5 border border-white/5 rounded-2xl grid grid-cols-[105px_1fr] gap-x-3 gap-y-3 text-[13px] text-spotify-silver animate-in fade-in duration-300">
+    <dl className="p-5 bg-white/5 border border-white/5 rounded-lg grid grid-cols-[105px_1fr] gap-x-3 gap-y-3 text-[13px] text-spotify-silver animate-in fade-in duration-300">
       <dt className="flex items-center gap-1.5 font-bold text-white align-middle">
         <Link2
           className="w-4 h-4 text-spotify-green shrink-0"

@@ -16,7 +16,7 @@ export const ContactSettingsPanel = React.memo(function ContactSettingsPanel({
   handleOptionalChange,
 }: ContactSettingsPanelProps): React.ReactElement {
   return (
-    <div className="bg-spotify-dark-surface border border-white/5 rounded-[32px] p-5 sm:p-6 md:p-8 shadow-spotify space-y-6 text-white">
+    <div className="bg-spotify-dark-surface border border-white/5 rounded-lg p-5 sm:p-6 md:p-8 shadow-spotify space-y-6 text-white">
       <div className="space-y-1 font-normal">
         <h3 className="text-[18px] sm:text-[20px] font-extrabold text-white flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-spotify-green fill-current" />
@@ -78,7 +78,7 @@ export const ContactSettingsPanel = React.memo(function ContactSettingsPanel({
           </div>
         </div>
       ) : (
-        <div className="text-[13px] text-spotify-silver bg-spotify-near-black/50 p-4 rounded-2xl border border-dashed border-white/5 text-center font-normal">
+        <div className="text-[13px] text-spotify-silver bg-spotify-near-black/50 p-4 rounded-lg border border-dashed border-white/5 text-center font-normal">
           연락처 섹션을 찾을 수 없습니다.
         </div>
       )}

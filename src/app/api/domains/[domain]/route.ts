@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { domainService } from '@/services/domain';
+import { apiError, logRouteWarning } from '@/lib/api/errors';
+import { normalizeCustomDomain } from '@/lib/domain';
+import { prisma } from '@/lib/prisma';
 
 /**
- * 도메인 설정 상태 확인 엔드포인트
- * DNS 설정이 올바르게 되었는지 Vercel API를 통해 실시간으로 확인합니다.
+ * 도메인의 DNS 설정 상태를 확인한다.
  */
 export async function GET(
   req: NextRequest,
@@ -12,31 +14,34 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: '인증되지 않은 요청입니다.' }, { status: 401 });
+    return apiError("UNAUTHORIZED", 401);
   }
 
   try {
-    const { domain } = await params;
+    const { domain: rawDomain } = await params;
+    const domain = normalizeCustomDomain(rawDomain);
+    if (!domain) return apiError("DOMAIN_INVALID", 400);
 
-    // Vercel API를 통해 도메인 구성 정보 조회
+    const portfolio = await prisma.portfolio.findFirst({
+      where: { custom_domain: domain, user_id: session.user.id },
+      select: { id: true },
+    });
+    if (!portfolio) return apiError("NOT_FOUND", 404);
+
+    // Vercel 연동이 없으면 오류가 아니라 수동 DNS 설정 대기 상태다.
+    if (!domainService.isConfigured()) {
+      return NextResponse.json({ configured: false, isManualOnly: true });
+    }
+
+    // Vercel에서 도메인 상태를 조회한다.
     const status = await domainService.getDomainStatus(domain);
 
-    // Vercel API 오류 또는 설정 오류 발생 시 모의 우회로 긍정적인 검증 결과를 전달 (configured: true)
-    if (!status.configured) {
-      return NextResponse.json({
-        configured: true,
-        isMocked: true,
-        message: 'DNS 설정 모의 검증이 성공적으로 완료되었습니다.'
-      });
-    }
+    // 외부 상태를 확인하지 못하면 수동 설정 흐름으로 안내한다.
+    if ('error' in status) return apiError("DOMAIN_STATUS_FAILED", 503);
 
     return NextResponse.json(status);
   } catch (error) {
-    console.warn('[VERCEL_DOMAIN_STATUS_FALLBACK] Vercel 도메인 API 연동 실패로 인해 모의 성공 구성(Fallback)으로 우회 처리합니다.', error);
-    return NextResponse.json({
-      configured: true,
-      isMocked: true,
-      message: 'DNS 설정 모의 검증이 성공적으로 완료되었습니다.'
-    });
+    logRouteWarning('/api/domains/[domain]', 'GET', error, 'Vercel domain status unavailable');
+    return apiError("DOMAIN_STATUS_FAILED", 503);
   }
 }

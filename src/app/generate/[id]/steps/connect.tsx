@@ -1,17 +1,19 @@
 "use client";
 
 import { AlertCircle, Github, LogIn } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
-// 동기화 중 확인하는 GitHub 데이터 항목을 안내한다.
+// 동기화 대상 GitHub 데이터를 안내한다.
 const READING = [
   "커밋과 스타, 사용 언어",
   "대표가 될 만한 프로젝트",
   "최근 활동과 기여 흐름",
 ];
 
-// 실제 진행률을 알 수 없는 동기화 상태를 표시한다.
+// 진행률을 알 수 없는 동안 대기 상태를 표시한다.
 const CONNECT_MOTION_CSS =
   "@keyframes pf-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}" +
   ".pf-sweep{animation:pf-sweep 1.4s ease-in-out infinite}" +
@@ -25,7 +27,7 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 컴포넌트가 해제되면 라우팅과 오류 상태 갱신을 중단한다.
+    // 언마운트 뒤에는 상태와 라우팅을 갱신하지 않는다.
     let active = true;
     async function run() {
       try {
@@ -38,21 +40,21 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
         const data = await res.json();
 
         if (!res.ok) {
-          let msg = data.error || "GitHub 연동 확인 중 오류가 발생했습니다.";
+          let msg = responseErrorMessage(data, "GITHUB_CONNECT_FAILED");
           if (msg.includes("Bad credentials")) {
-            msg = "GitHub 인증 세션이 만료되었습니다. 다시 로그인해 주세요.";
+            msg = errorMessage("GITHUB_AUTH_EXPIRED");
           }
           throw new Error(msg);
         }
 
-        // 동기화가 완료되면 분석 단계로 이동한다.
+        // 동기화가 끝나면 분석 단계로 이동한다.
         if (active) {
           router.push(
             `/generate/${portfolioId}?step=analyze&sync_job_id=${data.job_id}`,
           );
         }
       } catch (e: unknown) {
-        if (active) setError((e as Error).message);
+        if (active) setError(e instanceof Error ? e.message : errorMessage("GITHUB_CONNECT_FAILED"));
       }
     }
 
@@ -69,10 +71,10 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
     return (
       <section
         aria-labelledby="connect-error-title"
-        className="flex flex-col items-center gap-8 text-center max-w-md w-full bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
+        className="flex flex-col items-center gap-8 text-center max-w-md w-full bg-spotify-dark-surface p-8 md:p-10 rounded-lg border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
       >
         <div className="relative">
-          <div className="w-20 h-20 bg-spotify-negative/10 rounded-[28px] flex items-center justify-center">
+          <div className="w-20 h-20 bg-spotify-negative/10 rounded-lg flex items-center justify-center">
             {isAuthError ? (
               <LogIn className="w-10 h-10 text-spotify-negative" />
             ) : (
@@ -105,15 +107,15 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
         >
           {isAuthError ? (
             <button
-              onClick={() => (window.location.href = "/api/auth/signin/github")}
-              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+              onClick={() => signIn("github", { callbackUrl: `/generate/${portfolioId}?step=connect` })}
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
             >
               GitHub 다시 연동하기
             </button>
           ) : (
             <button
               onClick={() => window.location.reload()}
-              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold uppercase tracking-spotify transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
+              className="w-full h-14 bg-spotify-green hover:scale-105 active:scale-95 text-black rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(30,215,96,0.2)] cursor-pointer"
             >
               다시 시도하기
             </button>
@@ -121,7 +123,7 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
 
           <button
             onClick={() => router.push("/")}
-            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold uppercase tracking-spotify transition-all cursor-pointer"
+            className="w-full h-14 bg-transparent border border-spotify-silver hover:border-white text-white rounded-full font-bold transition-all cursor-pointer"
           >
             대시보드로 돌아가기
           </button>
@@ -133,12 +135,12 @@ export default function ConnectStep({ portfolioId }: { portfolioId: string }) {
   return (
     <section
       aria-labelledby="connect-title"
-      className="flex flex-col items-center gap-7 w-full max-w-md bg-spotify-dark-surface p-8 md:p-10 rounded-[32px] border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
+      className="flex flex-col items-center gap-7 w-full max-w-md bg-spotify-dark-surface p-8 md:p-10 rounded-lg border border-white/5 shadow-spotify animate-in fade-in zoom-in-95 duration-500"
     >
       <style dangerouslySetInnerHTML={{ __html: CONNECT_MOTION_CSS }} />
 
       <div className="relative">
-        <div className="w-20 h-20 bg-spotify-green/10 rounded-[28px] flex items-center justify-center">
+        <div className="w-20 h-20 bg-spotify-green/10 rounded-lg flex items-center justify-center">
           <Github className="w-10 h-10 text-spotify-green" />
         </div>
         <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-spotify-dark-surface rounded-full flex items-center justify-center border border-white/5 shadow-md">

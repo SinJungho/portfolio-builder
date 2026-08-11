@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Activity, Star, Code2, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { ThemeTokens } from "../themes";
 
 interface HeroBlockProps {
@@ -19,13 +19,14 @@ interface HeroBlockProps {
   theme: ThemeTokens;
   showContactLink?: boolean;
   showProjectsLink?: boolean;
+  isCompactPreview?: boolean;
 }
 
 // 큰 수를 k 단위로 축약한다.
 const formatCount = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n);
 
-export default function HeroBlock({ config, theme: t, showContactLink, showProjectsLink }: HeroBlockProps) {
+export default function HeroBlock({ config, theme: t, showContactLink, showProjectsLink, isCompactPreview = false }: HeroBlockProps) {
   const { headline, subheadline, bio, show_github_stats, github_login } = config;
 
   const [avatarError, setAvatarError] = useState(false);
@@ -36,24 +37,28 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
 
   // 값이 없거나 기준 미만인 통계는 표시하지 않는다.
   const stats = [
-    { icon: Code2, label: "리포지토리", value: config.github_repos_count, min: 3 },
-    { icon: Star, label: "받은 스타", value: config.github_stars_count, min: 1 },
-    { icon: Activity, label: "기여 횟수", value: config.github_contributions, min: 1 },
+    { label: "리포지토리", value: config.github_repos_count, min: 3 },
+    { label: "받은 스타", value: config.github_stars_count, min: 1 },
+    { label: "기여 횟수", value: config.github_contributions, min: 1 },
   ].filter(
-    (stat): stat is { icon: typeof Code2; label: string; value: number; min: number } =>
+    (stat): stat is { label: string; value: number; min: number } =>
       typeof stat.value === "number" && stat.value >= stat.min,
   );
   const hasGithubStats = stats.length > 0;
 
   const showStats = Boolean(show_github_stats && github_login && hasGithubStats);
+  const showBio = Boolean(bio.trim()) && bio.trim() !== subheadline.trim();
 
   return (
     <section
       className="relative flex items-center -mx-6 md:-mx-8 px-6 md:px-8 overflow-hidden md:min-h-[52vh]"
     >
 
-      <div className="relative w-full max-w-[1100px] mx-auto flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20 py-14 md:py-16">
-        <div className="flex-1 space-y-8 text-center lg:text-left">
+      <div className={`relative w-full max-w-[1100px] mx-auto flex ${isCompactPreview ? "flex-col-reverse" : "flex-col-reverse lg:flex-row"} items-center gap-12 lg:gap-20 py-14 md:py-16`}>
+        <div
+          className={`${isCompactPreview ? "w-full min-w-0 flex-none text-center" : "flex-1 text-center lg:text-left"} space-y-8`}
+          style={isCompactPreview ? { width: "100%" } : undefined}
+        >
           <div className="space-y-4">
             <h1
               className="text-[clamp(44px,7vw,72px)] font-extrabold leading-[1.02] tracking-[-1px] break-words"
@@ -62,22 +67,24 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
               {headline}
             </h1>
             <p
-              className="text-xl md:text-2xl font-semibold tracking-[-0.5px]"
+            className="text-xl md:text-2xl font-semibold tracking-[-0.5px]"
               style={{ color: t.textMuted }}
             >
               {subheadline}
             </p>
           </div>
 
-          <p
-            className="text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto lg:mx-0"
-            style={{ color: t.textMuted }}
-          >
-            {bio}
-          </p>
+          {showBio && (
+            <p
+              className={`text-[17px] md:text-[18px] leading-[1.75] max-w-xl mx-auto ${isCompactPreview ? "" : "lg:mx-0"}`}
+              style={{ color: t.textMuted }}
+            >
+              {bio}
+            </p>
+          )}
 
           {(showProjectsLink || showContactLink) && (
-            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+            <div className={`flex flex-wrap gap-3 justify-center ${isCompactPreview ? "" : "lg:justify-start"}`}>
               {showProjectsLink && (
                 <a
                   href="#projects"
@@ -107,44 +114,33 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
           )}
 
           {showStats && (
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+            <dl className={`flex flex-wrap justify-center ${isCompactPreview ? "" : "lg:justify-start"}`}>
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="flex items-center gap-3 px-5 py-3.5"
+                  className="flex items-baseline gap-2 border-l px-4 first:border-l-0 first:pl-0"
                   style={{
-                    backgroundColor: t.cardBg,
-                    border: `1px solid ${t.cardBorder}`,
-                    borderRadius: t.cardRadius,
+                    borderColor: t.cardBorder,
                   }}
                 >
-                  <stat.icon
-                    className="w-4 h-4 shrink-0"
-                    style={{ color: t.textMuted }}
-                  />
-                  <div className="flex flex-col">
-                    <span
-                      className="text-[11px] font-bold uppercase tracking-[1.5px]"
-                      style={{ color: t.textMuted }}
-                    >
-                      {stat.label}
-                    </span>
-                    <span
-                      className="text-[18px] font-extrabold tracking-tight leading-tight"
-                      style={{ color: t.text }}
-                    >
-                      {formatCount(stat.value)}
-                    </span>
-                  </div>
+                  <dd
+                    className="text-[18px] font-extrabold tracking-tight leading-tight"
+                    style={{ color: t.text }}
+                  >
+                    {formatCount(stat.value)}
+                  </dd>
+                  <dt className="text-[12px] font-semibold" style={{ color: t.textMuted }}>
+                    {stat.label}
+                  </dt>
                 </div>
               ))}
-            </div>
+            </dl>
           )}
         </div>
 
         <div className="shrink-0 relative">
           <div
-            className="relative w-36 h-36 md:w-60 md:h-60 rounded-full overflow-hidden group flex items-center justify-center"
+            className={`relative w-36 h-36 ${isCompactPreview ? "" : "md:w-60 md:h-60"} rounded-full overflow-hidden group flex items-center justify-center`}
             style={{
               backgroundColor: t.surfaceBg,
               border: `1px solid ${t.cardBorder}`,
@@ -153,15 +149,16 @@ export default function HeroBlock({ config, theme: t, showContactLink, showProje
             {showGithubAvatar ? (
               <Image
                 src={`https://github.com/${github_login}.png`}
-                alt={headline}
+                alt={`${headline}의 GitHub 프로필 이미지`}
                 fill
+                loading={isCompactPreview ? "lazy" : "eager"}
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
-                unoptimized
+                sizes={isCompactPreview ? "144px" : "(min-width: 768px) 240px, 144px"}
                 onError={() => setAvatarError(true)}
               />
             ) : (
               <span
-                className="text-6xl md:text-7xl font-extrabold select-none"
+                className={`text-6xl ${isCompactPreview ? "" : "md:text-7xl"} font-extrabold select-none`}
                 style={{ color: t.textMuted }}
                 aria-hidden="true"
               >

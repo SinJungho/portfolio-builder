@@ -4,37 +4,51 @@ import { prisma } from '@/lib/prisma';
 import { projectService } from '@/services/project';
 import { env } from '@/lib/env';
 import { revalidatePath } from 'next/cache';
+import { apiError, logRouteError, logRouteWarning, routeError } from '@/lib/api/errors';
+import { z } from 'zod';
+
+const pushPayloadSchema = z.object({
+  repository: z.object({
+    id: z.number().int().nonnegative(),
+    pushed_at: z.union([z.string(), z.number()]),
+    owner: z.object({ id: z.number().int().nonnegative() }),
+  }),
+});
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = req.headers.get('x-hub-signature-256');
   const event = req.headers.get('x-github-event');
 
-  // 1. Signature Verification (STEP 2 Security Rule)
+  // 웹훅 서명을 검증한다.
   if (!verifyGitHubWebhook(signature, body, env.GITHUB_WEBHOOK_SECRET)) {
-    console.error('[GitHub Webhook] Invalid signature');
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    logRouteWarning('/api/webhooks/github', 'POST', new Error('Invalid signature'), 'Invalid signature');
+    return apiError("WEBHOOK_INVALID_SIGNATURE", 401);
   }
 
   try {
     const payload = JSON.parse(body);
 
-    // 2. Event Handling
+    // 이벤트를 처리한다.
     switch (event) {
       case 'push': {
-        const repositoryId = payload.repository.id.toString();
-        const senderId = payload.sender.id;
-        const pushedAt = new Date(payload.repository.pushed_at);
+        const parsed = pushPayloadSchema.safeParse(payload);
+        if (!parsed.success) return apiError('WEBHOOK_BAD_REQUEST', 400);
+        const repositoryId = parsed.data.repository.id.toString();
+        const ownerId = parsed.data.repository.owner.id;
+        const rawPushedAt = parsed.data.repository.pushed_at;
+        const pushedAt = new Date(typeof rawPushedAt === 'number' ? rawPushedAt * 1000 : rawPushedAt);
+        if (Number.isNaN(pushedAt.getTime())) return apiError('WEBHOOK_BAD_REQUEST', 400);
 
-        // Find user by github_id
+        // GitHub ID로 사용자를 찾는다.
         const user = await prisma.user.findUnique({
-          where: { github_id: BigInt(senderId) }
+          where: { github_id: BigInt(ownerId) }
         });
 
         if (user) {
           await projectService.updatePushStatus(user.id, repositoryId, pushedAt);
           
-          // on-demand revalidation 실행 (포트폴리오 페이지 즉시 반영)
+          // 변경된 포트폴리오 페이지를 즉시 재검증한다.
           try {
             const portfolios = await prisma.portfolio.findMany({ where: { user_id: user.id } });
             for (const p of portfolios) {
@@ -43,8 +57,8 @@ export async function POST(req: NextRequest) {
             revalidatePath(`/dashboard`);
             console.log(`[GitHub Webhook] Revalidation triggered for User: ${user.id}`);
           } catch (revalidateError) {
-            console.error('[GitHub Webhook] Revalidation failed:', revalidateError);
-            // Revalidation 실패가 Webhook 전체 실패로 이어지지 않도록 함
+            logRouteError('/api/webhooks/github/revalidate', 'POST', revalidateError);
+            // 재검증 실패가 웹훅 실패로 이어지지 않게 한다.
           }
           
           console.log(`[GitHub Webhook] Updated push status for repo ${repositoryId} (User: ${user.id})`);
@@ -63,10 +77,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      console.error('[GitHub Webhook] Invalid JSON payload');
-      return NextResponse.json({ error: 'bad request' }, { status: 400 });
+      return apiError('WEBHOOK_BAD_REQUEST', 400);
     }
-    console.error('[GitHub Webhook] Error:', error);
-    return NextResponse.json({ error: 'internal server error' }, { status: 500 });
+    return routeError('/api/webhooks/github', 'POST', error);
   }
 }

@@ -2,10 +2,11 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { THEMES } from "@/preview/themes";
+import { THEMES, readableTextOn } from "@/preview/themes";
 import { usePortfolioStore } from "@/stores/portfolioStore";
 import { Sparkles } from "lucide-react";
 import React, { useState } from "react";
+import { errorMessage } from "@/lib/api/errors";
 
 const isHexColor = (value: string) => /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value);
 
@@ -19,13 +20,15 @@ export default function ColorCustomizer() {
   const currentTheme = THEMES[theme] || THEMES.minimal;
   const primaryColor =
     (designTokens?.primaryColor as string) || currentTheme?.accent || "#1ed760";
-  const [inputValue, setInputValue] = useState(primaryColor);
+  const [draftValue, setDraftValue] = useState<string | null>(null);
+  const inputValue = draftValue ?? primaryColor;
   const [error, setError] = useState("");
 
   const commitColor = (value: string) => {
-    if (!isHexColor(value)) return setError("#RGB 또는 #RRGGBB 형식의 색상을 입력하세요.");
+    if (!isHexColor(value)) return setError(errorMessage("COLOR_INVALID"));
     setError("");
     updateToken("primaryColor", value);
+    setDraftValue(null);
   };
 
   return (
@@ -38,12 +41,12 @@ export default function ColorCustomizer() {
           id="color-customizer-heading"
           className="text-[20px] font-bold text-white tracking-tight"
         >
-          포인트 컬러
+          포트폴리오 강조색
         </h3>
       </header>
 
-      <article className="bg-spotify-dark-surface p-8 rounded-2xl shadow-spotify-md border border-white/5 space-y-8">
-        <div className="flex items-center gap-8">
+      <article className="bg-spotify-dark-surface p-8 rounded-lg shadow-spotify-md border border-white/5 space-y-8">
+          <div className="flex items-center gap-6">
           <div
             className="w-20 h-20 rounded-full shadow-spotify border border-white/10 shrink-0 transition-transform duration-500"
             style={{ backgroundColor: primaryColor }}
@@ -54,7 +57,7 @@ export default function ColorCustomizer() {
               htmlFor="primaryColor"
               className="text-[12px] font-bold text-spotify-silver tracking-spotify"
             >
-              강조 색상
+              버튼과 링크에 쓰이는 색
             </Label>
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
@@ -62,9 +65,10 @@ export default function ColorCustomizer() {
                   id="primaryColor"
                   type="text"
                   value={inputValue}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftValue(event.target.value)}
                   onBlur={() => commitColor(inputValue)}
                   onKeyDown={(event) => event.key === "Enter" && commitColor(inputValue)}
+                  aria-invalid={Boolean(error)}
                   className="h-12 border-none bg-spotify-near-black rounded-full font-mono text-[14px] font-bold text-white pl-12 pr-4 focus-visible:ring-1 focus-visible:ring-spotify-green shadow-inner"
                   aria-describedby={error ? "primary-color-error" : undefined}
                 />
@@ -99,11 +103,26 @@ export default function ColorCustomizer() {
           role="note"
         >
           <p className="text-[13px] text-spotify-silver font-medium leading-relaxed">
-            버튼, 링크, 프로필 강조 등 사이트 전체의{" "}
-            <strong className="text-white">핵심 브랜드 컬러</strong>를
-            변경합니다. 테마 프리셋의 기본 색상보다 우선 적용됩니다.
+            아래 미리보기처럼 채용 담당자가 먼저 보는 버튼과 링크를 강조해요. 직접 고른 색이 너무 옅으면 가독성을 위해 포커스 색상은 테마 기본색으로 보정됩니다.
           </p>
         </aside>
+        <div className="rounded-xl border border-white/5 bg-spotify-near-black p-5" aria-label="강조색 미리보기">
+          <p className="mb-3 text-[11px] font-bold text-spotify-silver">포트폴리오에서 이렇게 보여요</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-[14px] font-bold text-white">대표 프로젝트</p>
+              <p className="text-[12px] text-spotify-silver">최근 작업과 기술을 한눈에 보여줘요.</p>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 rounded-full px-4 py-2 text-[12px] font-bold"
+              style={{ backgroundColor: primaryColor, color: readableTextOn(primaryColor) }}
+              aria-label="강조색 미리보기 버튼"
+            >
+              자세히 보기
+            </button>
+          </div>
+        </div>
       </article>
     </section>
   );

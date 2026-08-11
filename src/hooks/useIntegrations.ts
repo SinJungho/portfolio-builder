@@ -4,6 +4,7 @@ import { Integration } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 
 export function useIntegrations() {
   const queryClient = useQueryClient();
@@ -17,18 +18,18 @@ export function useIntegrations() {
     queryFn: async (): Promise<Integration[]> => {
       const response = await fetch("/api/integrations/rss");
       if (!response.ok) {
-        throw new Error("연동 서비스 정보를 가져오지 못했습니다.");
+        const data = await response.json().catch(() => null);
+        throw new Error(responseErrorMessage(data, "FETCH_FAILED"));
       }
       return response.json();
     },
   });
 
-  // 데이터 로드에 실패하면 화면 프리징 대신 토스트 알림으로 피드백을 제공합니다.
   useEffect(() => {
     if (error) {
       toast.error(
         error.message ||
-          "연동 서비스 정보를 가져오는 과정에서 오류가 발생했습니다.",
+          errorMessage("FETCH_FAILED"),
       );
     }
   }, [error]);
@@ -37,7 +38,6 @@ export function useIntegrations() {
     ["tistory", "velog", "medium", "custom_rss"].includes(integration.provider),
   );
 
-  // 블로그 채널을 연동하거나 지금 동기화를 수행합니다.
   const connectMutation = useMutation({
     mutationFn: async (url: string): Promise<{ syncedCount: number }> => {
       const response = await fetch("/api/integrations/rss", {
@@ -47,7 +47,7 @@ export function useIntegrations() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "RSS 피드 연동에 실패했습니다.");
+        throw new Error(responseErrorMessage(data, "RSS_IMPORT_FAILED"));
       }
       return data;
     },
@@ -62,7 +62,6 @@ export function useIntegrations() {
     },
   });
 
-  // 기존 블로그 연동을 안전하게 해제합니다.
   const disconnectMutation = useMutation({
     mutationFn: async (
       integrationId: string,
@@ -74,7 +73,7 @@ export function useIntegrations() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "RSS 피드 연동 해제에 실패했습니다.");
+        throw new Error(responseErrorMessage(data, "RSS_DISCONNECT_FAILED"));
       }
       return data;
     },

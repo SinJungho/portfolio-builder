@@ -19,7 +19,7 @@ export default function DashboardLoading() {
           </div>
 
           {/* 다음 한 가지 카드 */}
-          <div className="flex flex-col gap-3 rounded-2xl bg-spotify-dark-surface p-4 shadow-spotify-md sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-lg bg-spotify-dark-surface p-4 shadow-spotify-md sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <div className="h-3 w-20 rounded-full bg-white/10 animate-pulse" />
               <div className="h-4 w-48 rounded-md bg-white/5 animate-pulse" />
@@ -42,7 +42,7 @@ export default function DashboardLoading() {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="flex flex-col min-h-[300px] rounded-2xl bg-spotify-dark-surface overflow-hidden shadow-spotify-md"
+              className="flex flex-col min-h-[300px] rounded-lg bg-spotify-dark-surface overflow-hidden shadow-spotify-md"
             >
               <div className="p-7 flex-1 flex flex-col gap-5">
                 <div className="flex items-start justify-between gap-4">

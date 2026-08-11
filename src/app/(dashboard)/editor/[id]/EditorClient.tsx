@@ -1,66 +1,34 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
 import { type Block, usePortfolioStore } from "@/stores/portfolioStore";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  BarChart,
-  Check,
-  Copy,
-  Eye,
-  Globe,
-  Grid,
-  Loader2,
-  Mail,
-  Plus,
-  Rss,
-  Sparkles,
-  User,
-} from "lucide-react";
-import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import CustomDomainSection from "./components/CustomDomainSection";
 import ProjectSelectionModal from "./components/ProjectSelectionModal";
 import HeroEditorModal from "./components/HeroEditorModal";
 import SkillsEditorModal from "./components/SkillsEditorModal";
 import BlogFeedEditorModal from "./components/BlogFeedEditorModal";
 import ContactEditorModal from "./components/ContactEditorModal";
+import BlocksPanel from "./components/BlocksPanel";
+import SettingsPanel from "./components/SettingsPanel";
+import DesignPanel from "./components/DesignPanel";
+import EditorHeader from "./components/EditorHeader";
+import EditorSidebar, { type SidebarTab } from "./components/EditorSidebar";
+import PreviewPane, { MobilePreviewStatus, type PreviewViewport } from "./components/PreviewPane";
 import { type RawProject } from "@/types/project";
-import { type PortfolioInitialData } from "@/types/portfolio";
-import {
-  getPortfolioState,
-  portfolioStateLabel,
-} from "@/lib/portfolio-state";
-import { portfolioUrl, portfolioUrlLabel } from "@/lib/portfolio-url";
-import { blockDisplayName, blockDescription } from "@/lib/block-labels";
+import { type PortfolioInitialData, type PublishedSnapshot } from "@/types/portfolio";
+import type { DesignTokens } from "@/schemas/portfolio";
+import { getPortfolioState } from "@/lib/portfolio-state";
+import { errorMessage, responseErrorMessage } from "@/lib/api/errors";
 import {
   type EditorDestination,
-  type PortfolioReadinessItem,
   getPortfolioReadiness,
+  getPortfolioReadinessGroups,
 } from "@/lib/portfolio-readiness";
 
-import { SortableBlockItem } from "@/app/generate/[id]/steps/components/SortableBlockItem";
-import DesignEditor from "@/components/features/editor/DesignEditor";
-import PortfolioPreview from "@/preview/PortfolioPreview";
 import {
-  closestCenter,
-  DndContext,
   DragEndEvent,
   KeyboardSensor,
   PointerSensor,
@@ -69,20 +37,10 @@ import {
 } from "@dnd-kit/core";
 import {
   arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-const blockTypeIcons: Record<string, React.ReactNode> = {
-  hero: <User className="w-5 h-5 text-current" />,
-  project_grid: <Grid className="w-5 h-5 text-current" />,
-  skills: <BarChart className="w-5 h-5 text-current" />,
-  contact: <Mail className="w-5 h-5 text-current" />,
-  blog_feed: <Rss className="w-5 h-5 text-current" />,
-};
 
-type SidebarTab = "blocks" | "publish" | "design";
 type PreviewProject = RawProject & {
   html_url: string | null;
   ai_summary: string | null;
@@ -95,6 +53,7 @@ export default function EditorClient({
   initialData: PortfolioInitialData;
 }) {
   const {
+    portfolioId,
     blocks,
     theme,
     designTokens,
@@ -110,7 +69,11 @@ export default function EditorClient({
     setPublished,
   } = usePortfolioStore();
 
-  const [init] = useState<boolean>(() => {
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     initialize({
       ...initialData,
       blocks: initialData.blocks.map((b: Block) => ({
@@ -118,15 +81,37 @@ export default function EditorClient({
         block_type: b.block_type,
       })),
     });
-    return true;
-  });
+  }, [initialize, initialData]);
 
-  // React 18 비동기 렌더링 전환 훅 ( 사이드바 탭 클릭 시의 미세 렉 완화 )
+  const init = portfolioId === initialData.portfolioId;
+
   const [isPending, startTransition] = useTransition();
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("publish");
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
+    initialData.isPublished ? "blocks" : "publish",
+  );
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [previewViewport, setPreviewViewport] = useState<PreviewViewport>("desktop");
   const previewRef = useRef<HTMLDivElement>(null);
   const previewReviewStorageKey = `portfolio-preview-reviewed:${initialData.portfolioId}`;
+  const publishedSnapshotStorageKey = `portfolio-published-snapshot:${initialData.portfolioId}`;
+  const [publishedSnapshot, setPublishedSnapshot] = useState<PublishedSnapshot | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.localStorage.getItem(publishedSnapshotStorageKey);
+      if (stored) return JSON.parse(stored) as PublishedSnapshot;
+      return initialData.isPublished
+        ? {
+            theme: initialData.theme,
+            designTokens: initialData.designTokens || {},
+            blocks: initialData.blocks.map((block) => ({ ...block, config: { ...block.config } })),
+            savedAt: new Date(0).toISOString(),
+          }
+        : null;
+    } catch {
+      return null;
+    }
+  });
   const previewSignature = JSON.stringify({ blocks, theme, designTokens });
   const [openedPreviewSignature, setOpenedPreviewSignature] = useState<string | null>(null);
   const [reviewedPreviewSignature, setReviewedPreviewSignature] = useState(() =>
@@ -137,12 +122,11 @@ export default function EditorClient({
   const focusItem = useSearchParams().get("focus");
   const handledFocusItem = useRef<string | null>(null);
 
-  // 무거운 미리보기 스크린의 동기적 리렌더링 차단 ( 드래그 순서 변경 시 프리뷰 지연 반영 )
+  // 미리보기는 입력 변경과 분리해 렌더링한다.
   const deferredBlocks = useDeferredValue(blocks);
   const deferredTheme = useDeferredValue(theme);
   const deferredDesignTokens = useDeferredValue(designTokens);
 
-  // 대표 프로젝트 편집 관련 모달 상태 관리
   const [isEditingProjects, setIsEditingProjects] = useState<boolean>(false);
   const [isEditingHero, setIsEditingHero] = useState<boolean>(false);
   const [isEditingSkills, setIsEditingSkills] = useState<boolean>(false);
@@ -156,15 +140,32 @@ export default function EditorClient({
   >({});
   const [saveError, setSaveError] = useState<{ message: string; retry: () => void } | null>(null);
   const [lastBlockOrder, setLastBlockOrder] = useState<Block[] | null>(null);
-  // 이번 세션에서 방금 공개했을 때만 축하 카드를 노출한다(이미 공개된 포트폴리오 재진입 시엔 조용히).
   const [justPublished, setJustPublished] = useState(false);
+  const [isRestoringPublished, setIsRestoringPublished] = useState(false);
 
-  const { data: rawProjects } = useQuery<RawProject[]>({
+  const persistPublishedSnapshot = () => {
+    const snapshot: PublishedSnapshot = {
+      theme,
+      designTokens,
+      blocks: blocks.map((block) => ({ ...block, config: { ...block.config } })),
+      savedAt: new Date().toISOString(),
+    };
+    // 브라우저 저장소가 차단돼도 이번 세션의 복원 기준은 최신 공개본이어야 한다.
+    setPublishedSnapshot(snapshot);
+    try {
+      window.localStorage.setItem(publishedSnapshotStorageKey, JSON.stringify(snapshot));
+    } catch {
+      // 공개 자체는 성공했으므로 브라우저 저장 실패가 공개 흐름을 막지 않게 한다.
+    }
+  };
+
+  const { data: rawProjects, isLoading: projectsLoading, isError: projectsLoadFailed, refetch: refetchProjects } = useQuery<RawProject[]>({
     queryKey: ["raw-projects"],
     queryFn: async () => {
       const res = await fetch("/api/projects/raw");
-      if (!res.ok) throw new Error("Failed to fetch projects");
-      return res.json();
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(responseErrorMessage(payload, "PROJECT_LIST_FAILED"));
+      return payload;
     },
     enabled: init,
   });
@@ -215,17 +216,24 @@ export default function EditorClient({
       const oldIndex = blocks.findIndex((b: Block) => b.id === active.id);
       const newIndex = blocks.findIndex((b: Block) => b.id === over.id);
       setLastBlockOrder(blocks.map((block: Block) => ({ ...block, config: { ...block.config } })));
-      const newBlocks = arrayMove(blocks, oldIndex, newIndex);
-      newBlocks.forEach((b: Block, i: number) => (b.position = i));
-      reorderBlocks(newBlocks);
+      // 스토어 객체는 immer로 동결돼 있어 직접 변형하면 TypeError가 난다. 복사본에 순서를 매긴다.
+      const newBlocks = arrayMove(blocks, oldIndex, newIndex).map((block: Block, i: number) => ({
+        ...block,
+        config: { ...block.config },
+        position: i,
+      }));
+      void reorderBlocks(newBlocks).catch(() => {
+        toast.error(errorMessage("SECTION_ORDER_SAVE_FAILED"));
+      });
     }
   };
 
   const undoBlockOrder = () => {
     if (!lastBlockOrder) return;
     const restored = lastBlockOrder.map((block, index) => ({ ...block, config: { ...block.config }, position: index }));
-    reorderBlocks(restored);
-    setLastBlockOrder(null);
+    void reorderBlocks(restored)
+      .then(() => setLastBlockOrder(null))
+      .catch(() => toast.error(errorMessage("SECTION_ORDER_RESTORE_FAILED")));
   };
 
   const contactBlock = blocks.find((b: Block) => b.block_type === "contact");
@@ -233,8 +241,11 @@ export default function EditorClient({
   const readinessItems = getPortfolioReadiness(
     blocks,
     rawProjects?.map((project) => project.id) ?? [],
+    rawProjects
+      ?.filter((project) => Boolean(project.description?.trim() || project.ai_summary?.trim()))
+      .map((project) => project.id) ?? [],
   );
-
+  const readinessGroups = getPortfolioReadinessGroups(readinessItems);
   const handleTabChange = (tab: SidebarTab) => {
     startTransition(() => {
       setSidebarTab(tab);
@@ -264,13 +275,17 @@ export default function EditorClient({
     document.getElementById(`editor-tab-${nextTab}`)?.focus();
   };
 
-  const openPreview = () => {
-    setOpenedPreviewSignature(previewSignature);
+  const revealPreview = () => {
     setIsPreviewing(true);
     requestAnimationFrame(() => {
       previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       previewRef.current?.focus({ preventScroll: true });
     });
+  };
+
+  const openPreview = () => {
+    setOpenedPreviewSignature(previewSignature);
+    revealPreview();
   };
 
   const confirmPreviewReview = () => {
@@ -280,27 +295,63 @@ export default function EditorClient({
 
   const handlePublish = async () => {
     setSaveError(null);
-    const nextItem = readinessItems.find((item) => !item.complete);
-    if (nextItem) {
-      toast.error(`${nextItem.label}을(를) 먼저 준비해주세요.`);
-      handleReadinessAction(nextItem.destination);
-      return;
-    }
-
-    if (!hasReviewedPreview) {
-      handleTabChange("publish");
-      toast.error("미리보기를 확인한 뒤 공개해 주세요.");
+    const nextGroup = readinessGroups.find((group) => !group.complete);
+    if (nextGroup) {
+      toast.error(`${nextGroup.label}을(를) 먼저 준비해주세요.`);
+      handleReadinessAction(nextGroup.destination);
       return;
     }
 
     try {
       await setPublished(true);
+      persistPublishedSnapshot();
       setJustPublished(true);
       toast.success("공개했어요. 이제 링크를 복사해 지원서에 넣어보세요.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "공개하지 못했어요.";
+      const message = error instanceof Error ? error.message : errorMessage("PUBLISH_FAILED");
       setSaveError({ message, retry: handlePublish });
       toast.error(message);
+    }
+  };
+
+  const handleRestorePublished = async () => {
+    if (!publishedSnapshot || isRestoringPublished) return;
+    setSaveError(null);
+    setIsRestoringPublished(true);
+    try {
+      const res = await fetch(`/api/portfolios/${initialData.portfolioId}/snapshot`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          theme: publishedSnapshot.theme,
+          design_tokens: publishedSnapshot.designTokens,
+          blocks: publishedSnapshot.blocks,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        const message = payload && typeof payload.error === "string"
+          ? payload.error
+          : "마지막 공개본을 복원하지 못했어요.";
+        throw new Error(message);
+      }
+      initialize({
+        ...initialData,
+        // 공개본 복원은 콘텐츠와 디자인만 바꾼다. 현재 도메인은 그대로 유지한다.
+        customDomain,
+        blocks: publishedSnapshot.blocks,
+        theme: publishedSnapshot.theme,
+        designTokens: publishedSnapshot.designTokens,
+        isPublished: true,
+      });
+      setJustPublished(false);
+      toast.success("마지막 공개본으로 되돌렸어요.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "마지막 공개본을 복원하지 못했어요.";
+      setSaveError({ message, retry: () => void handleRestorePublished() });
+      toast.error(message);
+    } finally {
+      setIsRestoringPublished(false);
     }
   };
 
@@ -311,57 +362,61 @@ export default function EditorClient({
       setJustPublished(false);
       toast.success("공개를 중지했어요. 편집 내용은 그대로 보관돼요.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "공개를 중지하지 못했어요.";
+      const message = error instanceof Error ? error.message : errorMessage("UNPUBLISH_FAILED");
       setSaveError({ message, retry: handleUnpublish });
       toast.error(message);
     }
   };
 
   const handleReadinessAction = async (destination: EditorDestination) => {
-    if (destination === "projects") {
-      const projectBlock = blocks.find(
-        (block: Block) => block.block_type === "project_grid",
-      );
-      if (projectBlock) {
-        if (!projectBlock.is_visible) await toggleBlock(projectBlock.id);
-        setIsPreviewing(false);
-        openProjectEditor(projectBlock);
-      } else {
-        const newProjectBlock = await addBlock("project_grid");
-        if (newProjectBlock) {
+    try {
+      if (destination === "projects") {
+        const projectBlock = blocks.find(
+          (block: Block) => block.block_type === "project_grid",
+        );
+        if (projectBlock) {
+          if (!projectBlock.is_visible) await toggleBlock(projectBlock.id);
           setIsPreviewing(false);
-          openProjectEditor(newProjectBlock);
+          openProjectEditor(projectBlock);
+        } else {
+          const newProjectBlock = await addBlock("project_grid");
+          if (newProjectBlock) {
+            setIsPreviewing(false);
+            openProjectEditor(newProjectBlock);
+          }
+        }
+        return;
+      }
+
+      if (destination === "contact") {
+        if (contactBlock) {
+          if (!contactBlock.is_visible) await toggleBlock(contactBlock.id);
+          setIsPreviewing(false);
+          openProjectEditor(contactBlock);
+        } else {
+          const newContactBlock = await addBlock("contact");
+          if (newContactBlock) {
+            setIsPreviewing(false);
+            openProjectEditor(newContactBlock);
+          }
+        }
+        return;
+      }
+
+      const heroBlock = blocks.find((block: Block) => block.block_type === "hero");
+      if (heroBlock) {
+        if (!heroBlock.is_visible) await toggleBlock(heroBlock.id);
+        setIsPreviewing(false);
+        openProjectEditor(heroBlock);
+      } else {
+        const newHeroBlock = await addBlock("hero");
+        if (newHeroBlock) {
+          setIsPreviewing(false);
+          openProjectEditor(newHeroBlock);
         }
       }
-      return;
-    }
-
-    if (destination === "contact") {
-      if (contactBlock) {
-        if (!contactBlock.is_visible) await toggleBlock(contactBlock.id);
-        setIsPreviewing(false);
-        openProjectEditor(contactBlock);
-      } else {
-        const newContactBlock = await addBlock("contact");
-        if (newContactBlock) {
-          setIsPreviewing(false);
-          openProjectEditor(newContactBlock);
-        }
-      }
-      return;
-    }
-
-    const heroBlock = blocks.find((block: Block) => block.block_type === "hero");
-    if (heroBlock) {
-      if (!heroBlock.is_visible) await toggleBlock(heroBlock.id);
-      setIsPreviewing(false);
-      openProjectEditor(heroBlock);
-    } else {
-      const newHeroBlock = await addBlock("hero");
-      if (newHeroBlock) {
-        setIsPreviewing(false);
-        openProjectEditor(newHeroBlock);
-      }
+    } catch {
+      toast.error(errorMessage("SECTION_SAVE_FAILED"));
     }
   };
 
@@ -385,9 +440,16 @@ export default function EditorClient({
     }
   };
 
+  const handlePreviewBlockSelect = (block: Block) => {
+    setPreviewHighlightedBlockId(block.id);
+    setIsInspectorOpen(true);
+    setIsPreviewing(false);
+    openProjectEditor(block);
+  };
+
   useEffect(() => {
     if (!focusItem || handledFocusItem.current === focusItem) return;
-    // 애널리틱스에서 오는 blocks/publish 딥링크는 해당 사이드바 탭으로 전환한다.
+    // URL focus를 탭 또는 준비 항목으로 한 번만 연결한다.
     if (focusItem === "blocks" || focusItem === "publish") {
       handledFocusItem.current = focusItem;
       handleTabChange(focusItem);
@@ -396,7 +458,6 @@ export default function EditorClient({
     if (!["hero", "projects", "contact"].includes(focusItem)) return;
     handledFocusItem.current = focusItem;
     void handleReadinessAction(focusItem as EditorDestination);
-    // The action must run once per URL focus target; the ref prevents reruns as blocks change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusItem]);
 
@@ -414,7 +475,15 @@ export default function EditorClient({
       }).then(() => {
         setIsEditingProjects(false);
         setEditingBlockId(null);
+        revealPreview();
+        setSaveError(null);
         toast.success("대표 프로젝트 설정을 업데이트했어요.");
+      }).catch(() => {
+        setSaveError({
+          message: errorMessage("PROJECT_CONFIG_SAVE_FAILED"),
+          retry: () => handleSaveProjects(selectedIds, customDescriptions),
+        });
+        toast.error(errorMessage("PROJECT_CONFIG_SAVE_FAILED"));
       });
     }
   };
@@ -427,123 +496,53 @@ export default function EditorClient({
       setIsEditingBlogFeed(false);
       setIsEditingContact(false);
       setEditingBlockId(null);
-      toast.success("섹션 설정을 업데이트했어요.");
+      revealPreview();
+      setSaveError(null);
+      toast.success("콘텐츠 설정을 업데이트했어요.");
+    }).catch(() => {
+      setSaveError({
+        message: errorMessage("SECTION_SAVE_FAILED"),
+        retry: () => handleSaveBlockConfig(config),
+      });
+      toast.error(errorMessage("SECTION_SAVE_FAILED"));
     });
   };
 
   if (!init) {
     return (
-      <div className="flex justify-center p-12 h-screen items-center bg-spotify-near-black">
-        <Loader2 className="animate-spin w-8 h-8 text-spotify-green" />
+      <div className="flex h-[100dvh] items-center justify-center bg-spotify-near-black p-12" role="status" aria-live="polite">
+        <Loader2 className="animate-spin w-8 h-8 text-spotify-green" aria-hidden="true" />
+        <span className="sr-only">포트폴리오 편집기를 불러오는 중</span>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col h-screen w-full bg-spotify-near-black overflow-hidden text-white">
-      {/* 상단 헤더 영역 */}
-      <header className="h-14 border-b border-white/5 bg-spotify-near-black flex items-center justify-between px-6 shrink-0 z-20">
-        <h1 className="sr-only">포트폴리오 편집</h1>
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 text-[14px] font-bold text-spotify-silver hover:text-white transition-colors"
-          aria-label="대시보드로 돌아가기"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">대시보드로 돌아가기</span>
-        </Link>
-          <div className="flex items-center gap-4">
-          {lastBlockOrder && <button type="button" onClick={undoBlockOrder} disabled={isSaving} className="text-[12px] font-bold text-spotify-green hover:text-white disabled:opacity-50">순서 되돌리기</button>}
-          <button
-            type="button"
-            onClick={() => setIsPreviewing((previewing) => !previewing)}
-            className="md:hidden text-[12px] font-bold text-spotify-near-white hover:text-white"
-          >
-            {isPreviewing ? "편집" : "미리보기"}
-          </button>
-          <div className="flex items-center gap-1.5 text-[12px] font-bold transition-all">
-            {isSaving ? (
-              <span className="text-spotify-green flex items-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> <span className="hidden sm:inline">자동 저장 중...</span><span className="sr-only">자동 저장 중</span>
-              </span>
-            ) : (
-              <span className="text-spotify-silver flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-spotify-green" /> <span className="hidden sm:inline">모든 변경사항 자동 저장됨</span><span className="sr-only">모든 변경사항 자동 저장됨</span>
-              </span>
-            )}
-          </div>
-        </div>
-      </header>
-      {saveError && (
-        <div role="alert" className="flex items-center justify-between gap-3 border-b border-spotify-negative/30 bg-spotify-negative/10 px-6 py-3 text-[13px] font-bold text-spotify-negative">
-          <span>{saveError.message}</span>
-          <Button size="sm" variant="outline" className="border-spotify-negative/40 bg-transparent text-spotify-negative hover:bg-spotify-negative/10" onClick={saveError.retry}>다시 시도</Button>
-        </div>
-      )}
+  const previewWidth = { desktop: "1000px", tablet: "768px", mobile: "390px" }[previewViewport];
 
-      {/* 에디터 메인 레이아웃 */}
+  return (
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-spotify-near-black text-white md:-ml-64 md:w-[calc(100%+16rem)]">
+      <EditorHeader
+        isPublished={isPublished}
+        lastBlockOrder={Boolean(lastBlockOrder)}
+        onUndoBlockOrder={undoBlockOrder}
+        isSaving={isSaving || isRestoringPublished}
+        isPreviewing={isPreviewing}
+        onTogglePreview={() => setIsPreviewing((previewing) => !previewing)}
+        isInspectorOpen={isInspectorOpen}
+        onToggleInspector={() => setIsInspectorOpen((open) => !open)}
+        saveError={saveError}
+      />
+
       <div className="flex flex-1 overflow-hidden relative">
-        {/* 좌측 사이드바 패널 */}
-        <aside className={`${isPreviewing ? "hidden" : "flex"} w-full md:w-[380px] lg:w-[420px] shrink-0 border-r border-white/5 bg-spotify-dark-surface md:flex flex-col z-10 shadow-spotify`}>
-          <div role="tablist" aria-label="포트폴리오 편집 단계" className="flex p-3 gap-2 bg-spotify-near-black border-b border-white/5 shrink-0">
-            <button
-              id="editor-tab-publish"
-              onClick={() => handleTabChange("publish")}
-              onKeyDown={(event) => handleTabKeyDown(event, "publish")}
-              className={`flex-1 cursor-pointer rounded-full py-2.5 text-[13px] font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green ${
-                sidebarTab === "publish"
-                  ? "bg-white text-black shadow-spotify-md"
-                  : "bg-spotify-mid-dark text-white hover:bg-spotify-dark-surface"
-              }`}
-              type="button"
-              role="tab"
-              aria-selected={sidebarTab === "publish"}
-              aria-controls="editor-panel-publish"
-              tabIndex={sidebarTab === "publish" ? 0 : -1}
-            >
-              공개 준비
-            </button>
-            <button
-              id="editor-tab-blocks"
-              onClick={() => handleTabChange("blocks")}
-              onKeyDown={(event) => handleTabKeyDown(event, "blocks")}
-              className={`flex-1 cursor-pointer rounded-full py-2.5 text-[13px] font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green ${
-                sidebarTab === "blocks"
-                  ? "bg-white text-black shadow-spotify-md"
-                  : "bg-spotify-mid-dark text-white hover:bg-spotify-dark-surface"
-              }`}
-              type="button"
-              role="tab"
-              aria-selected={sidebarTab === "blocks"}
-              aria-controls="editor-panel-blocks"
-              tabIndex={sidebarTab === "blocks" ? 0 : -1}
-            >
-              섹션 구성
-            </button>
-            <button
-              id="editor-tab-design"
-              onClick={() => handleTabChange("design")}
-              onKeyDown={(event) => handleTabKeyDown(event, "design")}
-              className={`flex-1 cursor-pointer rounded-full py-2.5 text-[13px] font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spotify-green ${
-                sidebarTab === "design"
-                  ? "bg-white text-black shadow-spotify-md"
-                  : "bg-spotify-mid-dark text-white hover:bg-spotify-dark-surface"
-              }`}
-              type="button"
-              role="tab"
-              aria-selected={sidebarTab === "design"}
-              aria-controls="editor-panel-design"
-              tabIndex={sidebarTab === "design" ? 0 : -1}
-            >
-              디자인
-            </button>
-          </div>
-          <div role="tabpanel" id={`editor-panel-${sidebarTab}`} aria-labelledby={`editor-tab-${sidebarTab}`} className="flex-1 overflow-y-auto p-5 md:p-6 bg-spotify-dark-surface">
-            {isPending ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin w-6 h-6 text-spotify-green" />
-              </div>
-            ) : sidebarTab === "blocks" ? (
+        <EditorSidebar
+          isPreviewing={isPreviewing}
+          isInspectorOpen={isInspectorOpen}
+          sidebarTab={sidebarTab}
+          onTabChange={handleTabChange}
+          onTabKeyDown={handleTabKeyDown}
+          isPending={isPending}
+        >
+          {sidebarTab === "blocks" ? (
               <BlocksPanel
                 blocks={blocks}
                 sensors={sensors}
@@ -552,18 +551,23 @@ export default function EditorClient({
                 deleteBlock={deleteBlock}
                 openProjectEditor={openProjectEditor}
                 highlightPreviewBlock={setPreviewHighlightedBlockId}
-                isSaving={isSaving}
+                isSaving={isSaving || isRestoringPublished}
                 addBlock={addBlock}
               />
             ) : sidebarTab === "publish" ? (
               <SettingsPanel
                 initialData={initialData}
+                theme={theme}
+                designTokens={designTokens as DesignTokens}
                 customDomain={customDomain}
                 portfolioState={portfolioState}
-                isSaving={isSaving}
+                isSaving={isSaving || isRestoringPublished}
                 onPublish={handlePublish}
                 onUnpublish={handleUnpublish}
-                readinessItems={readinessItems}
+                readinessGroups={readinessGroups}
+                projectsLoading={projectsLoading}
+                projectsLoadFailed={projectsLoadFailed}
+                onRetryProjects={() => void refetchProjects()}
                 onReadinessAction={handleReadinessAction}
                 onPreview={openPreview}
                 previewOpened={previewOpened}
@@ -571,52 +575,56 @@ export default function EditorClient({
                 hasReviewedOnce={reviewedPreviewSignature !== null}
                 onReviewPreview={confirmPreviewReview}
                 justPublished={justPublished}
+                publishedSnapshot={publishedSnapshot}
+                onRestorePublished={() => void handleRestorePublished()}
               />
             ) : (
               <DesignPanel />
             )}
-          </div>
-        </aside>
+        </EditorSidebar>
 
-        {/* 우측 실시간 미리보기 스크린 */}
-        <main className={`${isPreviewing ? "flex" : "hidden"} md:flex flex-1 flex-col bg-spotify-near-black overflow-y-auto relative items-center pt-4 md:pt-8 pb-20 md:pb-32`}>
-          <MobilePreviewStatus
-            portfolioState={portfolioState}
-            readinessItems={readinessItems}
-            onAction={handleReadinessAction}
-            onReturnToPublish={() => {
-              setIsPreviewing(false);
-              handleTabChange("publish");
-            }}
-          />
-          <div ref={previewRef} tabIndex={-1} aria-label="포트폴리오 미리보기" className="w-full max-w-[1000px] bg-spotify-dark-surface rounded-t-2xl md:rounded-2xl overflow-hidden shadow-spotify mx-6 relative animate-in fade-in slide-in-from-bottom-8 duration-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spotify-green">
-          <div className="h-10 bg-spotify-near-black border-b border-white/5 flex items-center justify-between px-4 shrink-0">
-            <span className="text-[11px] font-bold text-spotify-silver">{isPublished ? "공개됨" : "초안 미리보기"}</span>
-            <div className="bg-spotify-mid-dark border border-white/5 rounded-full px-4 py-1 text-[11px] text-spotify-silver font-mono flex items-center gap-2 shadow-inner">
-              <Globe className="w-3.5 h-3.5 text-spotify-silver/50" />
-              {initialData.slug ? portfolioUrlLabel(initialData.slug, customDomain) : "주소 준비 중"}
-            </div>
-          </div>
-
-            {/* 실시간으로 연동되는 뷰포트 영역 (Deferred Value를 통해 인풋 타이핑 반응성 보존) */}
-            <div className="w-full h-full min-h-[800px] overflow-hidden bg-white">
-              <PortfolioPreview
-                blocks={previewBlocks}
-                theme={deferredTheme}
-                designTokens={deferredDesignTokens}
-                // slug 미전달 — PDF 내보내기 버튼은 position:fixed라 에디터 프레임을 뚫고 뷰포트에 고정됨.
-                // 내보내기는 게시 페이지 전용 액션이므로 에디터 프리뷰에선 렌더하지 않음.
-                slug={undefined}
-                portfolioId={initialData?.portfolioId}
-                highlightedBlockId={previewHighlightedBlockId}
-              />
-            </div>
-          </div>
-        </main>
+        <PreviewPane
+          isPreviewing={isPreviewing}
+          isInspectorOpen={isInspectorOpen}
+          onOpenInspector={() => setIsInspectorOpen(true)}
+          isPublished={isPublished}
+          slug={initialData.slug}
+          customDomain={customDomain}
+          previewWidth={previewWidth}
+          previewRef={previewRef}
+          projectsLoadFailed={projectsLoadFailed}
+          onRetryProjects={() => void refetchProjects()}
+          mobileStatus={
+            <MobilePreviewStatus
+              portfolioState={portfolioState}
+              readinessGroups={readinessGroups}
+              projectsLoading={projectsLoading}
+              projectsLoadFailed={projectsLoadFailed}
+              hasReviewedPreview={hasReviewedPreview}
+              isSaving={isSaving || isRestoringPublished}
+              hasSaveError={Boolean(saveError)}
+              onAction={handleReadinessAction}
+              onRetryProjects={() => void refetchProjects()}
+              onReturnToPublish={() => {
+                setIsPreviewing(false);
+                handleTabChange("publish");
+              }}
+              onReviewPreview={confirmPreviewReview}
+            />
+          }
+          previewBlocks={previewBlocks}
+          theme={deferredTheme}
+          designTokens={deferredDesignTokens as DesignTokens}
+          portfolioId={initialData.portfolioId}
+          previewViewport={previewViewport}
+          onViewportChange={setPreviewViewport}
+          highlightedBlockId={previewHighlightedBlockId}
+          onSelectBlock={handlePreviewBlockSelect}
+        />
       </div>
 
-      {/* 격리 설계된 고성능 리포지토리 지정 팝업 모달 */}
       <ProjectSelectionModal
+        key={`project-editor-${editingBlockId ?? "new"}-${isEditingProjects ? "open" : "closed"}`}
         isOpen={isEditingProjects}
         onClose={() => {
           setIsEditingProjects(false);
@@ -630,6 +638,7 @@ export default function EditorClient({
       />
 
       <HeroEditorModal
+        key={`hero-editor-${editingBlockId ?? "new"}`}
         isOpen={isEditingHero}
         onClose={() => {
           setIsEditingHero(false);
@@ -641,6 +650,7 @@ export default function EditorClient({
       />
 
       <SkillsEditorModal
+        key={`skills-editor-${editingBlockId ?? "new"}`}
         isOpen={isEditingSkills}
         onClose={() => {
           setIsEditingSkills(false);
@@ -652,6 +662,7 @@ export default function EditorClient({
       />
 
       <BlogFeedEditorModal
+        key={`blog-editor-${editingBlockId ?? "new"}`}
         isOpen={isEditingBlogFeed}
         onClose={() => {
           setIsEditingBlogFeed(false);
@@ -663,6 +674,7 @@ export default function EditorClient({
       />
 
       <ContactEditorModal
+        key={`contact-editor-${editingBlockId ?? "new"}`}
         isOpen={isEditingContact}
         onClose={() => {
           setIsEditingContact(false);
@@ -672,480 +684,6 @@ export default function EditorClient({
         initialConfig={blocks.find((b: Block) => b.id === editingBlockId)?.config || {}}
         isSaving={isSaving}
       />
-    </div>
-  );
-}
-
-// ==========================================
-// 캡슐화 및 메모이제이션 처리된 하위 패널 컴포넌트군
-// ==========================================
-
-interface BlocksPanelProps {
-  blocks: Block[];
-  sensors: ReturnType<typeof useSensors>;
-  handleDragEnd: (event: DragEndEvent) => void;
-  toggleBlock: (id: string) => Promise<void>;
-  deleteBlock: (id: string) => Promise<void>;
-  openProjectEditor: (block: Block) => void;
-  highlightPreviewBlock: (id: string) => void;
-  isSaving: boolean;
-  addBlock: (blockType: string) => Promise<Block | undefined>;
-}
-
-const BlocksPanel = React.memo(function BlocksPanel({
-  blocks,
-  sensors,
-  handleDragEnd,
-  toggleBlock,
-  deleteBlock,
-  openProjectEditor,
-  highlightPreviewBlock,
-  isSaving,
-  addBlock,
-}: BlocksPanelProps) {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-[17px] font-bold tracking-tight text-white flex items-center gap-2">
-          섹션 순서 및 표시 설정
-        </h2>
-      </div>
-      <p className="px-1 text-[12px] font-medium leading-relaxed text-spotify-silver">
-        순서 변경 아이콘을 선택한 뒤 스페이스바와 방향키로도 섹션 순서를 바꿀 수 있어요.
-      </p>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={blocks.map((b: Block) => b.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-4">
-            {blocks.map((block: Block) => (
-              <SortableBlockItem
-                key={block.id}
-                block={block}
-                icon={
-                  blockTypeIcons[block.block_type] || (
-                    <Grid className="w-5 h-5" />
-                  )
-                }
-                onToggle={toggleBlock}
-                onDelete={deleteBlock}
-                onOpenProjectEditor={openProjectEditor}
-                onFocusBlock={highlightPreviewBlock}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-      {blocks.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/5 bg-spotify-near-black/20 rounded-2xl gap-3">
-          <div className="p-3 bg-white/5 rounded-full text-spotify-silver">
-            <Grid className="w-6 h-6" />
-          </div>
-          <p className="text-spotify-silver font-bold text-[14px]">
-            아직 추가된 섹션이 없어요.
-          </p>
-        </div>
-      )}
-
-      <div className="pt-6 border-t border-white/5 mt-6">
-        <div className="flex flex-col gap-1 mb-4 px-1">
-          <h3 className="text-[15px] font-bold text-white">새 섹션 추가</h3>
-          <p className="text-[12px] text-spotify-silver font-medium">
-            내 포트폴리오를 더 풍성하게 만들어보세요.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {Object.keys(blockDisplayName).map((type: string) => {
-            const isUnique = type === "hero" || type === "contact";
-            const alreadyExists =
-              isUnique && blocks.some((b: Block) => b.block_type === type);
-
-            return (
-              <button
-                key={type}
-                onClick={() => addBlock(type)}
-                disabled={isSaving || alreadyExists}
-                className={`
-                  flex flex-col items-start gap-1 px-3 py-3 rounded-xl text-left transition-all border cursor-pointer
-                  ${
-                    alreadyExists
-                      ? "bg-spotify-near-black border-white/5 text-spotify-silver/50 cursor-not-allowed"
-                      : "bg-spotify-near-black border-white/5 text-white hover:border-spotify-green hover:bg-spotify-mid-dark active:scale-95 group"
-                  }
-                `}
-                type="button"
-              >
-                <span className={`flex items-center gap-2 text-[12px] font-bold ${alreadyExists ? "" : "group-hover:text-spotify-green"}`}>
-                  {alreadyExists ? (
-                    <Check className="w-3.5 h-3.5" />
-                  ) : (
-                    <Plus className="w-3.5 h-3.5" />
-                  )}
-                  {blockDisplayName[type]}
-                </span>
-                <span className={`text-[11px] font-medium leading-snug ${alreadyExists ? "text-spotify-silver/50" : "text-spotify-silver"}`}>
-                  {alreadyExists ? "이미 추가됨" : blockDescription[type]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-interface SettingsPanelProps {
-  initialData: PortfolioInitialData;
-  customDomain: string | null;
-  portfolioState: ReturnType<typeof getPortfolioState>;
-  isSaving: boolean;
-  onPublish: () => void;
-  onUnpublish: () => void;
-  readinessItems: PortfolioReadinessItem[];
-  onReadinessAction: (destination: EditorDestination) => void;
-  onPreview: () => void;
-  previewOpened: boolean;
-  hasReviewedPreview: boolean;
-  hasReviewedOnce: boolean;
-  onReviewPreview: () => void;
-  justPublished: boolean;
-}
-
-const SettingsPanel = React.memo(function SettingsPanel({
-  initialData,
-  customDomain,
-  portfolioState,
-  isSaving,
-  onPublish,
-  onUnpublish,
-  readinessItems,
-  onReadinessAction,
-  onPreview,
-  previewOpened,
-  hasReviewedPreview,
-  hasReviewedOnce,
-  onReviewPreview,
-  justPublished,
-}: SettingsPanelProps) {
-  const publishedPath = initialData.slug
-    ? portfolioUrl(initialData.slug, customDomain)
-    : null;
-  const nextItem = readinessItems.find((item) => !item.complete);
-
-  // 진행도 분모는 준비 항목 수로 통일한다(대시보드 카드·모바일 상태바와 동일한 X/Y).
-  // 미리보기 확인은 별도의 마지막 관문으로 두고 숫자에는 포함하지 않는다.
-  const totalSteps = readinessItems.length;
-  const completedSteps = readinessItems.filter((item) => item.complete).length;
-  const progressPct = Math.round((completedSteps / totalSteps) * 100);
-  const previewIsNext = !nextItem && !hasReviewedPreview;
-  const readyToPublish = !nextItem && hasReviewedPreview;
-  // 한 번 확인한 뒤 내용을 바꿔 미리보기가 다시 잠긴 상태. 공개 버튼이 조용히 사라지는 대신
-  // "왜 또 잠겼는지"를 카피로 설명해 마감 직전 불안(다 됐는데 왜?)을 줄인다.
-  const previewStale = previewIsNext && hasReviewedOnce;
-  const readinessLead =
-    portfolioState === "published"
-      ? "공개 중이에요. 필요한 준비를 모두 마쳤어요."
-      : completedSteps === 0
-        ? "GitHub에서 불러온 내용으로 시작해요. 아래를 채우면 지원서에 넣을 링크가 완성돼요."
-        : readyToPublish
-          ? "준비가 끝났어요. 링크를 만들어 지원서에 넣어보세요."
-          : previewStale
-            ? "내용을 바꿨네요. 바뀐 모습으로 미리보기만 한 번 더 확인하면 바로 공개할 수 있어요."
-            : previewIsNext
-              ? "마지막으로 미리보기만 확인하면 공개할 수 있어요."
-            : totalSteps - completedSteps === 1
-              ? "거의 다 왔어요. 한 가지만 더 채우면 공개할 수 있어요."
-              : "좋아요, 순조롭게 채워지고 있어요. 남은 항목을 이어가 볼까요?";
-
-  const copyPublishedLink = () => {
-    if (!initialData.slug) return;
-    navigator.clipboard.writeText(portfolioUrl(initialData.slug, customDomain));
-    toast.success("지원서용 링크를 복사했어요.");
-  };
-
-  return (
-    <div className="space-y-6">
-      {justPublished && portfolioState === "published" && (
-        <div className="rounded-3xl border border-spotify-green/30 bg-spotify-green/[0.07] p-6 shadow-spotify text-white space-y-5 animate-in fade-in zoom-in-95 duration-500 motion-reduce:animate-none">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-spotify-green text-black">
-              <Check className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-[17px] font-bold tracking-tight text-white">공개됐어요 🎉</h2>
-              <p className="text-[12px] font-medium text-spotify-silver">이제 이 링크만 지원서에 붙여넣으면 끝이에요.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-black/30 px-3 py-2.5">
-            <Globe className="w-4 h-4 shrink-0 text-spotify-green" />
-            <span className="truncate font-mono text-[13px] font-bold text-white">
-              {initialData.slug ? portfolioUrlLabel(initialData.slug, customDomain) : "주소 준비 중"}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" className="btn-pill-primary h-11 flex-1 text-[13px]" onClick={copyPublishedLink}>
-              <Copy className="w-4 h-4" /> 지원서용 링크 복사
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-11 rounded-full bg-white/10 px-4 text-[13px] font-bold text-white hover:bg-white/15"
-              onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug, customDomain), "_blank")}
-            >
-              <ArrowUpRight className="w-4 h-4" /> 열기
-            </Button>
-          </div>
-        </div>
-      )}
-      {portfolioState !== "published" && completedSteps > 0 && (
-        // 첫 진입의 감정 프레임: 빈 체크리스트가 아니라 "GitHub가 이미 채워둔 것"을 먼저 보여준다.
-        // completedSteps === 0(진짜 빈 상태)에서는 근거 없는 안심이 되므로 숨긴다(정직한 증거 원칙).
-        <div className="rounded-3xl border border-spotify-green/20 bg-spotify-green/[0.06] p-5 text-white flex items-start gap-3.5 animate-in fade-in duration-500 motion-reduce:animate-none">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-spotify-green/15 text-spotify-green">
-            <Sparkles className="h-[18px] w-[18px]" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 space-y-1">
-            <p className="text-[15px] font-bold tracking-tight text-white">이미 대부분 채워져 있어요</p>
-            <p className="text-[12px] text-spotify-silver font-medium leading-relaxed">
-              {totalSteps - completedSteps > 0
-                ? `GitHub에서 불러온 내용으로 ${completedSteps}개를 채웠어요. ${totalSteps - completedSteps}개만 확인하면 지원서에 넣을 링크가 완성돼요.`
-                : "GitHub에서 불러온 내용으로 준비를 마쳤어요. 미리보기만 확인하면 공개할 수 있어요."}
-            </p>
-          </div>
-        </div>
-      )}
-      <div className="bg-spotify-dark-surface border border-white/5 rounded-3xl p-6 shadow-spotify text-white space-y-6">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[16px] font-bold text-white flex items-center gap-2">
-              <Globe className="w-4 h-4 text-spotify-green" />
-              공개 준비
-            </h2>
-            <span className="text-[12px] font-bold text-spotify-silver tabular-nums" aria-hidden="true">
-              {completedSteps}/{totalSteps}
-            </span>
-          </div>
-          <div
-            role="progressbar"
-            aria-label="공개 준비도"
-            aria-valuemin={0}
-            aria-valuemax={totalSteps}
-            aria-valuenow={completedSteps}
-            className="h-1.5 overflow-hidden rounded-full bg-white/10"
-          >
-            <div
-              className="h-full rounded-full bg-spotify-green transition-[width] duration-500 ease-out motion-reduce:transition-none"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <p className="text-[12px] text-spotify-silver font-medium leading-relaxed">
-            {readinessLead}
-          </p>
-        </div>
-
-        <ul className="-mx-2 space-y-0.5" aria-label="공개 전 확인 항목">
-          {readinessItems.map((item) => {
-            const isNext = !item.complete && item.id === nextItem?.id;
-            return (
-              <li key={item.label} className={`flex items-center gap-3 rounded-xl px-2 py-2 text-[12px] font-bold transition-colors ${isNext ? "bg-white/[0.06]" : ""}`}>
-                {item.complete ? (
-                  <Check className="h-4 w-4 shrink-0 text-spotify-green" aria-hidden="true" />
-                ) : (
-                  <span className={`h-4 w-4 shrink-0 rounded-full border-2 ${isNext ? "border-spotify-green" : "border-white/25"}`} aria-hidden="true" />
-                )}
-                <span className={item.complete ? "text-white" : isNext ? "text-white" : "text-spotify-silver"}>{item.label}</span>
-                {item.complete ? (
-                  <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
-                ) : isNext ? (
-                  // 한 번에 하나의 행동만 노출 — 나머지 미완료 항목은 목록으로만 보여 인지 부하를 낮춘다.
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto h-8 rounded-full bg-white/10 px-3 text-[11px] font-bold text-white hover:bg-white/15"
-                    onClick={() => onReadinessAction(item.destination)}
-                  >
-                    {item.action}
-                  </Button>
-                ) : (
-                  <span className="ml-auto text-[11px] font-medium text-spotify-silver">나중에</span>
-                )}
-              </li>
-            );
-          })}
-          <li className={`flex items-center gap-3 rounded-xl px-2 py-2 text-[12px] font-bold transition-colors ${previewIsNext ? "bg-white/[0.06]" : ""}`}>
-            {hasReviewedPreview ? (
-              <Check className="h-4 w-4 shrink-0 text-spotify-green" aria-hidden="true" />
-            ) : (
-              <span className={`h-4 w-4 shrink-0 rounded-full border-2 ${previewIsNext ? "border-spotify-green" : "border-white/25"}`} aria-hidden="true" />
-            )}
-            <span className={hasReviewedPreview ? "text-white" : previewIsNext ? "text-white" : "text-spotify-silver"}>미리보기 확인</span>
-            {hasReviewedPreview ? (
-              <span className="ml-auto text-[11px] font-medium text-spotify-silver">완료</span>
-            ) : previewIsNext ? (
-              // 준비 항목을 모두 마친 뒤에만 미리보기 액션을 노출 — 한 번에 하나의 행동 원칙 유지.
-              <div className="ml-auto flex items-center gap-2">
-                <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={onPreview}>
-                  <Eye className="h-3.5 w-3.5" /> 미리보기로 이동
-                </Button>
-                <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10 disabled:opacity-40" disabled={!previewOpened} onClick={onReviewPreview}>
-                  확인했어요
-                </Button>
-              </div>
-            ) : (
-              <span className="ml-auto text-[11px] font-medium text-spotify-silver">나중에</span>
-            )}
-          </li>
-        </ul>
-
-        {readyToPublish && portfolioState !== "published" && (
-          <div className="space-y-3 border-t border-white/5 pt-5">
-            <p className="text-[13px] font-bold leading-relaxed text-white">
-              준비가 끝났어요. 이제 지원서에 넣을 링크를 만들 차례예요.
-            </p>
-            <Button
-              type="button"
-              className="btn-pill-primary h-12 w-full text-[14px]"
-              disabled={isSaving}
-              onClick={onPublish}
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Globe className="w-4 h-4" aria-hidden="true" />
-              )}
-              포트폴리오 공개하기
-            </Button>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label className="text-[10px] font-bold text-spotify-silver tracking-wider">
-            기본 주소
-          </Label>
-          <div className="flex flex-col gap-3 p-3 bg-white/5 border border-white/5 rounded-xl">
-            <div className="flex items-center gap-2 min-w-0">
-              <Globe className="w-4 h-4 text-spotify-green shrink-0" />
-              <span className="text-[13px] font-bold text-white font-mono truncate">
-                {initialData.slug ? portfolioUrlLabel(initialData.slug, customDomain) : "주소 준비 중"}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
-                portfolioState === "published" ? "bg-spotify-green/10 text-spotify-green" : "bg-white/10 text-spotify-silver"
-              }`}>
-                {portfolioStateLabel[portfolioState]}
-              </span>
-              {portfolioState === "published" && publishedPath ? (
-                <>
-                  {/* 방금 공개한 직후엔 위 성공 카드가 복사/열기를 제공하므로 여기선 중복을 접고 공개 중지만 남긴다. */}
-                  {!justPublished && (
-                    <>
-                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={copyPublishedLink}>
-                        <Copy className="w-3 h-3" /> 지원서용 링크 복사
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" onClick={() => initialData.slug && window.open(portfolioUrl(initialData.slug, customDomain), "_blank")}>
-                        <ArrowUpRight className="w-3 h-3" /> 열기
-                      </Button>
-                    </>
-                  )}
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-[11px] font-bold text-spotify-silver hover:bg-white/10 hover:text-white" disabled={isSaving}>
-                        공개 중지
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="bg-spotify-dark-surface border-none rounded-3xl shadow-spotify">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-[20px] font-bold text-white">
-                          공개를 중지할까요?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="text-spotify-silver text-[15px] font-medium leading-relaxed">
-                          링크가 즉시 비공개돼요. 편집한 내용은 그대로 보관되고, 언제든 다시 공개할 수 있어요.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter className="pt-4">
-                        <AlertDialogCancel className="bg-transparent border border-white/10 text-white rounded-full h-11 font-bold px-6 hover:bg-white/5 transition-colors">
-                          취소
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={onUnpublish}
-                          className="!bg-transparent border border-spotify-negative/40 !text-spotify-negative hover:!bg-spotify-negative/10 rounded-full h-11 font-bold px-6 transition-colors"
-                        >
-                          공개 중지
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              ) : portfolioState === "draft" ? (
-                <span className="text-[11px] font-medium text-spotify-silver">섹션을 추가하면 공개할 수 있어요.</span>
-              ) : null}
-            </div>
-          </div>
-          {portfolioState === "published" && (
-            <p className="text-[11px] leading-relaxed text-spotify-silver">
-              변경사항은 공개 페이지에 자동 반영되며, 언제든 공개를 중지할 수 있어요.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-function DesignPanel() {
-  return (
-    <div className="space-y-6">
-      <div className="px-1">
-        <h2 className="text-[17px] font-bold tracking-tight text-white">디자인</h2>
-        <p className="mt-1 text-[12px] font-medium text-spotify-silver">테마와 도메인은 공개 준비와 분리해 언제든 조정할 수 있어요.</p>
-      </div>
-      <DesignEditor />
-      <CustomDomainSection />
-    </div>
-  );
-}
-
-function MobilePreviewStatus({
-  portfolioState,
-  readinessItems,
-  onAction,
-  onReturnToPublish,
-}: Pick<SettingsPanelProps, "portfolioState" | "readinessItems"> & {
-  onAction: (destination: EditorDestination) => void;
-  onReturnToPublish: () => void;
-}) {
-  const nextItem = readinessItems.find((item) => !item.complete);
-  const completeCount = readinessItems.filter((item) => item.complete).length;
-
-  return (
-    <div className="md:hidden mb-3 flex w-[calc(100%-3rem)] max-w-[1000px] items-center justify-between gap-3 rounded-2xl bg-spotify-dark-surface px-4 py-3 shadow-spotify">
-      <div className="min-w-0">
-        <p className="text-[12px] font-bold text-white">
-          {portfolioState === "published" ? "공개 중" : `공개 준비 ${completeCount}/${readinessItems.length}`}
-        </p>
-        <p className="mt-0.5 truncate text-[11px] text-spotify-silver">
-          {portfolioState === "published"
-            ? "변경사항은 자동으로 반영돼요."
-            : nextItem ? `${nextItem.label}을(를) 준비해주세요.` : "공개할 준비가 됐어요."}
-        </p>
-      </div>
-      {nextItem ? (
-        <Button size="sm" variant="ghost" className="h-8 shrink-0 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={() => onAction(nextItem.destination)}>
-          {nextItem.action}
-        </Button>
-      ) : portfolioState !== "published" ? (
-        <Button size="sm" variant="ghost" className="h-8 shrink-0 rounded-full px-3 text-[11px] font-bold text-white hover:bg-white/10" onClick={onReturnToPublish}>
-          공개 준비로
-        </Button>
-      ) : null}
     </div>
   );
 }

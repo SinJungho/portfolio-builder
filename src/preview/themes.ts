@@ -34,11 +34,18 @@ export interface ThemeTokens {
   fontClass?: string;
 }
 
+export const DEFAULT_PORTFOLIO_THEME = "minimal";
+export const DEFAULT_DESIGN_TOKENS = {
+  fontFamily: "pretendard",
+  spacing: "normal",
+  borderRadius: "md",
+} as const;
+
 export const THEMES: Record<string, ThemeTokens> = {
   spotify: {
     id: "spotify",
-    label: "Spotify",
-    description: "근-블랙 몰입형 다크 · 기능적 그린 액센트",
+    label: "개성 강조형",
+    description: "강한 대비와 다크한 분위기로 프로젝트를 돋보이게 해요",
     bg: "#121212",
     text: "#FFFFFF",
     textMuted: "#B3B3B3", // #121212 대비 ≈ 8.9:1 (AA 통과)
@@ -56,33 +63,33 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   minimal: {
     id: "minimal",
-    label: "Minimal",
-    description: "깔끔한 화이트 테마 · 기능적 블루 액센트",
+    label: "채용 기본형",
+    description: "한눈에 읽히는 밝은 화면과 균형 잡힌 정보 구조예요",
     bg: "#F7F8FA", // 카드(#FFFFFF)와 명도 분리 — 플랫 엘리베이션(그림자 없이 면으로 구분)
-    text: "#191F28",
-    textMuted: "#5E6875", // #F7F8FA 대비 ≈ 4.7:1 (AA 통과)
-    accent: "#3182F6",
+    text: "#121212", // Spotify 근-블랙 — 라이트에서도 같은 무채색 축을 쓴다
+    textMuted: "#5C5C5C", // #F7F8FA 대비 ≈ 6.3:1 (AA 통과)
+    accent: "#17A34A", // Spotify 그린을 라이트 면에서 쓸 수 있게 낮춘 값 — bg 대비 3.1:1 (비텍스트 AA)
     surfaceBg: "#EEF0F3",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(0,0,0,0.08)",
-    tagBg: "rgba(0,0,0,0.05)", // 태그 무채색 — 블루는 기능(CTA·프로그레스·활성)에만
-    tagText: "#4B5563",
-    ctaBg: "#3182F6",
-    ctaText: "#121212", // 블루 위 화이트는 3.5:1 미달 → 다크 텍스트로 5.0:1 (AA 통과)
+    tagBg: "rgba(0,0,0,0.05)", // 태그 무채색 — 그린은 기능(CTA·프로그레스·활성)에만
+    tagText: "#4B4B4B",
+    ctaBg: "#17A34A",
+    ctaText: "#121212", // 그린 위 다크 텍스트 5.7:1 (AA 통과)
     footerBg: "#F9FAFB",
-    footerText: "#5E6875", // #F9FAFB 대비 ≈ 5.0:1 (AA 통과)
+    footerText: "#5C5C5C", // #F9FAFB 대비 ≈ 6.4:1 (AA 통과)
     cardRadius: "20px",
   },
   midnight: {
     id: "midnight",
-    label: "Midnight",
-    description: "바이올렛 액센트의 다크 테마",
+    label: "차분한 다크형",
+    description: "어두운 화면에서 기술적인 인상을 차분하게 전달해요",
     bg: "#09090B",
     text: "#FAFAFA",
     textMuted: "#808088", // #09090B 대비 ≈ 5.1:1 (AA 통과)
     accent: "#A78BFA",
     surfaceBg: "#111113",
-    cardBg: "rgba(255,255,255,0.04)",
+    cardBg: "#131315",
     cardBorder: "rgba(255,255,255,0.09)",
     tagBg: "rgba(255,255,255,0.08)", // 태그 무채색 — 퍼플은 기능에만
     tagText: "#E5E5E5",
@@ -94,12 +101,12 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   ocean: {
     id: "ocean",
-    label: "Ocean",
-    description: "시원한 블루 액센트의 라이트 테마",
+    label: "맑고 시원한 형",
+    description: "가벼운 색감과 선명한 블루로 산뜻하게 보여줘요",
     bg: "#F8FDFF",
     text: "#0C4A6E",
     textMuted: "#3D7A93", // #F8FDFF 대비 ≈ 4.7:1 (AA 통과)
-    accent: "#0EA5E9",
+    accent: "#027AAE", // 밝은 배경·카드 모두에서 기능 요소 3:1 이상
     surfaceBg: "#EFF9FF",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(14,165,233,0.16)",
@@ -113,12 +120,12 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   forest: {
     id: "forest",
-    label: "Forest",
-    description: "자연스러운 에메랄드 액센트의 라이트 테마",
+    label: "차분한 그린형",
+    description: "부드러운 색감으로 안정감 있는 인상을 만들어요",
     bg: "#F8FDF9",
     text: "#14532D",
     textMuted: "#47755A", // #F8FDF9 대비 ≈ 5.2:1 (AA 통과)
-    accent: "#10B981",
+    accent: "#07824F", // 밝은 배경·카드 모두에서 기능 요소 3:1 이상
     surfaceBg: "#EFFDF3",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(16,185,129,0.16)",
@@ -132,12 +139,12 @@ export const THEMES: Record<string, ThemeTokens> = {
   },
   sunset: {
     id: "sunset",
-    label: "Sunset",
-    description: "따뜻한 오렌지 액센트의 라이트 테마",
+    label: "따뜻한 포인트형",
+    description: "오렌지 포인트로 친근하고 기억에 남게 보여줘요",
     bg: "#FFF8F0", // 카드(#FFFFFF)와 명도 분리 — 플랫 엘리베이션
     text: "#431407",
     textMuted: "#8A6A5A", // #FFF8F0 대비 ≈ 4.6:1 (AA 통과)
-    accent: "#F97316",
+    accent: "#C2410C", // 밝은 배경·카드 모두에서 기능 요소 3:1 이상
     surfaceBg: "#FDEFE0",
     cardBg: "#FFFFFF",
     cardBorder: "rgba(249,115,22,0.16)",
@@ -169,6 +176,31 @@ export function resolveTheme(themeKey: string): ThemeTokens {
 
 /** 테마 목록 (선택 UI용) */
 export const THEME_LIST = Object.values(THEMES);
+
+const DESIGN_CHOICE_LABELS: Record<string, Record<string, string>> = {
+  fontFamily: {
+    inter: "깔끔하고 현대적인 인상",
+    pretendard: "한글을 가장 편하게 읽기",
+    "fira-code": "기술적인 인상",
+    playfair: "제목을 우아하게 강조하기",
+  },
+  spacing: {
+    compact: "한 화면에 더 많이 보기",
+    normal: "균형 있게 읽기",
+    relaxed: "여유 있게 집중하기",
+  },
+  borderRadius: {
+    none: "또렷하고 단정하게",
+    sm: "절제된 곡선",
+    md: "균형 잡힌 기본형",
+    lg: "부드럽고 친근하게",
+    full: "캡슐형으로 강하게 강조하기",
+  },
+};
+
+export function getDesignChoiceLabel(key: string, value: string): string {
+  return DESIGN_CHOICE_LABELS[key]?.[value] || value;
+}
 
 /** hex(#RGB 또는 #RRGGBB)의 WCAG 상대휘도. 파싱 실패 시 null. */
 function luminance(hex: string): number | null {
@@ -221,5 +253,9 @@ export function accentForSurface(
   bg: string,
   fallback: string,
 ): string {
-  return contrastRatio(accent, bg) >= 3 ? accent : fallback;
+  if (contrastRatio(accent, bg) >= 3) return accent;
+  if (contrastRatio(fallback, bg) >= 3) return fallback;
+  return contrastRatio("#121212", bg) >= contrastRatio("#FFFFFF", bg)
+    ? "#121212"
+    : "#FFFFFF";
 }

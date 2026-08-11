@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
+import { DEFAULT_DESIGN_TOKENS, DEFAULT_PORTFOLIO_THEME } from "@/preview/themes";
 
 export type Block = {
   id: string;
@@ -8,6 +9,11 @@ export type Block = {
   config: Record<string, unknown>;
   is_visible: boolean;
   is_ai_generated: boolean;
+};
+
+type DesignSnapshot = {
+  theme: string;
+  designTokens: Record<string, unknown>;
 };
 
 export type PortfolioStore = {
@@ -21,6 +27,9 @@ export type PortfolioStore = {
   customDomain: string | null;
   slug: string | null;
   isSaving: boolean; // API 호출 중 여부
+  previousDesign: DesignSnapshot | null;
+  failedDesign: DesignSnapshot | null;
+  designError: string | null;
 
   // 초기화
   initialize: (data: {
@@ -35,6 +44,8 @@ export type PortfolioStore = {
   }) => void;
 
   setDesignTokens: (tokens: Record<string, unknown>) => Promise<void>;
+  applyDesign: (design: Partial<DesignSnapshot>) => Promise<void>;
+  undoDesign: () => Promise<void>;
 
   // 액션
   toggleBlock: (blockId: string) => Promise<void>;
@@ -58,36 +69,51 @@ export const usePortfolioStore = create<PortfolioStore>()(
   immer((set, get) => ({
     portfolioId: null,
     blocks: [],
-    theme: "spotify",
+    theme: DEFAULT_PORTFOLIO_THEME,
     isPublished: false,
     publishedUrl: null,
     designTokens: {},
     customDomain: null,
     slug: null,
     isSaving: false,
+    previousDesign: null,
+    failedDesign: null,
+    designError: null,
 
     initialize: (data) => {
       set((state) => {
         state.portfolioId = data.portfolioId;
         state.blocks = data.blocks;
-        state.theme = data.theme;
+        state.theme = data.theme || DEFAULT_PORTFOLIO_THEME;
         state.isPublished = data.isPublished;
         state.publishedUrl = data.publishedUrl;
-        state.designTokens = data.designTokens || {};
+        state.designTokens = { ...DEFAULT_DESIGN_TOKENS, ...(data.designTokens || {}) };
         state.customDomain = data.customDomain || null;
         state.slug = data.slug || null;
+        state.previousDesign = null;
+        state.failedDesign = null;
+        state.designError = null;
       });
     },
 
-    setDesignTokens: async (tokens: Record<string, unknown>) => {
-      const { portfolioId, designTokens: prevTokens } = get();
+    applyDesign: async (design) => {
+      const {
+        portfolioId,
+        theme: prevTheme,
+        designTokens: prevTokens,
+      } = get();
       if (!portfolioId) return;
 
-      const newTokens = { ...prevTokens, ...tokens };
+      const nextTheme = design.theme || prevTheme;
+      const nextTokens = design.designTokens || prevTokens;
 
       // 낙관적 업데이트
       set((state) => {
-        state.designTokens = newTokens;
+        state.theme = nextTheme;
+        state.designTokens = nextTokens;
+        state.previousDesign = { theme: prevTheme, designTokens: prevTokens };
+        state.failedDesign = null;
+        state.designError = null;
         state.isSaving = true;
       });
 
@@ -95,13 +121,66 @@ export const usePortfolioStore = create<PortfolioStore>()(
         const res = await fetch(`/api/portfolios/${portfolioId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ design_tokens: newTokens }),
+          body: JSON.stringify({ theme: nextTheme, design_tokens: nextTokens }),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch {
+        set((state) => {
+          state.failedDesign = null;
+        });
+      } catch (error) {
         // 롤백
         set((state) => {
+          state.theme = prevTheme;
           state.designTokens = prevTokens;
+          state.designError = error instanceof Error
+            ? error.message
+            : "디자인을 저장하지 못했어요.";
+          state.failedDesign = { theme: nextTheme, designTokens: nextTokens };
+        });
+      } finally {
+        set((state) => {
+          state.isSaving = false;
+        });
+      }
+    },
+
+    setDesignTokens: async (tokens: Record<string, unknown>) => {
+      const { designTokens } = get();
+      await get().applyDesign({ designTokens: { ...designTokens, ...tokens } });
+    },
+
+    undoDesign: async () => {
+      const { portfolioId, previousDesign, theme, designTokens } = get();
+      if (!portfolioId || !previousDesign) return;
+
+      set((state) => {
+        state.theme = previousDesign.theme;
+        state.designTokens = previousDesign.designTokens;
+        state.previousDesign = null;
+        state.failedDesign = null;
+        state.designError = null;
+        state.isSaving = true;
+      });
+
+      try {
+        const res = await fetch(`/api/portfolios/${portfolioId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            theme: previousDesign.theme,
+            design_tokens: previousDesign.designTokens,
+          }),
+        });
+        if (!res.ok) throw new Error("Update failed");
+      } catch (error) {
+        set((state) => {
+          state.theme = theme;
+          state.designTokens = designTokens;
+          state.previousDesign = previousDesign;
+          state.failedDesign = { theme: previousDesign.theme, designTokens: previousDesign.designTokens };
+          state.designError = error instanceof Error
+            ? error.message
+            : "디자인을 되돌리지 못했어요.";
         });
       } finally {
         set((state) => {
@@ -138,11 +217,12 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch {
+      } catch (error) {
         // 롤백
         set((state) => {
           state.blocks = previousBlocks;
         });
+        throw error;
       } finally {
         set((state) => {
           state.isSaving = false;
@@ -169,10 +249,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Update failed");
-      } catch {
+      } catch (error) {
         set((state) => {
           state.blocks = previousBlocks;
         });
+        throw error;
       } finally {
         set((state) => {
           state.isSaving = false;
@@ -181,30 +262,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
     },
 
     setTheme: async (theme: string) => {
-      const { portfolioId, theme: prevTheme } = get();
-      if (!portfolioId) return;
-
-      set((state) => {
-        state.theme = theme;
-        state.isSaving = true;
-      });
-
-      try {
-        const res = await fetch(`/api/portfolios/${portfolioId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ theme }),
-        });
-        if (!res.ok) throw new Error("Update failed");
-      } catch {
-        set((state) => {
-          state.theme = prevTheme;
-        });
-      } finally {
-        set((state) => {
-          state.isSaving = false;
-        });
-      }
+      await get().applyDesign({ theme });
     },
 
     updateOptionalField: async (
@@ -267,10 +325,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Delete failed");
-      } catch {
+      } catch (error) {
         set((state) => {
           state.blocks = previousBlocks;
         });
+        throw error;
       } finally {
         set((state) => {
           state.isSaving = false;
@@ -303,10 +362,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         );
         if (!res.ok) throw new Error("Update failed");
-      } catch {
+      } catch (error) {
         set((state) => {
           state.blocks = previousBlocks;
         });
+        throw error;
       } finally {
         set((state) => {
           state.isSaving = false;
@@ -339,6 +399,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
         return newBlock as Block;
       } catch (e) {
         console.error("Failed to add block", e);
+        throw e;
       } finally {
         set((state) => {
           state.isSaving = false;

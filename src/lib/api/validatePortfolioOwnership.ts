@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { apiError } from "@/lib/api/errors";
 
 export async function validatePortfolioOwnership(portfolioId: string) {
   const session = await auth();
   if (!session?.user?.id) {
-    return { error: new NextResponse(null, { status: 401 }), session: null, portfolio: null };
+    return { error: apiError("UNAUTHORIZED", 401), session: null, portfolio: null };
   }
 
   const portfolio = await prisma.portfolio.findUnique({
@@ -13,11 +13,11 @@ export async function validatePortfolioOwnership(portfolioId: string) {
   });
 
   if (!portfolio) {
-    return { error: new NextResponse(null, { status: 404 }), session, portfolio: null };
+    return { error: apiError("NOT_FOUND", 404), session, portfolio: null };
   }
 
   if (portfolio.user_id !== session.user.id) {
-    return { error: NextResponse.json({ error: "forbidden" }, { status: 403 }), session, portfolio };
+    return { error: apiError("FORBIDDEN", 403), session, portfolio };
   }
 
   return { error: null, session, portfolio };

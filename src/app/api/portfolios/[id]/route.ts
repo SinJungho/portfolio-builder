@@ -1,23 +1,22 @@
 import { validatePortfolioOwnership } from "@/lib/api/validatePortfolioOwnership";
+import { apiError, logRouteError, routeError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { DesignTokenSchema } from "@/schemas/portfolio";
+import { DesignTokenSchema, PortfolioThemeSchema } from "@/schemas/portfolio";
 import {
   getMissingPortfolioReadiness,
   getSelectedProjectIds,
 } from "@/lib/portfolio-readiness";
 
 const updatePortfolioSchema = z.object({
-  theme: z
-    .enum(["spotify", "minimal", "midnight", "ocean", "forest", "sunset", "minimalist", "creative", "corporate", "dark", "pastel", "tech"])
-    .optional(),
-  slug: z.string().optional(),
-  title: z.string().optional(),
+  theme: PortfolioThemeSchema.optional(),
+  slug: z.string().regex(/^[a-z0-9-]+$/).min(3).max(50).optional(),
+  title: z.string().trim().max(255).optional(),
   is_published: z.boolean().optional(),
   design_tokens: DesignTokenSchema.optional(),
-});
+}).refine((value) => Object.values(value).some((item) => item !== undefined));
 
 export async function PATCH(
   req: Request,
@@ -28,15 +27,14 @@ export async function PATCH(
     const { error, portfolio } = await validatePortfolioOwnership(id);
     if (error) return error;
 
-    const json = await req.json().catch(() => ({}));
+    const json = await req.json().catch(() => null);
 
     const {
       success,
       data,
-      error: zError,
     } = updatePortfolioSchema.safeParse(json);
     if (!success) {
-      return NextResponse.json({ error: zError.message }, { status: 400 });
+      return apiError("INVALID_REQUEST", 400);
     }
 
     const updateData: Record<string, unknown> = {};
@@ -54,29 +52,28 @@ export async function PATCH(
           config: block.config as Record<string, unknown>,
         }));
         const projectIds = getSelectedProjectIds(readinessBlocks);
-        const availableProjectIds = projectIds.length
+        const availableProjects = projectIds.length
           ? (await prisma.rawProject.findMany({
               where: {
                 id: { in: projectIds },
                 user_id: portfolio.user_id,
                 is_fork: false,
               },
-              select: { id: true },
-            })).map((project) => project.id)
+              select: { id: true, description: true, ai_summary: true },
+            }))
           : [];
+        const availableProjectIds = availableProjects.map((project) => project.id);
+        const describedProjectIds = availableProjects
+          .filter((project) => Boolean(project.description?.trim() || project.ai_summary?.trim()))
+          .map((project) => project.id);
         const missing = getMissingPortfolioReadiness(
           readinessBlocks,
           availableProjectIds,
+          describedProjectIds,
         );
 
         if (missing.length) {
-          return NextResponse.json(
-            {
-              error: `공개 전 ${missing[0].label}을(를) 완료해주세요.`,
-              missing_items: missing,
-            },
-            { status: 400 },
-          );
+          return apiError("PORTFOLIO_NOT_READY", 400, { missing_items: missing });
         }
       }
       updateData.is_published = data.is_published;
@@ -88,7 +85,7 @@ export async function PATCH(
         where: { slug: data.slug },
       });
       if (existing) {
-        return NextResponse.json({ error: "slug_conflict" }, { status: 409 });
+        return apiError("SLUG_CONFLICT", 409);
       }
       updateData.slug = data.slug;
     }
@@ -109,17 +106,13 @@ export async function PATCH(
           body: JSON.stringify({ slug: updatedPortfolio.slug }),
         });
       } catch (e) {
-        console.error("Revalidate explicitly failed:", e);
+        logRouteError('/api/revalidate', 'POST', e);
       }
     }
 
     return NextResponse.json({ portfolio: updatedPortfolio }, { status: 200 });
   } catch (error: unknown) {
-    console.error("PATCH /api/portfolios/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Internal server error" },
-      { status: 500 },
-    );
+    return routeError('/api/portfolios/[id]', 'PATCH', error);
   }
 }
 
@@ -138,10 +131,6 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
-    console.error("DELETE /api/portfolios/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Internal server error" },
-      { status: 500 },
-    );
+    return routeError('/api/portfolios/[id]', 'DELETE', error);
   }
 }

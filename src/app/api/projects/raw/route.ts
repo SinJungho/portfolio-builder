@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { apiError, routeError } from "@/lib/api/errors";
 
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return new NextResponse(null, { status: 401 });
+      return apiError("UNAUTHORIZED", 401);
     }
 
     const projects = await prisma.rawProject.findMany({
@@ -21,7 +22,6 @@ export async function GET() {
 
     return NextResponse.json(projects);
   } catch (error: unknown) {
-    console.error("GET /api/projects/raw error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return routeError('/api/projects/raw', 'GET', error);
   }
 }

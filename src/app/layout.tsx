@@ -1,16 +1,12 @@
 import AuthProvider from "@/components/providers/AuthProvider";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
+// 본문 서체. 동적 서브셋이라 브라우저가 실제로 쓰는 글자 구간만 내려받는다
+// (전체 가변 폰트 하나는 2MB, 서브셋은 파일당 ~34KB).
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
-
-const notoSans = Noto_Sans({ variable: "--font-sans" });
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import { Geist_Mono } from "next/font/google";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -18,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PortfolioForge | AI 기반 포트폴리오 자동 생성",
+  title: "PortfolioForge | GitHub로 만드는 개발자 포트폴리오",
   description:
-    "GitHub 데이터를 분석하여 나만의 프리미엄 포트폴리오를 1분 만에 완성하세요.",
+    "GitHub 활동을 채용 담당자가 읽기 좋은 포트폴리오로 만들어요. 한 번 연결하면 커밋할 때마다 알아서 최신으로 유지돼요.",
 };
 
 export default function RootLayout({
@@ -29,10 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={notoSans.variable}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="ko">
+      <body className={`${geistMono.variable} antialiased`}>
         <AuthProvider>
           <QueryProvider>
             {children}

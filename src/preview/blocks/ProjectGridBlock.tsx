@@ -3,6 +3,7 @@
 import { ArrowUpRight, Calendar, Code2, Star } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { parseProjectSummary } from "../project-summary";
 import type { ThemeTokens } from "../themes";
 
 interface ProjectGridBlockProps {
@@ -24,37 +25,7 @@ interface ProjectGridBlockProps {
   theme: ThemeTokens;
   portfolioId?: string;
   blockId?: string;
-}
-
-interface ParsedSummary {
-  headline: string | null;
-  highlights: string[];
-  demo_url: string | null;
-  role: string | null;
-}
-
-function parseSummary(summary: string | null): ParsedSummary {
-  if (!summary)
-    return { headline: null, highlights: [], demo_url: null, role: null };
-  try {
-    const trimmed = summary.trim();
-    if (trimmed.startsWith("{")) {
-      const data = JSON.parse(trimmed);
-      return {
-        headline: data.headline || null,
-        highlights: Array.isArray(data.highlights)
-          ? data.highlights.filter(
-              (x: unknown): x is string => typeof x === "string",
-            )
-          : [],
-        demo_url: data.demo_url || null,
-        role: data.role || null,
-      };
-    }
-  } catch {
-    return { headline: summary, highlights: [], demo_url: null, role: null };
-  }
-  return { headline: summary, highlights: [], demo_url: null, role: null };
+  isCompactPreview?: boolean;
 }
 
 export default function ProjectGridBlock({
@@ -62,6 +33,7 @@ export default function ProjectGridBlock({
   theme: t,
   portfolioId,
   blockId,
+  isCompactPreview = false,
 }: ProjectGridBlockProps) {
   const { projectsData = [] } = config;
 
@@ -87,6 +59,9 @@ export default function ProjectGridBlock({
             </span>
           )}
         </div>
+        <p className="text-[13px] leading-relaxed" style={{ color: t.textMuted }}>
+          GitHub에서 고른 작업을 채용 담당자에게 먼저 보여줘요.
+        </p>
       </div>
 
       {/* 프로젝트가 없을 때 공개 페이지용 빈 상태를 표시한다. */}
@@ -118,6 +93,7 @@ export default function ProjectGridBlock({
             customDescription={config.custom_descriptions?.[p.id]}
             portfolioId={portfolioId}
             blockId={blockId}
+            isCompactPreview={isCompactPreview}
           />
         ))}
       </div>
@@ -132,6 +108,7 @@ function ProjectRow({
   customDescription,
   portfolioId,
   blockId,
+  isCompactPreview,
 }: {
   project: NonNullable<ProjectGridBlockProps["config"]["projectsData"]>[0];
   index: number;
@@ -139,14 +116,15 @@ function ProjectRow({
   customDescription?: string;
   portfolioId?: string;
   blockId?: string;
+  isCompactPreview: boolean;
 }) {
-  const { headline, highlights, demo_url, role } = parseSummary(p.ai_summary);
+  const { headline, highlights, demo_url, role } = parseProjectSummary(p.ai_summary);
   const year = p.pushed_at ? new Date(p.pushed_at).getFullYear() : null;
+  const normalizedCustomDescription = customDescription?.trim() ? customDescription : undefined;
   const outcome =
-    headline || highlights[0] || customDescription || p.description;
+    normalizedCustomDescription || headline || highlights[0] || p.description;
   const primaryUrl = demo_url || p.html_url;
   const primaryLabel = demo_url ? "데모 보기" : "GitHub 보기";
-  const num = String(index + 1).padStart(2, "0");
   // 첫 프로젝트만 대표작으로 강조한다.
   const isFlagship = index === 0;
   // 대표작에는 중복을 제외한 하이라이트를 최대 2개 표시한다.
@@ -171,8 +149,7 @@ function ProjectRow({
     }
   };
 
-  const rowClass =
-    "group flex flex-col gap-4 sm:flex-row sm:items-center px-5 py-5 md:px-6 transition-all duration-300 hover:-translate-y-0.5 hover:brightness-[1.12] focus-visible:outline-2 focus-visible:outline-offset-4";
+  const rowClass = `group flex ${isCompactPreview ? "flex-col gap-3 px-4 py-4" : "flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center md:px-6"} transition-all duration-300 hover:-translate-y-0.5 hover:brightness-[1.12] focus-visible:outline-2 focus-visible:outline-offset-4`;
   const rowStyle: React.CSSProperties = {
     backgroundColor: t.cardBg,
     border: `1px solid ${t.cardBorder}`,
@@ -182,18 +159,11 @@ function ProjectRow({
 
   const body = (
     <>
-      <div className="flex gap-4 sm:gap-5 flex-1 min-w-0">
-        <span
-          className="block text-[13px] sm:text-[15px] font-bold tabular-nums pt-0.5 sm:pt-1 w-5 sm:w-7 shrink-0"
-          style={{ color: t.textMuted }}
-          aria-hidden="true"
-        >
-          {num}
-        </span>
+      <div className="w-full flex flex-1 min-w-0">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h3
-              className="text-[20px] md:text-[24px] font-extrabold tracking-[-1px] leading-tight break-words"
+              className={`${isCompactPreview ? "text-[18px]" : "text-[20px] md:text-[24px]"} font-extrabold tracking-[-1px] leading-tight break-words`}
               style={{ color: t.text }}
             >
               {p.name}
@@ -209,7 +179,7 @@ function ProjectRow({
           </div>
           {outcome && (
             <p
-              className="text-[15px] leading-relaxed line-clamp-2 max-w-2xl"
+              className={`${isCompactPreview ? "text-[14px]" : "text-[15px]"} leading-relaxed line-clamp-2 max-w-2xl`}
               style={{ color: t.textMuted }}
             >
               {outcome}
@@ -262,7 +232,7 @@ function ProjectRow({
 
       {primaryUrl && (
         <span
-          className={`${isFlagship ? "" : "pf-cta-badge "}inline-flex items-center justify-center gap-1.5 shrink-0 self-start sm:self-center px-4 py-2 text-[13px] font-bold rounded-full transition-all group-hover:translate-x-0.5`}
+          className={`${isFlagship ? "" : "pf-cta-badge "}inline-flex items-center justify-center gap-1.5 shrink-0 self-start ${isCompactPreview ? "px-3 py-2" : "px-4 py-2 sm:self-center"} text-[13px] font-bold rounded-full transition-all group-hover:translate-x-0.5`}
           style={
             isFlagship
               ? { backgroundColor: t.ctaBg, color: t.ctaText }
@@ -293,7 +263,7 @@ function ProjectRow({
       // 링크 이름에 프로젝트 요약과 이동 동작을 포함한다.
       aria-label={
         outcome
-          ? `${p.name} — ${outcome.slice(0, 100)}, ${primaryLabel}`
+          ? `${p.name}, ${outcome.slice(0, 100)}, ${primaryLabel}`
           : `${p.name}, ${primaryLabel}`
       }
     >

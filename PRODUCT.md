@@ -10,7 +10,7 @@ web
 
 Primary user: **a Korean developer preparing for employment or a job change** — junior to mid-level — who already has GitHub activity but no presentable portfolio, and who is not confident in design or writing. Their situation is active job-seeking for the domestic (Korean) market; the job to be done is "turn what I've already built into something a recruiter can understand at a glance, without spending days on it."
 
-Secondary audiences (confirmed by product surface, not the primary target): **bootcamps and small teams** (a Team plan supports up to ~10 members with shared/private templates and team analytics). English (`en`) is supported alongside Korean, but Korean is the default and fallback language and the primary market is Korea.
+English (`en`) is supported alongside Korean, but Korean is the default and fallback language and the primary market is Korea.
 
 ## Product Purpose
 
@@ -23,13 +23,13 @@ Four mechanisms define the product and must be preserved. A neighboring "portfol
 1. **GitHub auto-sync** — connect once and it's done. New commits, stars, and repositories keep the published portfolio current automatically; the user does not re-edit to stay up to date.
 2. **AI curation** — it does not dump every repository. It selects the projects worth featuring, orders them, and rewrites descriptions into something readable.
 3. **No-code real-time editing** — drag blocks, change colors, adjust copy, and the result updates in place. You edit what you see; code knowledge is not required.
-4. **Instant publish to your own address** — the finished portfolio goes live at a personal subdomain immediately and is shareable by link; custom domains are a paid upgrade.
+4. **Instant publish to your own address** — the finished portfolio goes live at a personal subdomain immediately and is shareable by link. Custom domains are available to everyone; nothing is gated behind payment.
 
 ## Operating Context
 
 - **Connect:** the user authenticates with GitHub (OAuth) and optionally links a blog/RSS feed; the product ingests raw projects and activity.
 - **Curate & edit:** the user picks which projects to show, chooses a template, and edits blocks (hero, project grid, skills, blog feed, contact) live in an editor with drag-and-drop reordering, theme/color/typography controls, and a custom-CSS escape hatch.
-- **Publish & share:** the portfolio is published to a personal subdomain (paid: custom domain), shared by link, and can be exported to PDF.
+- **Publish & share:** the portfolio is published to a personal subdomain (or a custom domain), shared by link, and can be exported to PDF.
 - **Measure:** a visitor-analytics dashboard tracks how the published portfolio performs.
 - **The evaluating scene:** the end audience is a **recruiter or hiring manager scanning quickly** — the portfolio must be legible and credible in seconds, not studied.
 
@@ -45,7 +45,6 @@ Confirmed functionality (from the implemented product):
 - Publishing to a per-user subdomain via a public `[slug]` route; PDF export (headless Chromium).
 - Visitor analytics dashboard; account/settings and integrations management.
 - Internationalization: Korean (default + fallback) and English.
-- **Plan structure** (three tiers exist in the product): a free tier (single portfolio, basic templates, subdomain), a paid individual tier (unlimited portfolios, all premium templates, custom domain, visitor analytics, priority support), and a team tier (up to ~10 members, private templates, team analytics reports, dedicated onboarding). **The specific prices/numbers shown on the marketing page are placeholders — see Evidence on Hand — and are not confirmed pricing.**
 
 ## Brand Commitments
 
@@ -55,11 +54,11 @@ Confirmed functionality (from the implemented product):
 
 ## Evidence on Hand
 
-**Currently there is NO real proof of any kind. All of the following on the marketing home are placeholders and must not be treated as, cited as, or presented as fact in future work:**
+**There is still NO real proof of any kind — no customers, no measured metrics.** The marketing home no longer *claims* any, which is the point: fabricated testimonials and invented statistics were removed rather than dressed up.
 
-- **Testimonials** — the quotes attributed to 박지현/카카오, 이도윤/토스, 김민서/네이버 (`src/components/home/Testimonials.tsx`) are fabricated example content, not real customers.
-- **Statistics** — figures such as "취업 성공률", "생성된 포트폴리오", "평균 생성 시간", "사용자 만족도" (`src/components/home/SocialProof.tsx`) are placeholders, not measured metrics.
-- **Pricing numbers** — the amounts in `src/components/home/Pricing.tsx` are placeholders; only the three-tier *structure* is a real product fact.
+- **Testimonials** — the fabricated quotes attributed to 박지현/카카오, 이도윤/토스, 김민서/네이버 were deleted along with the component (2026-08-07). Do not recreate them.
+- **Statistics** — the invented figures ("취업 성공률", "생성된 포트폴리오", "평균 생성 시간", "사용자 만족도") are gone. `src/components/home/SocialProof.tsx` now states only what the product actually guarantees (public data only, own address, PDF export).
+- Any future claim, quote, or number must come from real data before it ships, or be clearly framed as illustrative.
 
 Real content that does exist: the working product itself (its editor and published-portfolio output) is the strongest available demonstration. Future work must source any claim, quote, or number from real data before publishing it, or clearly frame it as illustrative.
 

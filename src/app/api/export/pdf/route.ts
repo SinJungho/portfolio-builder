@@ -1,15 +1,18 @@
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/prisma";
 import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
+import os from "os";
 import path from "path";
 import puppeteer, { Browser } from "puppeteer-core";
+import { apiError, logRouteError } from "@/lib/api/errors";
+import { normalizePortfolioSlug } from "@/lib/portfolio-url";
 
 /**
- * Chromium 실행 파일이 안전한 화이트리스트 디렉토리에 위치하고 실제 정규 파일인지 교차 검증합니다.
- * (심볼릭 링크 우회 공격 및 비권한 바이너리 실행 리스크 방어 - 로컬 & 프로덕션 통합 가드)
+ * 허용된 디렉토리의 실제 Chromium 실행 파일인지 검증한다.
  */
-function validateChromiumPath(filePath: string): boolean {
+function validateChromiumPath(filePath: string, allowedPrefixes: string[]): boolean {
   try {
     if (!filePath) return false;
 
@@ -34,21 +37,16 @@ function validateChromiumPath(filePath: string): boolean {
       return false;
     }
 
-    const allowedEnv = process.env.ALLOWED_CHROMIUM_PREFIXES;
-    if (!allowedEnv) {
+    if (allowedPrefixes.length === 0) {
       console.error(
-        `[PDF_내보내기_보안] 실행이 차단됨: 인가 정책(ALLOWED_CHROMIUM_PREFIXES) 환경 변수가 구성되지 않았습니다.`,
+        `[PDF_내보내기_보안] 실행이 차단됨: 허용된 Chromium 경로가 구성되지 않았습니다.`,
       );
       return false;
     }
 
-    const allowedPrefixes = allowedEnv.split(",").map((p) => p.trim());
-    const normalizedPath = path.normalize(filePath);
-    const pathForMatching = normalizedPath.replace(/\\/g, "/");
-
     const isAllowed = allowedPrefixes.some((prefix) => {
-      const normalizedPrefix = path.normalize(prefix).replace(/\\/g, "/");
-      return pathForMatching.startsWith(normalizedPrefix);
+      const relative = path.relative(path.resolve(prefix), path.resolve(filePath));
+      return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
     });
 
     if (!isAllowed) {
@@ -66,8 +64,7 @@ function validateChromiumPath(filePath: string): boolean {
 }
 
 /**
- * 렌더링 타겟 URL의 호스트가 인가된 도메인(Localhost 또는 portfolioforge.app 대역)인지 검증합니다.
- * (사설망 자원 탈취 시도 및 외부 악성 도메인으로의 SSRF 리다이렉션 방어)
+ * 렌더링 대상이 허용된 호스트인지 검증한다.
  */
 function validateTargetUrl(targetUrl: string): boolean {
   try {
@@ -91,38 +88,32 @@ function validateTargetUrl(targetUrl: string): boolean {
   }
 }
 
-/**
- * @summary 포트폴리오 페이지를 A4 규격의 PDF 이력서(CV) 문서로 변환하여 다운로드 스트림으로 반환합니다.
- *
- * @description
- * Vercel Serverless 환경의 50MB 용량 제한을 우회하기 위해 `@sparticuz/chromium` 바이너리를 활용하며,
- * 로컬 개발 환경과 프로덕션 환경의 OS 플랫폼 구분에 맞춰 Chrome 실행 파일을 동적으로 탐색합니다.
- * 렌더링 시 웹 폰트 누락 및 레이아웃 깨짐을 방지하기 위해 폰트 로드 완료 대기 및 추가 지연 시간을 가집니다.
- *
- * @route GET /api/export/pdf
- * @query {string} slug - 포트폴리오를 식별하기 위한 고유 주소(Slug)
- * @returns {NextResponse} application/pdf 바이너리 파일 다운로드 스트림
- * @throws {400} 포트폴리오 식별자(slug) 누락 및 유효하지 않은 특수 문자 포함(SSRF 방어) 시 반환
- * @throws {500} Chromium 인스턴스 기동 실패, 페이지 렌더링 타임아웃, PDF 변환 실패 시 반환
- */
+/** 포트폴리오 페이지를 A4 PDF로 변환한다. */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const slug = searchParams.get("slug");
+  const rawSlug = searchParams.get("slug");
 
   const slugRegex = /^[a-z0-9-]+$/i;
-  if (!slug || !slugRegex.test(slug)) {
-    return NextResponse.json(
-      {
-        error:
-          "유효하지 않은 포트폴리오 식별자 형식입니다. (영문, 숫자, 하이픈만 허용)",
-      },
-      { status: 400 },
-    );
+  if (!rawSlug || rawSlug.length > 50 || !slugRegex.test(rawSlug)) {
+    return apiError("PDF_INVALID_SLUG", 400);
   }
+  // 조회한 행과 렌더링할 주소가 항상 같은 slug를 가리키게 한다.
+  const slug = normalizePortfolioSlug(rawSlug);
 
   let browser: Browser | null = null;
 
   try {
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { slug },
+      select: { id: true, is_published: true },
+    });
+    if (!portfolio?.is_published) return apiError("NOT_FOUND", 404);
+
+    const portfolioUrl = `${env.NEXT_PUBLIC_APP_URL}/${slug}?export=true`;
+    if (!validateTargetUrl(portfolioUrl)) {
+      return apiError("PDF_SECURITY", 400);
+    }
+
     const isLocal = process.env.NODE_ENV === "development";
     let executablePath = "";
 
@@ -135,7 +126,13 @@ export async function GET(req: NextRequest) {
       executablePath = await chromium.executablePath();
     }
 
-    if (!executablePath || !validateChromiumPath(executablePath)) {
+    const allowedPrefixes = isLocal
+      ? (process.env.ALLOWED_CHROMIUM_PREFIXES || "")
+          .split(",")
+          .map((prefix) => prefix.trim())
+          .filter(Boolean)
+      : [os.tmpdir()];
+    if (!executablePath || !validateChromiumPath(executablePath, allowedPrefixes)) {
       console.warn(
         `[PDF_내보내기_보안] 유효한 크롬 실행 파일 검증을 실패했습니다: ${executablePath}.`,
       );
@@ -154,37 +151,29 @@ export async function GET(req: NextRequest) {
 
     const page = await browser.newPage();
 
-    const baseUrl = env.NEXT_PUBLIC_APP_URL;
-    const portfolioUrl = `${baseUrl}/${slug}?export=true`;
-
-    if (!validateTargetUrl(portfolioUrl)) {
-      return NextResponse.json(
-        { error: "보안 검증 실패: 허용되지 않은 렌더링 대상 주소입니다." },
-        { status: 400 },
-      );
-    }
-
     console.log(
       `[PDF_내보내기] 대상 렌더링 URL이 생성되었습니다: ${portfolioUrl}`,
     );
 
-    await page.goto(portfolioUrl, {
+    const response = await page.goto(portfolioUrl, {
       waitUntil: "networkidle2",
       timeout: 30000,
     });
+    if (!response?.ok()) {
+      throw new Error(
+        `포트폴리오 렌더링 응답이 올바르지 않습니다 (${response?.status() ?? "응답 없음"}).`,
+      );
+    }
 
-    await page.evaluateHandle("document.fonts.ready");
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    await page.emulateMediaType("print");
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: {
-        top: "20px",
-        bottom: "20px",
-        left: "20px",
-        right: "20px",
-      },
+      preferCSSPageSize: true,
     });
 
     const date = new Date().toISOString().split("T")[0];
@@ -195,24 +184,20 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (error: unknown) {
-    console.error("[PDF_내보내기_실패]", error);
-    return NextResponse.json(
-      {
-        error: "PDF 생성을 실패했습니다.",
-        details:
-          error instanceof Error
-            ? error.message
-            : "알 수 없는 오류가 발생했습니다.",
-      },
-      { status: 500 },
-    );
+    logRouteError('/api/export/pdf', 'GET', error);
+    return apiError("PDF_FAILED", 500);
   } finally {
-    // 좀비 크롬 프로세스 잔존으로 인한 서버 리소스 커넥션 누수 및 OOM(Memory Leak) 방지
+    // Chromium을 종료해 프로세스와 리소스를 정리한다.
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (error) {
+        logRouteError("/api/export/pdf", "CLOSE", error);
+      }
     }
   }
 }
